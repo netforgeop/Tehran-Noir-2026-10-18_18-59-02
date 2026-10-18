@@ -1,0 +1,79 @@
+# ===================================
+# Tehran Noir - Unity .gitattributes
+# هدف: جلوگیری از خراب شدن فایل‌های Unity
+# به‌خاطر تفاوت Line Ending بین ویندوز و لینوکس
+# ===================================
+
+# حالت پیش‌فرض: Git خودش تصمیم بگیرد
+* text=auto
+
+# --- فایل‌های متنی Unity: همیشه LF ---
+*.cs    text eol=lf
+*.meta  text eol=lf
+*.asmdef text eol=lf
+*.shader text eol=lf
+*.hlsl  text eol=lf
+*.cginc text eol=lf
+*.compute text eol=lf
+*.shadergraph text eol=lf
+*.shadersubgraph text eol=lf
+*.uxml  text eol=lf
+*.uss   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# --- صحنه‌ها و Prefabها (متنی ولی حساس به تغییر) ---
+*.unity     text eol=lf merge=unityyamlmerge
+*.prefab    text eol=lf merge=unityyamlmerge
+*.mat       text eol=lf merge=unityyamlmerge
+*.anim      text eol=lf merge=unityyamlmerge
+*.asset     text eol=lf merge=unityyamlmerge
+*.controller text eol=lf merge=unityyamlmerge
+*.physicMaterial text eol=lf merge=unityyamlmerge
+*.mask      text eol=lf merge=unityyamlmerge
+*.signal    text eol=lf merge=unityyamlmerge
+*.terrainlayer text eol=lf merge=unityyamlmerge
+*.brush     text eol=lf merge=unityyamlmerge
+*.flare     text eol=lf merge=unityyamlmerge
+*.giparams  text eol=lf merge=unityyamlmerge
+*.spriteatlas text eol=lf merge=unityyamlmerge
+*.playable  text eol=lf merge=unityyamlmerge
+*.mixer     text eol=lf merge=unityyamlmerge
+*.guiskin   text eol=lf merge=unityyamlmerge
+*.lighting  text eol=lf merge=unityyamlmerge
+*.rendertexture text eol=lf merge=unityyamlmerge
+
+# --- فایل‌های باینری: هرگز تغییر نکنند ---
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.tga   binary
+*.tif   binary
+*.psd   binary
+*.exr   binary
+*.hdr   binary
+*.gif   binary
+*.fbx   binary
+*.obj   binary
+*.blend binary
+*.max   binary
+*.wav   binary
+*.mp3   binary
+*.ogg   binary
+*.aif   binary
+*.flac  binary
+*.ttf   binary
+*.otf   binary
+*.dll   binary
+*.so    binary
+*.dylib binary
+*.a     binary
+*.pdf   binary
+*.zip   binary
+*.7z    binary
+*.rar   binary
+*.cubemap binary
+*.anim.fbx binary

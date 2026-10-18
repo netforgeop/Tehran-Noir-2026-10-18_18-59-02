@@ -1,0 +1,78 @@
+# ===================================
+# Tehran Noir - Unity .gitignore
+# Unity 6.6 (6000.6.x) / Universal 3D
+# فقط فایل‌های پروژه در Git ذخیره می‌شوند؛
+# فایل‌های تولیدشده (Library, Temp, Logs) هرگز.
+# ===================================
+
+# --- پوشه‌های تولیدشده توسط Unity ---
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Dd]ataStore/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# --- Asset Store Tools ---
+/[Aa]ssets/AssetStoreTools*
+
+# --- TextMesh Pro (فایل‌های موقتی) ---
+[Aa]ssets/TextMesh*Pro/
+
+# --- Addressables ---
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# --- پلاگین‌های خودکار تولیدشده ---
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# --- Visual Studio / Rider ---
+.vs/
+.idea/
+.gradle/
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# --- Unity3D generated meta files ---
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# --- Unity3D generated file on crash reports ---
+sysinfo.txt
+
+# --- Builds ---
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# --- Crashlytics generated file ---
+crashlytics-build.properties
+
+# --- Packed Addressables ---
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+
+# --- سیستم‌عامل ---
+.DS_Store
+Thumbs.db
+desktop.ini

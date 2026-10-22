@@ -17,6 +17,7 @@ L.A. Noire، GTA 1 & 2، GTA: Chinatown Wars و The Wolf Among Us.
 
 - ریپازیتوری تازه راه‌اندازی شده است.
 - فایل‌های `.gitignore` و `.gitattributes` مخصوص Unity اضافه شده‌اند.
+- ابزار `tools/DialogueViewer.html` (نویسندگی و تست دیالوگ) اضافه شد.
 - هنوز هیچ `Assets`، `Packages` یا `ProjectSettings` در Git ثبت نشده است.
 
 ## ساختار پوشه‌ها (برنامه‌ریزی‌شده)
@@ -40,3 +41,11 @@ Assets/
 پروژه از طریق Unity Hub به GitHub متصل شده است.
 `.gitignore` باعث می‌شود پوشه‌های سنگین و تولیدشده (`Library`, `Temp`, `Logs`, `obj`, `Build`)
 هرگز آپلود نشوند؛ بنابراین حجم ریپازیتوری کوچک می‌ماند.
+
+## قاعده‌ی تحویل فایل‌ها
+
+- فایل‌های Unity با **همان مسیر** داخل پروژه در ریپو ذخیره می‌شوند؛
+  مثلاً `Assets/_Project/Scripts/Dialogue/DialogueRunner.cs`.
+  پس کپی از ریپو به پروژه، بدون جست‌وجو انجام می‌شود.
+- تنظیمات دستی Inspector برای هر مرحله، در `docs/` با نام همان مرحله نوشته می‌شود.
+- ابزارهای بیرون از Unity در `tools/` می‌مانند.

@@ -1,0 +1,112 @@
+[gd_scene format=3 uid="uid://b0golykwh8h12"]
+
+[ext_resource type="Script" uid="uid://d1y1bv487rjvb" path="res://scene/script/main_menu.gd" id="1_2atga"]
+[ext_resource type="Texture2D" uid="uid://bdjyp1scxp58d" path="res://source/img/bgmenu.png" id="1_3er1b"]
+[ext_resource type="FontFile" uid="uid://bmbjmik56ou61" path="res://source/font/RobotoCondensed-Black.ttf" id="2_2fwvj"]
+[ext_resource type="FontFile" uid="uid://bgt6gseqfw7ae" path="res://source/font/RobotoCondensed-Bold.ttf" id="2_hxu56"]
+[ext_resource type="Texture2D" uid="uid://cqwkauwy6f07c" path="res://source/img/menu end.png" id="4_0iwki"]
+[ext_resource type="StyleBox" uid="uid://csx7wvurex3q5" path="res://source/style/new_style_box_flat.tres" id="4_sepwh"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_782js"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jcfcc"]
+content_margin_left = 54.0
+content_margin_top = 5.0
+content_margin_right = 150.0
+content_margin_bottom = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[node name="MainMenu" type="Node" unique_id=1293838907]
+script = ExtResource("1_2atga")
+
+[node name="Control" type="Control" parent="." unique_id=1664657985]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TextureRect" type="TextureRect" parent="Control" unique_id=100608672]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -25.0
+offset_top = -23.0
+offset_right = 1908.4355
+offset_bottom = 1077.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_3er1b")
+expand_mode = 1
+flip_h = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control" unique_id=2061951820]
+layout_mode = 1
+offset_left = 269.0
+offset_top = 285.0
+offset_right = 885.0
+offset_bottom = 901.0
+theme_override_constants/separation = 8
+
+[node name="TextEdit" type="Label" parent="Control/VBoxContainer" unique_id=1152751530]
+custom_minimum_size = Vector2(10, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65882355, 0.5019608, 0.1882353, 1)
+theme_override_fonts/font = ExtResource("2_2fwvj")
+theme_override_font_sizes/font_size = 90
+theme_override_styles/normal = SubResource("StyleBoxFlat_782js")
+text = "HOME"
+
+[node name="CONTINUE" type="Button" parent="Control/VBoxContainer" unique_id=2096538610]
+z_index = 3
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0.5882353, 0.57254905, 0.5411765, 1)
+theme_override_colors/font_hover_color = Color(0.93333334, 0.9372549, 0.9254902, 1)
+theme_override_fonts/font = ExtResource("2_hxu56")
+theme_override_font_sizes/font_size = 60
+theme_override_styles/normal = SubResource("StyleBoxFlat_jcfcc")
+theme_override_styles/pressed = ExtResource("4_sepwh")
+theme_override_styles/hover = ExtResource("4_sepwh")
+theme_override_styles/focus = ExtResource("4_sepwh")
+text = "CONTINUE"
+
+[node name="OPTIONS" type="Button" parent="Control/VBoxContainer" unique_id=1574368931]
+z_index = 3
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0.5882353, 0.57254905, 0.5411765, 1)
+theme_override_colors/font_hover_color = Color(0.93333334, 0.9372549, 0.9254902, 1)
+theme_override_fonts/font = ExtResource("2_hxu56")
+theme_override_font_sizes/font_size = 60
+theme_override_styles/normal = SubResource("StyleBoxFlat_jcfcc")
+theme_override_styles/pressed = ExtResource("4_sepwh")
+theme_override_styles/hover = ExtResource("4_sepwh")
+theme_override_styles/focus = ExtResource("4_sepwh")
+text = "OPTIONS"
+
+[node name="QUIT" type="Button" parent="Control/VBoxContainer" unique_id=1951033616]
+z_index = 3
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0.5882353, 0.57254905, 0.5411765, 1)
+theme_override_colors/font_hover_color = Color(0.93333334, 0.9372549, 0.9254902, 1)
+theme_override_fonts/font = ExtResource("2_hxu56")
+theme_override_font_sizes/font_size = 60
+theme_override_styles/normal = SubResource("StyleBoxFlat_jcfcc")
+theme_override_styles/pressed = ExtResource("4_sepwh")
+theme_override_styles/hover = ExtResource("4_sepwh")
+theme_override_styles/focus = ExtResource("4_sepwh")
+text = "QUIT"
+
+[node name="TextureRect2" type="TextureRect" parent="Control/VBoxContainer" unique_id=664060687]
+layout_mode = 2
+texture = ExtResource("4_0iwki")
+expand_mode = 5
+
+[connection signal="pressed" from="Control/VBoxContainer/CONTINUE" to="." method="_on_continue_pressed"]
+[connection signal="pressed" from="Control/VBoxContainer/OPTIONS" to="." method="_on_options_pressed"]
+[connection signal="pressed" from="Control/VBoxContainer/QUIT" to="." method="_on_quit_pressed"]

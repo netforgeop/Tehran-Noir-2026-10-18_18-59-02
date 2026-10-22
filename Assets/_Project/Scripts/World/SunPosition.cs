@@ -37,7 +37,7 @@ namespace TehranNoir.World
         public static SunState Evaluate(GameDate date, float latitude, float longitude, float timeZone)
         {
             double lat = latitude * Deg2Rad;
-            double dayOfYear = date.GregorianDayOfYear;
+            double dayOfYear = date.GregorianDayOfYear();
             double hour = date.HourFraction;
 
             // کسر سال

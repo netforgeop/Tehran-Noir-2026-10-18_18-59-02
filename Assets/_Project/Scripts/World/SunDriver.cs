@@ -61,7 +61,8 @@ namespace TehranNoir.World
             }
 
             // بدون ساعت، خورشید روی ظهر یک تاریخ ثابت می‌ماند (برای تست صحنه‌های بدون ساعت)
-            _sun = clock != null ? clock.Sun : SunPosition.Evaluate(new GameDate(1352, 1, 1, 12, 0));
+            GameDate date = clock != null ? clock.Now : new GameDate(1352, 1, 1, 12, 0);
+            _sun = SunPosition.Evaluate(date, latitude, longitude, timeZone);
 
             Apply(_sun);
         }

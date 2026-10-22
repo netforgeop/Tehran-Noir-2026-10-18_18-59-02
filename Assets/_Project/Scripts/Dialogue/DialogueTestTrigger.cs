@@ -67,17 +67,24 @@ namespace TehranNoir.Dialogue
 
             if (document.HasErrors) return;
 
-            bool createWorld = _world == null || !keepWorldBetweenDialogues;
+            WorldState world = WorldStateProvider.Instance != null ? WorldStateProvider.Instance.State : null;
 
-            if (createWorld)
+            if (world == null)
             {
-                _world = WorldState.CreateDefault(document);
+                bool createWorld = _world == null || !keepWorldBetweenDialogues;
 
-                for (int i = 0; i < initialVariables.Length; i++)
-                    DialogueRunner.ApplyEffect(initialVariables[i], _world);
+                if (createWorld)
+                {
+                    _world = WorldState.CreateDefault(document);
+
+                    for (int i = 0; i < initialVariables.Length; i++)
+                        DialogueRunner.ApplyEffect(initialVariables[i], _world);
+                }
+
+                world = _world;
             }
 
-            dialogueUI.Play(document, _world);
+            dialogueUI.Play(document, world);
         }
     }
 }

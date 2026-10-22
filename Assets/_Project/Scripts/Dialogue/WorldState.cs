@@ -8,7 +8,8 @@ namespace TehranNoir.Dialogue
     {
         public static readonly string[] Scalars =
         {
-            "time", "weather", "energy", "fear", "sanity", "trust", "playerAge"
+            "time", "weather", "energy", "fear", "sanity", "trust", "playerAge",
+            "season", "year", "month", "day", "hour"
         };
 
         public static readonly string[] Prefixes = { "rel.", "met.", "present.", "flag." };

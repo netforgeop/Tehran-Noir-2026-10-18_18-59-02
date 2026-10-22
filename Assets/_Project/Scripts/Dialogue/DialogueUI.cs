@@ -451,10 +451,10 @@ namespace TehranNoir.Dialogue
             hintRect.anchorMax = new Vector2(0f, 1f);
             hintRect.pivot = new Vector2(0f, 1f);
             hintRect.anchoredPosition = new Vector2(36f, -24f);
-            hintRect.sizeDelta = new Vector2(420f, 28f);
+            hintRect.sizeDelta = new Vector2(460f, 28f);
             TMP_Text hint = CreateText("HintText", hintRect, 18f, FontStyles.Normal, HintColor);
             hint.alignment = TextAlignmentOptions.TopLeft;
-            hint.text = "Space / B  ←  ادامه";
+            hint.text = "ادامه: Space یا B";
 
             RectTransform bodyRect = CreateNode("Body", _panel);
             bodyRect.anchorMin = new Vector2(0f, 0f);

@@ -14,7 +14,8 @@ namespace TehranNoir.Dialogue
         [SerializeField] private Key startKey = Key.Space;
 
         [Header("دنیای تست")]
-        [SerializeField] private bool resetWorldOnStart = true;
+        [Tooltip("جهان بین دیالوگ‌ها حفظ می‌شود؛ یعنی met.reza بعد از اولین صحبت ثبت می‌ماند.")]
+        [SerializeField] private bool keepWorldBetweenDialogues = true;
         [SerializeField] private string[] initialVariables = new string[0];
 
         private WorldState _world;
@@ -32,6 +33,13 @@ namespace TehranNoir.Dialogue
             if (keyboard == null) return;
 
             if (keyboard[startKey].wasPressedThisFrame) StartDialogue();
+        }
+
+        [ContextMenu("ریست جهان")]
+        public void ResetWorld()
+        {
+            _world = null;
+            Debug.Log("[Dialogue] وضعیت جهان پاک شد. دوباره Space بزن.");
         }
 
         [ContextMenu("شروع دیالوگ")]
@@ -59,10 +67,15 @@ namespace TehranNoir.Dialogue
 
             if (document.HasErrors) return;
 
-            if (_world == null || resetWorldOnStart) _world = WorldState.CreateDefault(document);
+            bool createWorld = _world == null || !keepWorldBetweenDialogues;
 
-            for (int i = 0; i < initialVariables.Length; i++)
-                DialogueRunner.ApplyEffect(initialVariables[i], _world);
+            if (createWorld)
+            {
+                _world = WorldState.CreateDefault(document);
+
+                for (int i = 0; i < initialVariables.Length; i++)
+                    DialogueRunner.ApplyEffect(initialVariables[i], _world);
+            }
 
             dialogueUI.Play(document, _world);
         }

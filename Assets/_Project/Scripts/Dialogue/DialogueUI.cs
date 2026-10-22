@@ -65,6 +65,9 @@ namespace TehranNoir.Dialogue
 
         public DialogueRunner Runner { get; private set; }
 
+        /// <summary>پنل باز فعلی؛ null یعنی هیچ دیالوگی باز نیست.</summary>
+        public static DialogueUI Current { get; private set; }
+
         public bool IsOpen { get { return _panel != null && _panel.gameObject.activeSelf; } }
 
         private void Awake()
@@ -80,6 +83,8 @@ namespace TehranNoir.Dialogue
 
         private void OnDestroy()
         {
+            if (Current == this) Current = null;
+
             if (Runner == null) return;
 
             Runner.LineShown -= HandleLine;
@@ -116,16 +121,14 @@ namespace TehranNoir.Dialogue
             ApplyCursorRelease();
             ApplyPause(true);
 
+            Current = this;
+
             Runner.Begin(document, world, startNodeId);
         }
 
         public void Close()
         {
-            if (Runner != null && Runner.IsRunning)
-            {
-                Runner.Stop();
-                return;
-            }
+            if (Runner != null && Runner.IsRunning) Runner.Stop();
 
             HidePanel();
         }
@@ -348,6 +351,7 @@ namespace TehranNoir.Dialogue
         private void HidePanel()
         {
             if (_panel != null) _panel.gameObject.SetActive(false);
+            if (Current == this) Current = null;
 
             RestoreCursor();
             ApplyPause(false);

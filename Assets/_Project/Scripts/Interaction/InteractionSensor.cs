@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using TehranNoir.Dialogue;
 using TehranNoir.Inputs;
 
 namespace TehranNoir.Interaction
@@ -27,20 +28,31 @@ namespace TehranNoir.Interaction
 
         private void Update()
         {
-            Interactable best = FindBest();
-
-            if (best != current)
+            // تا وقتی پنل دیالوگ باز است، تعامل و هایلایت تعطیل است
+            if (DialogueUI.Current != null)
             {
-                if (current != null) Unfocus(current);
-                current = best;
-                if (current != null) Focus(current);
+                SetCurrent(null);
+                return;
             }
+
+            SetCurrent(FindBest());
 
             if (current != null && drawDebugLine)
                 Debug.DrawLine(transform.position, current.Point.position, Color.yellow);
 
             if (current != null && input.InteractPressedThisFrame)
                 current.Interact(gameObject);
+        }
+
+        private void SetCurrent(Interactable next)
+        {
+            if (next == current) return;
+
+            if (current != null) Unfocus(current);
+
+            current = next;
+
+            if (current != null) Focus(current);
         }
 
         private void Focus(Interactable interactable)

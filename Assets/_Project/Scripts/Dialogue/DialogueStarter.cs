@@ -30,6 +30,9 @@ namespace TehranNoir.Dialogue
                 return;
             }
 
+            // اگر پنل باز است، با زدن دوباره‌ی دکمه، دیالوگ از اول شروع نشود
+            if (dialogueUI.IsOpen) return;
+
             DialogueDocument document = DialogueParser.Parse(dialogueFile.text, dialogueFile.name);
 
             for (int i = 0; i < document.Errors.Count; i++)

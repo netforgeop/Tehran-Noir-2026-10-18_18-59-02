@@ -1,0 +1,295 @@
+[person] نادر
+[name] نادر | Nader
+[role] بازجو | Interrogator
+[cast] نادر
+[cast] جواد
+[cast] یزدانی
+
+[node] intro
+[say] نادر | اسمت؟ | Your name?
+[say] جواد | جوادم آقا... جواد رضایی. بیست‌وشیش سالمه. | Javad, sir... Javad Rezaei. I'm twenty-six.
+[say] نادر | کارت چیه؟ | What do you do?
+[say] جواد | دوره‌گردم. شونه، آینه، از این خرت‌وپرتا می‌فروشم. | I'm a peddler. Combs, mirrors, little things.
+[say] نادر | دیشب کجا بودی؟ | Where were you last night?
+[say] جواد | خونه بودم آقا. از سر شب پامو بیرون نذاشتم. | I was home, sir. Didn't step outside all evening.
+[opt] تنها بودی؟ | Were you alone? -> alibi
+[opt] کی دیدت؟ | Who saw you? -> witness
+[opt] راستشو بگو. | Tell me the truth. -> first_pressure
+
+[node] alibi
+[say] نادر | تنها بودی؟ | Were you alone?
+[say] جواد | نه... یعنی آره. زنم رفته بود خونه مادرش، کوچه آب‌منگل. | No... I mean yes. My wife was at her mother's, in Ab-Mangel alley.
+[opt] باور کردم. | I believe you. -> alibi_soft
+[opt] پس کی برات شهادت می‌ده؟ | Then who can vouch for you? -> alibi_break
+[opt] همسایه‌ها تو رو دیدن. | The neighbors saw you. -> witness_break
+
+[node] witness
+[say] نادر | کی دیدت؟ | Who saw you?
+[say] جواد | مش‌اکبر. سر کوچه ما بقالیه. ساعت نه ازش کبریت خریدم. | Mash Akbar. He has a grocery on our corner. Bought matches at nine.
+[opt] قبول. بعدش؟ | All right. And then? -> alibi_soft
+[opt] مغازه‌ش کی می‌بنده؟ | When does his shop close? -> alibi_break
+[opt] شاهدای بازار چی؟ | What about the market witnesses? -> witness_break
+
+[node] first_pressure
+[say] نادر | راستشو بگو. | Tell me the truth.
+[say] جواد | به جان بچه‌م، آقا. دیشب حتی چراغ اتاقم خاموش بود. | On my child's life, sir. Even my room light was off.
+[say] یزدانی | قسم خوردن اینجا به کارت نمی‌آد. | Swearing oaths won't help you here.
+[opt] خیلی خب. | All right. -> alibi_soft
+[opt] پس کبریت واسه چی خریدی؟ | Then why buy matches? -> alibi_break
+[opt] تو رو بازار دیدن. | You were seen at the market. -> witness_break
+
+[node] alibi_soft
+[do] flag.javad_closed +0
+[say] نادر | گفتی خونه بودی. | You said you were home.
+[say] جواد | بله آقا. سماورم روشن بود. چای خوردم، خوابیدم. | Yes, sir. The samovar was on. Had tea and went to sleep.
+[say] نادر | ساعت چند؟ | What time?
+[say] جواد | ده... شاید ده‌ونیم. ساعت دیواری نداریم آقا. | Ten... maybe half past ten. We don't have a wall clock, sir.
+[opt] بعد از ده بیرون نرفتی؟ | Didn't go out after ten? -> witness_break
+[opt] از بازار بگو. | Tell me about the market. -> market
+[opt] این ساعت رو می‌شناسی؟ | Recognize this watch? -> watch_reveal
+
+[node] alibi_break
+[do] flag.pressure +1
+[say] نادر | مش‌اکبر نه مغازه داره، نه دیشب سر کوچه بوده. | Mash Akbar has no shop, and he wasn't on that corner last night.
+[say] جواد | نه آقا، یعنی... مغازه مال پسرشه. من از خودش کبریت گرفتم. | No, sir, I mean... his son owns it. I bought the matches from him.
+[say] نادر | کجا؟ | Where?
+[say] جواد | جلو مسجد. نه... اون‌ور خیابون. آقا یادم نیست. | By the mosque. No... across the street. Sir, I can't remember.
+[opt] باشه. | Fine. -> market
+[opt] چرا حرفت عوض شد؟ | Why did your story change? -> witness_break
+[opt] ساعت حاج رحیم اینجاست. | Haji Rahim's watch is here. -> watch_reveal
+
+[node] witness_break
+[do] flag.pressure +1
+[say] نادر | دو نفر تو رو نزدیک مغازه دیدن. | Two people saw you near the shop.
+[say] جواد | کی؟ آقا کی گفته؟ من فقط از جلو بازار رد شدم. | Who? Sir, who said that? I only passed by the market.
+[say] نادر | پس خونه نبودی. | So you weren't home.
+[say] جواد | رفتم بازار، قبول. ولی دست به مغازه نزدم. | I went to the market, fine. But I never touched the shop.
+[opt] چرا رفتی؟ | Why did you go? -> market
+[opt] چه ساعتی؟ | What time? -> market_time
+[opt] این ساعت مال کیه؟ | Whose watch is this? -> watch_reveal
+
+[node] market
+[say] نادر | چرا بازار؟ | Why the market?
+[say] جواد | طلب داشتم آقا. از عباس مسگر. دوازده تومن. | Someone owed me money, sir. Abbas the coppersmith. Twelve tomans.
+[say] نادر | دیشب گرفتی؟ | Did you collect it last night?
+[say] جواد | نه... درش بسته بود. حوالی ده رسیدم. | No... his door was shut. Got there around ten.
+[opt] شاید اشتباه کردی. | Maybe you were mistaken. -> market_soft
+[opt] عباس سه ماهه رفته قم. | Abbas left for Qom three months ago. -> market_break
+[opt] ساعت رو ببین. | Look at the watch. -> watch_reveal
+
+[node] market_time
+[say] نادر | چه ساعتی رسیدی؟ | What time did you arrive?
+[say] جواد | ده‌ونیم. نه... یازده نشده بود. صدای ساعت مسجد اومد. | Half past ten. No... not eleven yet. Heard the mosque clock.
+[say] نادر | از کدوم راه؟ | Which way?
+[say] جواد | از پامنار. بعد پیچیدم تو کوچه پشت بازار. | From Pamenar. Then turned into the alley behind the market.
+[opt] ادامه بده. | Go on. -> market_soft
+[opt] پشت بازار چه کار داشتی؟ | Why the back alley? -> rear_break
+[opt] جای پا رو دیدیم. | We found the footprints. -> shoe_reveal
+
+[node] market_soft
+[do] flag.javad_closed +0
+[say] نادر | بعدش کجا رفتی؟ | Where did you go afterward?
+[say] جواد | برگشتم خونه. از جلوی نونوایی سنگکی رد شدم. تنورش خاموش بود. | Went home. Passed the sangak bakery. Its oven was cold.
+[say] نادر | مغازه حاج رحیم؟ | Haji Rahim's shop?
+[say] جواد | از دور دیدم. چراغش... یعنی نمی‌دونم روشن بود یا نه. | Saw it from a distance. Its light... I mean, can't say if it was on.
+[opt] قبول. | All right. -> rear
+[opt] از دور چطور چراغشو ندیدی؟ | How could you miss the light? -> rear_break
+[opt] ساعتش تو خونه‌ت بود. | His watch was in your house. -> watch_reveal
+
+[node] market_break
+[do] flag.pressure +1
+[say] نادر | عباس سه ماهه قم زندگی می‌کنه. | Abbas has lived in Qom for three months.
+[say] جواد | آقا من از کجا بدونم؟ گفتم شاید برگشته باشه. | Sir, how would I know? Thought maybe he'd returned.
+[say] نادر | پس طلب بهونه بود. | So the debt was an excuse.
+[say] جواد | نه... یعنی، پول لازم داشتم. رفتم ببینم کسی هست جنس بخره. | No... I mean, needed money. Went to see if anyone would buy my goods.
+[opt] فهمیدم. | I understand. -> rear
+[opt] نصف شب کی جنس می‌خره؟ | Who buys goods at midnight? -> rear_break
+[opt] این ساعت رو از کجا آوردی؟ | Where did you get this watch? -> watch_reveal
+
+[node] rear
+[say] نادر | کوچه پشتی رو می‌شناسی؟ | Know the back alley?
+[say] جواد | آره آقا. بن‌بست باریکیه. یه در آهنی هم تهشه. | Yes, sir. Narrow dead end. There's an iron door at the end.
+[say] نادر | از کجا می‌دونی؟ | How do you know?
+[say] جواد | روزا اونجا بساط می‌کنم. کنار دیوار آجری. | I sell my things there during the day. By the brick wall.
+[opt] باشه. | All right. -> rear_soft
+[opt] اون در مال حاج رحیمه. | That door belongs to Haji Rahim. -> rear_break
+[opt] جای پا اونجاست. | There are footprints there. -> shoe_reveal
+
+[node] rear_soft
+[say] نادر | در باز بود؟ | Was the door open?
+[say] جواد | ندیدم آقا. از اون سر کوچه رد شدم. | Didn't see, sir. Passed the other end of the alley.
+[say] نادر | پشت‌بوم چی؟ | What about the roof?
+[say] جواد | پشت‌بوم؟ نه آقا... اونجا نردبون چوبی داره. | The roof? No, sir... there's a wooden ladder there.
+[opt] شاید روز دیده بودی. | Maybe you saw it by day. -> rear_break
+[opt] نردبون رو از کجا می‌شناسی؟ | How do you know the ladder? -> roof_break
+[opt] ساعت رو نشونت می‌دم. | I'll show you the watch. -> watch_reveal
+
+[node] rear_break
+[do] flag.pressure +1
+[say] نادر | گفتی نزدیک مغازه نرفتی. | You said you never went near the shop.
+[say] جواد | نرفتم توش آقا. نزدیکش رفتم، خب رفتم. | Didn't go inside, sir. Went near it, yes, I did.
+[say] نادر | در پشتی رو دیدی؟ | Did you see the back door?
+[say] جواد | نه... یعنی تاریک بود. یه چیزی تکون خورد، فکر کردم گربه‌ست. | No... I mean, it was dark. Something moved. Thought it was a cat.
+[opt] ادامه بده. | Continue. -> roof
+[opt] چه چیزی تکون خورد؟ | What moved? -> roof_break
+[opt] جای پا مال کیه؟ | Whose footprints are those? -> shoe_reveal
+
+[node] watch_reveal
+[do] flag.evidence_watch = 1
+[say] نادر | این ساعت تو خونه‌ت پیدا شده. | This watch was found in your house.
+[say] جواد | آقا... اون... مال من نیست. | Sir... that... it isn't mine.
+[say] نادر | مال حاج رحیمه. | It belonged to Haji Rahim.
+[say] جواد | من از یه نفر خریدم. کنار حموم نواب. پنج تومن دادم. | Bought it from someone. By Navvab bathhouse. Paid five tomans.
+[opt] شاید راست می‌گی. | Maybe you're telling the truth. -> watch_soft
+[opt] اسم فروشنده؟ | Seller's name? -> watch_break
+[opt] پس چرا پشت ساعت اسم رحیمه؟ | Then why is Rahim's name on it? -> watch_break
+
+[node] watch_soft
+[do] flag.javad_closed +1
+[say] نادر | فروشنده رو می‌شناختی؟ | Did you know the seller?
+[say] جواد | نه آقا. قدبلند بود. یه شال گردن خاکستری داشت. | No, sir. Tall fellow. Had a gray scarf.
+[say] نادر | چه ساعتی خریدی؟ | When did you buy it?
+[say] جواد | صبح... یعنی دیروز عصر. دم غروب. | Morning... I mean yesterday afternoon. Near sunset.
+[opt] فعلاً قبول. | I'll accept that for now. -> roof
+[opt] چرا اول گفتی مال تو نیست؟ | Why did you first deny owning it? -> watch_break
+[opt] از مغازه برداشتی؟ | Did you take it from the shop? -> roof_break
+
+[node] watch_break
+[do] flag.pressure +1
+[say] نادر | این ساعت رو از مغازه برداشتی. | You took this watch from the shop.
+[say] جواد | آقا... من کسی رو نکشتم. به خدا نکشتم. | Sir... I didn't kill anyone. I swear I didn't.
+[say] نادر | من از ساعت پرسیدم. | I asked about the watch.
+[say] جواد | خب... خب اونجا بود. روی میز کنار چراغ نفتی. | Well... it was there. On the table beside the oil lamp.
+[opt] می‌شنوم. | I'm listening. -> roof
+[opt] چطور رفتی تو؟ | How did you get inside? -> roof_break
+[opt] پس دروغ گفتی. | So you lied. -> harsh
+
+[node] shoe_reveal
+[do] flag.evidence_shoe = 1
+[say] نادر | تو کوچه پشتی جای پای یه مرد مونده. | A man's footprints were left in the back alley.
+[say] جواد | خب آقا، اون کوچه که مال یه نفر نیست. | Well, sir, that alley doesn't belong to one man.
+[say] نادر | یکی از پاشو می‌کشیده. | He was dragging one foot.
+[say] جواد | من که لنگ نیستم. کفشامم ته لاستیکیه. | I don't limp. My shoes have rubber soles.
+[opt] درست می‌گی. | You're right. -> shoe_soft
+[opt] از کجا می‌دونی کفشش چرمی بوده؟ | How do you know he wore leather shoes? -> shoe_break
+[opt] اون مرد رو دیدی؟ | Did you see that man? -> shoe_break
+
+[node] shoe_soft
+[do] flag.javad_closed +1
+[say] نادر | شاید جای پای کس دیگه‌ست. | Maybe they're someone else's footprints.
+[say] جواد | معلومه آقا. من کفش ارزون می‌پوشم. از سر گذر خریدم. | Of course, sir. I wear cheap shoes. Bought them by the crossroads.
+[say] نادر | کسی رو تو کوچه دیدی؟ | Did you see anyone in the alley?
+[say] جواد | یه سایه... نه، کسی نبود. سگ ولگرد بود شاید. | A shadow... no, nobody. Maybe a stray dog.
+[opt] باشه. | Fine. -> roof
+[opt] سایه آدم بود یا سگ؟ | Was it a man or a dog? -> shoe_break
+[opt] چرا گفتی کفش چرمی؟ | Why mention leather shoes? -> shoe_break
+
+[node] shoe_break
+[do] flag.pressure +1
+[say] نادر | من نگفتم کفش چرمی بوده. | I never said the shoes were leather.
+[say] جواد | آقا... من... از صداش فهمیدم. تق‌تق می‌کرد رو سنگ. | Sir... I... heard the sound. They clicked on the stones.
+[say] نادر | پس اونجا بودی. | So you were there.
+[say] جواد | نزدیکش بودم. فقط نزدیکش. کنار در پشتی. | I was nearby. Just nearby. Beside the back door.
+[opt] خوبه. ادامه بده. | Good. Continue. -> roof
+[opt] اون مرد کی بود؟ | Who was that man? -> stranger
+[opt] چرا ازش نگفتی؟ | Why didn't you mention him? -> harsh
+
+[node] roof
+[say] نادر | چطور وارد شدی؟ | How did you get inside?
+[say] جواد | آقا... من... از در نرفتم. | Sir... I... didn't use the door.
+[say] نادر | از کجا؟ | From where?
+[say] جواد | پشت‌بوم. از نردبون رفتم بالا. دریچه انبار باز بود. | The roof. Climbed the ladder. The storeroom hatch was open.
+[opt] بعدش چی دیدی؟ | What did you see next? -> body
+[opt] واسه چی رفتی تو؟ | Why did you go inside? -> roof_break
+[opt] پس واسه دزدی رفتی. | So you went there to steal. -> harsh
+
+[node] roof_break
+[do] flag.pressure +1
+[say] نادر | نردبون، دریچه، ساعت. همه رو می‌شناسی. | The ladder, hatch, watch. You know them all.
+[say] جواد | آقا... رفتم پول بردارم. فقط پول. | Sir... I went to take money. Just money.
+[say] نادر | حاج رحیم کجا بود؟ | Where was Haji Rahim?
+[say] جواد | افتاده بود کف مغازه. کنار صندوق. تکون نمی‌خورد. | Lying on the shop floor. Beside the cashbox. Wasn't moving.
+[opt] چی کار کردی؟ | What did you do? -> body
+[opt] چرا کمک نخواستی؟ | Why didn't you get help? -> body_break
+[opt] خودت زدی تو سرش؟ | Did you strike his head? -> harsh
+
+[node] body
+[say] نادر | وقتی رسیدی زنده بود؟ | Was he alive when you arrived?
+[say] جواد | نه آقا. خون کنار سرش بود. دستش افتاده بود زیر میز. | No, sir. Blood was by his head. His hand was under the table.
+[say] نادر | صندوق چی؟ | What about the cashbox?
+[say] جواد | باز بود. خالی بود. حتی یه اسکناس هم توش نبود. | Open. Empty. Not even a banknote inside.
+[opt] حرفتو می‌شنوم. | I'm listening. -> final_gate
+[opt] چرا ساعت رو برداشتی؟ | Why did you take the watch? -> body_break
+[opt] پس قاتل خودتی. | Then you're the killer. -> harsh
+
+[node] body_break
+[do] flag.pressure +1
+[say] نادر | ساعت رو برداشتی، ولی صندوق خالی بود. | You took the watch, but the cashbox was empty.
+[say] جواد | آره آقا. ساعت رو برداشتم. از رو میز. بعد دویدم طرف دریچه. | Yes, sir. Took the watch. From the table. Then ran toward the hatch.
+[say] نادر | کسی رو دیدی؟ | Did you see anyone?
+[say] جواد | از پنجره انبار... یه نفر کنار در پشتی بود. | Through the storeroom window... someone was by the back door.
+[opt] چه شکلی بود؟ | What did he look like? -> final_gate
+[opt] چرا تا حالا نگفتی؟ | Why didn't you say so earlier? -> harsh
+[opt] اسمشو می‌دونی؟ | Do you know his name? -> stranger
+
+[node] stranger
+[say] نادر | اون مرد رو می‌شناسی؟ | Do you know that man?
+[say] جواد | نه آقا. صورتشو درست ندیدم. پشتش به من بود. | No, sir. Didn't see his face properly. His back was toward me.
+[say] نادر | چی تنش بود؟ | What was he wearing?
+[say] جواد | یه پالتوی تیره. کلاه نمدی هم سرش بود. | A dark overcoat. Wore a felt hat too.
+[opt] خوبه. | Good. -> final_gate
+[opt] از کدوم پا می‌لنگید؟ | Which leg was he limping on? -> stranger_break
+[opt] اسمشو بگو. | Tell me his name. -> harsh
+
+[node] stranger_break
+[do] flag.pressure +1
+[say] نادر | کدوم پاش می‌لنگید؟ | Which leg was he limping on?
+[say] جواد | پای راستش... گمونم. کفش چرم مشکی داشت. | His right leg... I think. Wore black leather shoes.
+[say] نادر | کدوم طرف رفت؟ | Which way did he go?
+[say] جواد | از در پشتی رفت تو کوچه. بعد پیچید طرف گذر باریک. | Left through the back door into the alley. Then turned toward the narrow passage.
+[go] final_gate
+
+[node] harsh
+[do] flag.javad_closed +1
+[say] یزدانی | این همه دروغ برای یه ساعت نیست، جواد. | All these lies aren't just about a watch, Javad.
+[say] جواد | آقا به جان بچه‌م... من نزدمش. از ترس دروغ گفتم. | Sir, on my child's life... I didn't hit him. I lied because I was scared.
+[say] نادر | پس کمکم کن. | Then help me.
+[if] flag.javad_closed >= 3 -> deadlock
+[opt] از اول بگو. | Start from the beginning. -> body
+[opt] اون مرد رو توصیف کن. | Describe that man. -> final_gate
+
+[node] final_gate
+[if] flag.javad_closed >= 3 -> deadlock
+[if] flag.pressure >= 4 and flag.evidence_watch == 1 and flag.evidence_shoe == 1 -> full_confession
+[if] flag.evidence_watch == 1 -> partial_confession
+[go] deadlock
+
+[node] full_confession
+[say] نادر | از اول تا آخر. | From beginning to end.
+[say] جواد | رفتم دزدی آقا. از پشت‌بوم. ولی حاج رحیم مرده بود. | I went there to steal, sir. Through the roof. But Haji Rahim was dead.
+[say] نادر | بعد؟ | Then?
+[say] جواد | ساعتشو برداشتم. یه مرد کلاه‌نمدی با کفش چرمی دیدم که لنگ‌لنگون از در پشتی رفت. | Took his watch. Saw a man in a felt hat and leather shoes limp out the back door.
+[say] نادر | اسمش؟ | His name?
+[say] جواد | نمی‌دونم آقا. به خدا نمی‌دونم. | I don't know, sir. I swear I don't.
+[say] یزدانی | صورت‌جلسه کن، نادر. | Put it in the report, Nader.
+[do] rel.javad +1
+[do] rel.yazdani +1
+[end]
+
+[node] partial_confession
+[say] نادر | ساعت رو برداشتی؟ | Did you take the watch?
+[say] جواد | آره آقا. رفتم دزدی، ولی نکشتمش. یه مرد کلاه‌نمدی هم دیدم که از در پشتی رفت. | Yes, sir. Went to steal, but didn't kill him. Saw a man in a felt hat leave by the back door.
+[say] نادر | چه جور راه می‌رفت؟ | How did he walk?
+[say] جواد | می‌لنگید. کفش چرمی داشت. اسمشو نمی‌دونم. | He limped. Wore leather shoes. I don't know his name.
+[say] یزدانی | دزدی رو بنویس، قتل هنوز روشن نیست. | Record the theft. The murder is still unresolved.
+[do] rel.javad +0
+[end]
+
+[node] deadlock
+[say] نادر | جواد، یه بار دیگه می‌پرسم. | Javad, I'll ask you one more time.
+[say] جواد | ... | ...
+[say] نادر | حرفی نداری؟ | Nothing to say?
+[say] جواد | ... | ...
+[say] یزدانی | کافیه نادر، پرونده رو ببند. | Enough, Nader. Close the case.
+[do] rel.yazdani +0
+[end]

@@ -21,7 +21,7 @@ namespace TehranNoir.Dialogue
 
         private void Awake()
         {
-            if (dialogueUI == null) dialogueUI = FindFirstObjectByType<DialogueUI>();
+            if (dialogueUI == null) dialogueUI = GetComponent<DialogueUI>();
         }
 
         private void Update()

@@ -200,8 +200,8 @@ namespace TehranNoir.Dialogue
                     return;
                 }
 
-                if (keyboard.downKey.wasPressedThisFrame) MoveSelection(1);
-                else if (keyboard.upKey.wasPressedThisFrame) MoveSelection(-1);
+                if (keyboard.downArrowKey.wasPressedThisFrame) MoveSelection(1);
+                else if (keyboard.upArrowKey.wasPressedThisFrame) MoveSelection(-1);
                 else if (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame)
                 {
                     Choose(_selected);
@@ -566,24 +566,13 @@ namespace TehranNoir.Dialogue
             if (_rtlSearched) return _rtlType;
 
             _rtlSearched = true;
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-            for (int i = 0; i < assemblies.Length; i++)
-            {
-                try
-                {
-                    Type found = assemblies[i].GetType("RTLTMPro.RTLTextMeshPro", false);
-                    if (found == null) continue;
+            // ۱) اگر RTLTMPro داخل Assets پروژه باشد، اسمبلی همان Assembly-CSharp است.
+            _rtlType = typeof(DialogueUI).Assembly.GetType("RTLTMPro.RTLTextMeshPro", false);
+            if (_rtlType != null) return _rtlType;
 
-                    _rtlType = found;
-                    break;
-                }
-                catch (Exception)
-                {
-                    // اسمبلی‌های سیستم را نادیده بگیر.
-                }
-            }
-
+            // ۲) اگر به شکل پکیج نصب شده باشد، اسمبلی خودش RTLTMPro نام دارد.
+            _rtlType = Type.GetType("RTLTMPro.RTLTextMeshPro, RTLTMPro", false);
             return _rtlType;
         }
 

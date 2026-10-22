@@ -1,4 +1,5 @@
-﻿using TehranNoir.Inputs;
+﻿using TehranNoir.Dialogue;
+using TehranNoir.Inputs;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -58,6 +59,13 @@ namespace TehranNoir.Cameras
 
         private void Update()
         {
+            // در طول دیالوگ نه ورودی می‌گیرد، نه برمی‌گردد
+            if (DialogueUI.Current != null)
+            {
+                if (followTarget != null) lastTargetPosition = followTarget.position;
+                return;
+            }
+
             bool looked = ApplyLook();
 
             if (looked) timeSinceLookInput = 0f;

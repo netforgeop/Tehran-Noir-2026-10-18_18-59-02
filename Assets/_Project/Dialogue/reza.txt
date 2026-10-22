@@ -1,0 +1,50 @@
+# رضا — دیالوگ نمونه برای تست موتور
+[person] reza
+[name] رضا | Reza
+[role] صاحب مغازه | Shopkeeper
+[cast] reza
+
+[node] greet
+[if] met.reza == true -> greet_known
+[if] time == night -> greet_night
+[say] reza | سلام. اولین باره می‌بینمت. | Hello. First time I am seeing you.
+[do] met.reza = true
+[go] ask
+
+[node] greet_night
+[say] reza | این وقت شب بیداری؟ | You are up at this hour?
+[do] met.reza = true
+[go] ask
+
+[node] greet_known
+[if] rel.reza >= 50 -> greet_friend
+[if] rel.reza >= 20 -> greet_acquaintance
+[go] greet_stranger
+
+[node] greet_stranger
+[say] reza | بازم تو؟ چی می‌خوای؟ | You again? What do you want?
+[go] ask
+
+[node] greet_acquaintance
+[say] reza | سلام رفیق. بازم اومدی. | Hey friend. Back again.
+[go] ask
+
+[node] greet_friend
+[say] reza | نادر جان! بفرما. | Nader! Come in.
+[go] ask
+
+[node] ask
+[say] reza | بگو ببینم چی می‌خوای. | Tell me, what do you want?
+[opt] یه سؤال درباره‌ی دیشب دارم | I have a question about last night -> ask_night
+[opt] فقط داشتم رد می‌شدم | Just passing by -> bye
+[opt] هیچی، بعداً می‌آم | Nothing, I will come later -> bye
+
+[node] ask_night
+[say] reza | دیشب؟ من تا صبح اینجا بودم. | Last night? I was here until morning.
+[say] reza | چی شنیدی؟ | What did you hear?
+[do] rel.reza +5
+[go] bye
+
+[node] bye
+[say] reza | برو، کارت دارم. | Go on, I have work.
+[end]

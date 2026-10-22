@@ -35,17 +35,31 @@ namespace TehranNoir.World
 
         public SunState CurrentSun { get { return _sun; } }
 
+        private bool _warnedNoLight;
+
         private void Awake()
         {
             if (clock == null) clock = WorldClock.Instance;
             if (sunLight == null) sunLight = RenderSettings.sun;
-
-            if (sunLight == null)
-                Debug.LogError("[Sun] Directional Light پیدا نشد. فیلد Sun Light را دستی پر کن.");
         }
 
         private void LateUpdate()
         {
+            // ترتیب Awake تضمینی نیست؛ پس هر فریم اگر مرجع خالی بود دوباره تلاش می‌کنیم
+            if (clock == null) clock = WorldClock.Instance;
+            if (sunLight == null) sunLight = RenderSettings.sun;
+
+            if (sunLight == null)
+            {
+                if (!_warnedNoLight)
+                {
+                    _warnedNoLight = true;
+                    Debug.LogError("[Sun] Directional Light پیدا نشد. فیلد Sun Light را دستی پر کن.");
+                }
+
+                return;
+            }
+
             // بدون ساعت، خورشید روی ظهر یک تاریخ ثابت می‌ماند (برای تست صحنه‌های بدون ساعت)
             _sun = clock != null ? clock.Sun : SunPosition.Evaluate(new GameDate(1352, 1, 1, 12, 0));
 

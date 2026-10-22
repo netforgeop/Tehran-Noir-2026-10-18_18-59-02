@@ -108,7 +108,7 @@ namespace TehranNoir.World
 
         public static bool IsLeapYear(int jalaliYear)
         {
-            return JalaliCal(jalaliYear).Leap == 0;
+            return GetJalaliCalendar(jalaliYear).Leap == 0;
         }
 
         public static int DaysInMonth(int jalaliYear, int month)
@@ -167,7 +167,7 @@ namespace TehranNoir.World
            الگوریتم استاندارد جلالی (همان که jalaali-js استفاده می‌کند)
            ============================================================ */
 
-        private struct JalaliCal
+        private struct JalaliCalendar
         {
             public int Leap;   // 0 = سال کبیسه
             public int Gy;
@@ -180,7 +180,7 @@ namespace TehranNoir.World
             1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178
         };
 
-        private static JalaliCal JalaliCal(int jy)
+        private static JalaliCalendar GetJalaliCalendar(int jy)
         {
             int gy = jy + 621;
             int leapJ = -14;
@@ -210,7 +210,7 @@ namespace TehranNoir.World
             int leap = (((n + 1) % 33) - 1) % 4;
             if (leap == -1) leap = 4;
 
-            JalaliCal result = new JalaliCal();
+            JalaliCalendar result = new JalaliCalendar();
             result.Leap = leap;
             result.Gy = gy;
             result.March = march;
@@ -242,7 +242,7 @@ namespace TehranNoir.World
 
         private static int JalaliToJulianDay(int jy, int jm, int jd)
         {
-            JalaliCal cal = JalaliCal(jy);
+            JalaliCalendar cal = GetJalaliCalendar(jy);
 
             return GregorianToJulianDay(cal.Gy, 3, cal.March)
                    + (jm - 1) * 31
@@ -257,7 +257,7 @@ namespace TehranNoir.World
 
             jy = gy - 621;
 
-            JalaliCal cal = JalaliCal(jy);
+            JalaliCalendar cal = GetJalaliCalendar(jy);
             int jdnFirstFarvardin = GregorianToJulianDay(gy, 3, cal.March);
 
             int k = jdn - jdnFirstFarvardin;

@@ -1,60 +1,201 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace TehranNoir.UI
 {
     /// <summary>
-    /// منوی اصلی. تمام رابط در زمان اجرا ساخته می‌شود؛
-    /// در صحنه فقط یک آبجکت خالی با همین کامپوننت لازم است.
+    /// منوی اصلی به سبک Mafia: پس‌زمینه‌ی تمام‌صفحه، عنوان طلایی، آیتم‌های
+    /// خاکستری با نوار تیره زیر آیتم انتخاب‌شده و لوزی + خط ثابت زیر لیست.
+    /// تمام رابط در زمان اجرا ساخته می‌شود.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MainMenuUI : MonoBehaviour
     {
-        [Header("ظاهر")]
-        [SerializeField] private TMP_FontAsset font;
-        [SerializeField] private string title = "تهران نوآر";
-        [SerializeField] private string subtitle = "تهران، ۱۳۵۲ تا ۱۳۵۷";
-        [SerializeField] private string footer = "نسخه ۰.۱";
-        [SerializeField] private Color backgroundColor = new Color(0.05f, 0.045f, 0.04f);
+        [Header("تصاویر")]
+        [SerializeField] private Sprite backgroundSprite;
+        [SerializeField] private Sprite markerSprite;
+
+        [Header("فونت")]
+        [SerializeField] private MenuFonts englishFonts = new MenuFonts();
+        [SerializeField] private MenuFonts persianFonts = new MenuFonts();
+
+        [Header("زبان")]
+        [SerializeField] private bool persian;
 
         [Header("صحنه بازی")]
         [Tooltip("نام فایل صحنه، بدون .unity")]
         [SerializeField] private string gameSceneName = "Sandbox";
 
-        private static readonly Color Gold = new Color(0.85f, 0.74f, 0.45f);
-        private static readonly Color Body = new Color(0.94f, 0.90f, 0.82f);
-        private static readonly Color Muted = new Color(0.55f, 0.52f, 0.45f);
-        private static readonly Color ButtonColor = new Color(0.13f, 0.12f, 0.10f, 0.96f);
-        private static readonly Color ButtonHover = new Color(0.26f, 0.22f, 0.14f, 1f);
-        private static readonly Color ButtonPressed = new Color(0.35f, 0.29f, 0.17f, 1f);
+        [Serializable]
+        public sealed class MenuFonts
+        {
+            [Tooltip("وزن Black — عنوان")]
+            public TMP_FontAsset title;
+            [Tooltip("وزن Bold — آیتم‌ها")]
+            public TMP_FontAsset label;
+        }
+
+        /* ============================================================
+           اندازه‌ها — از main_menu.tscn در Godot برداشته شده
+           ============================================================ */
+
+        private const float MenuX = 270f;
+        private const float MenuY = -286f;
+        private const float ColumnWidth = 640f;
+        private const float TitleHeight = 118f;
+        private const float ItemHeight = 76f;
+        private const float ItemGap = 8f;
+        private const float MarkerGap = 26f;
+        private const float TitleSize = 90f;
+        private const float ItemSize = 56f;
+        private const float TextLeftPadding = 54f;
+
+        private static readonly Color GoldColor = new Color(0.659f, 0.502f, 0.188f);
+        private static readonly Color ItemNormalColor = new Color(0.588f, 0.573f, 0.541f);
+        private static readonly Color ItemSelectedColor = new Color(0.933f, 0.937f, 0.925f);
+        private static readonly Color BarColor = new Color(0.10f, 0.09f, 0.07f, 0.82f);
+        private static readonly Color BackgroundFallback = new Color(0.05f, 0.045f, 0.04f);
+
+        private sealed class MenuItem
+        {
+            public string Key;
+            public RectTransform Rect;
+            public Image Bar;
+            public TMP_Text Label;
+            public Action Action;
+        }
+
+        private readonly List<MenuItem> _items = new List<MenuItem>();
+        private readonly List<KeyValuePair<TMP_Text, bool>> _texts = new List<KeyValuePair<TMP_Text, bool>>();
+
+        private TMP_Text _titleText;
+        private TMP_Text _hintText;
+        private TMP_Text _languageText;
+        private int _selected;
 
         private static Type _rtlType;
         private static bool _rtlSearched;
 
+        /* ============================================================
+           چرخه
+           ============================================================ */
+
         private void Awake()
         {
-            // اگر از بازی به منو برگشتیم، زمان ممکن است متوقف مانده باشد
             Time.timeScale = 1f;
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
             EnsureCamera();
-            EnsureEventSystem();
             Build();
+            ApplyLanguage();
+            SelectIndex(0);
+        }
+
+        private void Update()
+        {
+            HandleInput();
+            AnimateBars();
+        }
+
+        /* ============================================================
+           ورودی
+           ============================================================ */
+
+        private void HandleInput()
+        {
+            Keyboard keyboard = Keyboard.current;
+            Gamepad gamepad = Gamepad.current;
+            Mouse mouse = Mouse.current;
+
+            if (keyboard != null)
+            {
+                if (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame) SelectIndex(_selected + 1);
+                if (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame) SelectIndex(_selected - 1);
+
+                if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
+                    keyboard.spaceKey.wasPressedThisFrame) Activate(_selected);
+
+                if (keyboard.f1Key.wasPressedThisFrame) ToggleLanguage();
+                if (keyboard.escapeKey.wasPressedThisFrame) QuitGame();
+            }
+
+            if (gamepad != null)
+            {
+                if (gamepad.dpad.down.wasPressedThisFrame || gamepad.leftStick.down.wasPressedThisFrame) SelectIndex(_selected + 1);
+                if (gamepad.dpad.up.wasPressedThisFrame || gamepad.leftStick.up.wasPressedThisFrame) SelectIndex(_selected - 1);
+
+                if (gamepad.buttonSouth.wasPressedThisFrame) Activate(_selected);
+            }
+
+            if (mouse == null) return;
+
+            Vector2 pointer = mouse.position.ReadValue();
+            bool clicked = mouse.leftButton.wasPressedThisFrame;
+
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (!PointerInside(_items[i].Rect, pointer)) continue;
+
+                SelectIndex(i);
+                if (clicked) Activate(i);
+
+                return;
+            }
+        }
+
+        private static bool PointerInside(RectTransform rect, Vector2 screenPoint)
+        {
+            if (rect == null) return false;
+            return RectTransformUtility.RectangleContainsScreenPoint(rect, screenPoint, null);
+        }
+
+        private void SelectIndex(int index)
+        {
+            if (_items.Count == 0) return;
+
+            _selected = Mathf.Clamp(index, 0, _items.Count - 1);
+        }
+
+        private void Activate(int index)
+        {
+            if (index < 0 || index >= _items.Count) return;
+
+            Action action = _items[index].Action;
+            if (action == null) return;
+
+            action();
+        }
+
+        /// <summary>پرش نرم نوار انتخاب؛ هر فریم آلفا را به هدف نزدیک می‌کند.</summary>
+        private void AnimateBars()
+        {
+            for (int i = 0; i < _items.Count; i++)
+            {
+                MenuItem item = _items[i];
+                if (item.Bar == null) continue;
+
+                float target = i == _selected ? BarColor.a : 0f;
+                Color color = item.Bar.color;
+                color.a = Mathf.MoveTowards(color.a, target, 8f * Time.unscaledDeltaTime);
+                item.Bar.color = color;
+
+                item.Label.color = i == _selected ? ItemSelectedColor : ItemNormalColor;
+            }
         }
 
         /* ============================================================
            دکمه‌ها
            ============================================================ */
 
-        public void StartGame()
+        private void SandboxTest()
         {
             if (string.IsNullOrWhiteSpace(gameSceneName))
             {
@@ -72,7 +213,12 @@ namespace TehranNoir.UI
             SceneManager.LoadScene(gameSceneName);
         }
 
-        public void QuitGame()
+        private void Options()
+        {
+            ShowHint(persian ? "تنظیمات هنوز ساخته نشده است." : "Options are not built yet.");
+        }
+
+        private void QuitGame()
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
@@ -81,11 +227,23 @@ namespace TehranNoir.UI
 #endif
         }
 
+        private void ToggleLanguage()
+        {
+            persian = !persian;
+            ApplyLanguage();
+        }
+
+        private void ShowHint(string message)
+        {
+            if (_hintText == null) return;
+
+            _hintText.text = message;
+        }
+
         /* ============================================================
-           صحنه
+           ساخت رابط
            ============================================================ */
 
-        /// یک صحنه‌ی خالی هیچ دوربینی ندارد؛ بدون دوربین، پس‌زمینه رندر نمی‌شود.
         private void EnsureCamera()
         {
             if (Camera.main != null) return;
@@ -96,30 +254,13 @@ namespace TehranNoir.UI
 
             Camera camera = cameraObject.GetComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = backgroundColor;
+            camera.backgroundColor = BackgroundFallback;
             camera.orthographic = true;
             camera.orthographicSize = 5f;
         }
 
-        /// برای کلیک موس روی دکمه‌ها به EventSystem نیاز است.
-        private void EnsureEventSystem()
-        {
-            if (EventSystem.current != null) return;
-
-            GameObject eventObject = new GameObject("EventSystem",
-                typeof(EventSystem), typeof(InputSystemUIInputModule));
-            eventObject.transform.SetParent(transform, false);
-        }
-
-        /* ============================================================
-           ساخت رابط
-           ============================================================ */
-
         private void Build()
         {
-            if (font == null)
-                Debug.LogWarning("[Menu] فونت TMP انتخاب نشده؛ متن فارسی ممکن است درست نمایش داده نشود.");
-
             GameObject canvasObject = new GameObject("MenuCanvas",
                 typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvasObject.transform.SetParent(transform, false);
@@ -133,108 +274,197 @@ namespace TehranNoir.UI
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
 
-            RectTransform background = CreateNode("Background", canvasObject.transform);
-            Stretch(background);
-
-            Image backgroundImage = background.gameObject.AddComponent<Image>();
-            backgroundImage.color = backgroundColor;
-            backgroundImage.raycastTarget = false;
-
-            RectTransform titleRect = CreateNode("Title", canvasObject.transform);
-            titleRect.anchorMin = new Vector2(0.5f, 1f);
-            titleRect.anchorMax = new Vector2(0.5f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.anchoredPosition = new Vector2(0f, -170f);
-            titleRect.sizeDelta = new Vector2(1200f, 130f);
-
-            TMP_Text titleText = CreateText("TitleText", titleRect, 96f, FontStyles.Bold, Gold,
-                TextAlignmentOptions.Center);
-            titleText.text = title;
-            titleText.characterSpacing = 4f;
-
-            RectTransform subtitleRect = CreateNode("Subtitle", canvasObject.transform);
-            subtitleRect.anchorMin = new Vector2(0.5f, 1f);
-            subtitleRect.anchorMax = new Vector2(0.5f, 1f);
-            subtitleRect.pivot = new Vector2(0.5f, 1f);
-            subtitleRect.anchoredPosition = new Vector2(0f, -306f);
-            subtitleRect.sizeDelta = new Vector2(1000f, 44f);
-
-            TMP_Text subtitleText = CreateText("SubtitleText", subtitleRect, 30f, FontStyles.Normal, Muted,
-                TextAlignmentOptions.Center);
-            subtitleText.text = subtitle;
-
-            RectTransform dividerRect = CreateNode("Divider", canvasObject.transform);
-            dividerRect.anchorMin = new Vector2(0.5f, 1f);
-            dividerRect.anchorMax = new Vector2(0.5f, 1f);
-            dividerRect.pivot = new Vector2(0.5f, 1f);
-            dividerRect.anchoredPosition = new Vector2(0f, -366f);
-            dividerRect.sizeDelta = new Vector2(520f, 2f);
-
-            Image divider = dividerRect.gameObject.AddComponent<Image>();
-            divider.color = new Color(Gold.r, Gold.g, Gold.b, 0.45f);
-            divider.raycastTarget = false;
-
-            RectTransform buttonsRoot = CreateNode("Buttons", canvasObject.transform);
-            buttonsRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            buttonsRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            buttonsRoot.pivot = new Vector2(0.5f, 0.5f);
-            buttonsRoot.anchoredPosition = new Vector2(0f, -90f);
-            buttonsRoot.sizeDelta = new Vector2(420f, 160f);
-
-            VerticalLayoutGroup layout = buttonsRoot.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 14f;
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            Button firstButton = CreateButton(buttonsRoot, "شروع بازی", StartGame);
-            CreateButton(buttonsRoot, "خروج", QuitGame);
-
-            RectTransform footerRect = CreateNode("Footer", canvasObject.transform);
-            footerRect.anchorMin = new Vector2(0.5f, 0f);
-            footerRect.anchorMax = new Vector2(0.5f, 0f);
-            footerRect.pivot = new Vector2(0.5f, 0f);
-            footerRect.anchoredPosition = new Vector2(0f, 34f);
-            footerRect.sizeDelta = new Vector2(600f, 30f);
-
-            TMP_Text footerText = CreateText("FooterText", footerRect, 20f, FontStyles.Normal, Muted,
-                TextAlignmentOptions.Center);
-            footerText.text = footer;
-
-            // اولین دکمه انتخاب شود تا با کیبورد/دسته هم کار کند
-            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(firstButton.gameObject);
+            BuildBackground(canvasObject.transform);
+            BuildMenu(canvasObject.transform);
         }
 
-        private Button CreateButton(RectTransform parent, string label, UnityEngine.Events.UnityAction onClick)
+        private void BuildBackground(Transform parent)
         {
-            RectTransform rect = CreateNode("Button_" + label, parent);
-
-            LayoutElement element = rect.gameObject.AddComponent<LayoutElement>();
-            element.preferredHeight = 62f;
+            RectTransform rect = CreateNode("Background", parent);
+            Stretch(rect);
 
             Image image = rect.gameObject.AddComponent<Image>();
-            image.color = ButtonColor;
-            image.raycastTarget = true;
 
-            Button button = rect.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
+            if (backgroundSprite != null)
+            {
+                image.sprite = backgroundSprite;
+                image.preserveAspect = false;
+            }
+            else
+            {
+                Debug.LogWarning("[Menu] Background Sprite خالی است؛ پس‌زمینه تکرنگ می‌شود.");
+                image.color = BackgroundFallback;
+            }
 
-            ColorBlock colors = button.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1.6f, 1.6f, 1.6f, 1f);
-            colors.pressedColor = new Color(2.2f, 2.2f, 2.2f, 1f);
-            colors.selectedColor = new Color(1.4f, 1.4f, 1.4f, 1f);
-            colors.fadeDuration = 0.08f;
-            button.colors = colors;
+            image.raycastTarget = false;
 
-            TMP_Text text = CreateText("Label", rect, 30f, FontStyles.Normal, Body,
-                TextAlignmentOptions.Center);
-            text.text = label;
+            // در Godot همین عکس با flip_h آینه می‌شد تا پرچم سمت چپ بیفتد
+            rect.localScale = new Vector3(-1f, 1f, 1f);
+        }
 
-            button.onClick.AddListener(onClick);
-            return button;
+        private void BuildMenu(Transform parent)
+        {
+            RectTransform menuRoot = CreateNode("Menu", parent);
+            menuRoot.anchorMin = new Vector2(0f, 1f);
+            menuRoot.anchorMax = new Vector2(0f, 1f);
+            menuRoot.pivot = new Vector2(0f, 1f);
+            menuRoot.anchoredPosition = new Vector2(MenuX, MenuY);
+            menuRoot.sizeDelta = new Vector2(ColumnWidth, TitleHeight + 3f * ItemHeight + 3f * ItemGap + MarkerGap + 60f);
+
+            // عنوان
+            RectTransform titleRect = CreateNode("Title", menuRoot);
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(0f, 1f);
+            titleRect.pivot = new Vector2(0f, 1f);
+            titleRect.anchoredPosition = Vector2.zero;
+            titleRect.sizeDelta = new Vector2(ColumnWidth, TitleHeight);
+
+            _titleText = CreateText("TitleText", titleRect, TitleSize, GoldColor, true);
+            _titleText.characterSpacing = 2f;
+
+            // آیتم‌ها
+            float y = -(TitleHeight + ItemGap);
+
+            CreateItem(menuRoot, y, "sandbox", SandboxTest);
+            y -= ItemHeight + ItemGap;
+
+            CreateItem(menuRoot, y, "options", Options);
+            y -= ItemHeight + ItemGap;
+
+            CreateItem(menuRoot, y, "quit", QuitGame);
+            y -= ItemHeight + MarkerGap;
+
+            // لوزی + خط، ثابت زیر لیست (مثل Godot)
+            RectTransform markerRect = CreateNode("Marker", menuRoot);
+            markerRect.anchorMin = new Vector2(0f, 1f);
+            markerRect.anchorMax = new Vector2(0f, 1f);
+            markerRect.pivot = new Vector2(0f, 1f);
+            markerRect.anchoredPosition = new Vector2(0f, y);
+            markerRect.sizeDelta = new Vector2(ColumnWidth, 44f);
+
+            Image marker = markerRect.gameObject.AddComponent<Image>();
+            marker.raycastTarget = false;
+
+            if (markerSprite != null)
+            {
+                marker.sprite = markerSprite;
+                marker.preserveAspect = false;
+            }
+            else
+            {
+                marker.color = new Color(GoldColor.r, GoldColor.g, GoldColor.b, 0.35f);
+            }
+
+            // پیام موقت پایین صفحه
+            RectTransform hintRect = CreateNode("Hint", parent);
+            hintRect.anchorMin = new Vector2(0f, 0f);
+            hintRect.anchorMax = new Vector2(0f, 0f);
+            hintRect.pivot = new Vector2(0f, 0f);
+            hintRect.anchoredPosition = new Vector2(MenuX, 90f);
+            hintRect.sizeDelta = new Vector2(900f, 34f);
+
+            _hintText = CreateText("HintText", hintRect, 24f, ItemNormalColor, false);
+            _hintText.text = string.Empty;
+
+            // سوییچ زبان — موقت تا منوی تنظیمات ساخته شود
+            RectTransform languageRect = CreateNode("Language", parent);
+            languageRect.anchorMin = new Vector2(1f, 0f);
+            languageRect.anchorMax = new Vector2(1f, 0f);
+            languageRect.pivot = new Vector2(1f, 0f);
+            languageRect.anchoredPosition = new Vector2(-48f, 40f);
+            languageRect.sizeDelta = new Vector2(220f, 40f);
+
+            _languageText = CreateText("LanguageText", languageRect, 22f, ItemNormalColor, false);
+            _languageText.alignment = TextAlignmentOptions.BottomRight;
+        }
+
+        private void CreateItem(RectTransform parent, float y, string key, Action action)
+        {
+            RectTransform rect = CreateNode("Item_" + key, parent);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(0f, y);
+            rect.sizeDelta = new Vector2(ColumnWidth, ItemHeight);
+
+            Image bar = rect.gameObject.AddComponent<Image>();
+            bar.color = new Color(BarColor.r, BarColor.g, BarColor.b, 0f);
+            bar.raycastTarget = false;
+
+            RectTransform labelRect = CreateNode("Label", rect);
+            Stretch(labelRect);
+            labelRect.offsetMin = new Vector2(TextLeftPadding, 0f);
+
+            TMP_Text label = CreateText("LabelText", labelRect, ItemSize, ItemNormalColor, false);
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+
+            MenuItem item = new MenuItem();
+            item.Key = key;
+            item.Rect = rect;
+            item.Bar = bar;
+            item.Label = label;
+            item.Action = action;
+            _items.Add(item);
+        }
+
+        /* ============================================================
+           زبان
+           ============================================================ */
+
+        private void ApplyLanguage()
+        {
+            MenuFonts fonts = persian ? persianFonts : englishFonts;
+
+            _titleText.text = persian ? "خانه" : "HOME";
+
+            TMP_FontAsset titleFont = fonts.title != null ? fonts.title : fonts.label;
+            if (titleFont != null) _titleText.font = titleFont;
+
+            for (int i = 0; i < _items.Count; i++)
+            {
+                MenuItem item = _items[i];
+                item.Label.text = LabelFor(item.Key, persian);
+                if (fonts.label != null) item.Label.font = fonts.label;
+            }
+
+            if (_languageText != null)
+            {
+                _languageText.text = persian ? "F1: English" : "F1: فارسی";
+                if (fonts.label != null) _languageText.font = fonts.label;
+            }
+
+            if (_hintText != null)
+            {
+                _hintText.text = string.Empty;
+                if (fonts.label != null) _hintText.font = fonts.label;
+            }
+
+            ApplyRtl();
+        }
+
+        private static string LabelFor(string key, bool fa)
+        {
+            switch (key)
+            {
+                case "sandbox": return fa ? "تست سندباکس" : "SANDBOX TEST";
+                case "options": return fa ? "تنظیمات" : "OPTIONS";
+                case "quit": return fa ? "خروج" : "QUIT";
+            }
+
+            return key;
+        }
+
+        /// اگر RTLTMPro نصب باشد، متن فارسی درست شکل می‌گیرد؛ برای انگلیسی خاموش می‌شود.
+        private void ApplyRtl()
+        {
+            for (int i = 0; i < _texts.Count; i++)
+            {
+                Component rtl = FindRtlComponent(_texts[i].Key.gameObject);
+                if (rtl == null) continue;
+
+                SetBoolMember(rtl, "Farsi", persian);
+                SetBoolMember(rtl, "FixTags", true);
+            }
         }
 
         /* ============================================================
@@ -257,26 +487,22 @@ namespace TehranNoir.UI
             rect.offsetMax = Vector2.zero;
         }
 
-        private TMP_Text CreateText(string name, RectTransform parent, float size, FontStyles style,
-            Color color, TextAlignmentOptions alignment)
+        private TMP_Text CreateText(string name, RectTransform parent, float size, Color color, bool isTitle)
         {
             RectTransform rect = CreateNode(name, parent);
             Stretch(rect);
 
             TMP_Text text = AddTextComponent(rect.gameObject);
 
-            if (font != null) text.font = font;
-
             text.fontSize = size;
-            text.fontStyle = style;
             text.color = color;
             text.raycastTarget = false;
-            text.alignment = alignment;
+            text.alignment = TextAlignmentOptions.MidlineLeft;
 
+            _texts.Add(new KeyValuePair<TMP_Text, bool>(text, isTitle));
             return text;
         }
 
-        /// اگر RTLTMPro نصب باشد از آن استفاده می‌کند؛ وگرنه TextMeshPro معمولی.
         private static TMP_Text AddTextComponent(GameObject gameObject)
         {
             Type rtl = FindRtlTextType();
@@ -286,12 +512,7 @@ namespace TehranNoir.UI
                 Component component = gameObject.AddComponent(rtl);
                 TMP_Text text = component as TMP_Text;
 
-                if (text != null)
-                {
-                    SetBoolMember(component, "Farsi", true);
-                    SetBoolMember(component, "FixTags", true);
-                    return text;
-                }
+                if (text != null) return text;
             }
 
             return gameObject.AddComponent<TextMeshProUGUI>();
@@ -308,6 +529,14 @@ namespace TehranNoir.UI
 
             _rtlType = Type.GetType("RTLTMPro.RTLTextMeshPro, RTLTMPro", false);
             return _rtlType;
+        }
+
+        private static Component FindRtlComponent(GameObject gameObject)
+        {
+            Type rtl = FindRtlTextType();
+            if (rtl == null) return null;
+
+            return gameObject.GetComponent(rtl);
         }
 
         private static void SetBoolMember(Component component, string name, bool value)

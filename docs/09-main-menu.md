@@ -1,75 +1,108 @@
-# مرحله ۶ — منوی اصلی در صحنه‌ی جدا
+# مرحله ۶ — منوی اصلی به سبک Mafia
 
-منوی اصلی یک صحنه‌ی مستقل است: `Assets/_Project/Scenes/MainMenu.unity`.
-یک آبجکت خالی با کامپوننت `Main Menu UI`، بقیه‌ی رابط در زمان اجرا ساخته می‌شود.
+همان منویی که در Godot ساخته بودی، این بار در Unity. ظاهر از `main_menu.tscn`
+گرفته شده و الگو همان Mafia: Definitive Edition است.
 
 ## چه چیزی ساخته می‌شود
 
-| بخش | توضیح |
+| بخش | مقدار (از فایل Godot) |
 | --- | --- |
-| پس‌زمینه | مشکی قهوه‌ای، رنگ `0.05 / 0.045 / 0.04` |
-| عنوان | «تهران نوآر» — طلایی، فاصله‌ی حروف ۴ |
-| زیرعنوان | «تهران، ۱۳۵۲ تا ۱۳۵۷» |
-| خط جداکننده | ۵۲۰ پیکسل، طلایی کم‌رنگ |
-| دکمه‌ها | **شروع بازی** و **خروج** |
-| پانویس | «نسخه ۰.۱» |
+| پس‌زمینه | `bgmenu.png` تمام‌صفحه و **آینه‌شده** (پرچم سمت چپ می‌آید، مثل `flip_h` در Godot) |
+| جای ستون منو | `x = 270`، `y = -286` از گوشه‌ی بالا-چپ |
+| عنوان | «HOME» طلایی `#A88030`، سایز `90`، وزن Black |
+| آیتم‌ها | سایز `56`، وزن Bold، خاکستری `#969189` |
+| آیتم انتخاب‌شده | نوار تیره‌ی نیمه‌شفاف + متن `#EEEFEC` |
+| فاصله‌ی آیتم‌ها | `8` |
+| لوزی + خط | `menu end.png`، **ثابت** زیر لیست |
 
-## تنظیم در Unity
+سه آیتم: **SANDBOX TEST** / **OPTIONS** / **QUIT**
+(«شروع بازی» و «ادامه» بعداً که سیستم مراحل و سیو آمد اضافه می‌شوند.)
 
-۱. `File > New Scene` → گزینه‌ی **Empty** را بزن (اگر Empty نبود، **Basic**).
-   اگر Basic انتخاب کردی، `Main Camera` و `Directional Light` داخل صحنه می‌مانند؛ اشکالی ندارد.
+زبان با `F1` عوض می‌شود: انگلیسی با Roboto، فارسی با Vazirmatn. این کلید موقتی است
+تا منوی تنظیمات ساخته شود؛ بعداً همان‌جا می‌رود.
 
-۲. `GameObject > Create Empty` → اسمش را بگذار `MainMenu`
-   - `Add Component` → `Main Menu UI`
-   - فیلد `Font` → `Assets/_Project/Art/Fonts/Vazirmatn-Regular SDF`
+## فایل‌های تازه
 
-۳. `Ctrl + S` → مسیر `Assets/_Project/Scenes/` → نام `MainMenu`
+| مسیر | چیست |
+| --- | --- |
+| `Art/Menu/bgmenu.png` | پس‌زمینه (1672×941) |
+| `Art/Menu/menu_end.png` | لوزی + خط (1695×130) |
+| `Art/Fonts/Source/Roboto-Black.ttf` | وزن عنوان |
+| `Art/Fonts/Source/Roboto-Bold.ttf` | وزن آیتم‌ها |
+| `Art/Fonts/Source/Vazirmatn-Black.ttf` | وزن عنوان فارسی |
+| `Art/Fonts/Source/Vazirmatn-Bold.ttf` | وزن آیتم‌های فارسی |
+| `Scripts/UI/MainMenuUI.cs` | منو |
 
-۴. `File > Build Profiles` → `Scene List`:
-   - `MainMenu` را اضافه کن و **بالاتر از همه** بگذار (index 0)
-   - `Sandbox` را هم اضافه کن (index 1)
+هر دو فونت مجوز آزاد دارند (Roboto: Apache 2.0، Vazirmatn: OFL).
 
-   بدون این کار، `LoadScene` پیدا نمی‌کند و یک خطای قرمز در Console می‌آید.
+## کار ۱ — نوع تصویرها
 
-## فیلدهای کامپوننت
+۱. `bgmenu.png` را در Project انتخاب کن → Inspector → `Texture Type` = **Sprite (2D and UI)** → `Apply`
+۲. همین کار را برای `menu_end.png` بکن
 
-| فیلد | پیش‌فرض | کار |
-| --- | --- | --- |
-| `Font` | خالی | فونت TMP؛ `Vazirmatn-Regular SDF` |
-| `Title` | تهران نوآر | عنوان |
-| `Subtitle` | تهران، ۱۳۵۲ تا ۱۳۵۷ | زیرعنوان |
-| `Footer` | نسخه ۰.۱ | پانویس |
-| `Background Color` | `#0D0B0A` تقریبی | رنگ پس‌زمینه |
-| `Game Scene Name` | `Sandbox` | صحنه‌ای که «شروع بازی» باز می‌کند |
+## کار ۲ — ساخت فونت اَسِت‌ها (۴ عدد)
 
-## چرا دوربین و EventSystem ساخته می‌شوند
+`Window > TextMeshPro > Font Asset Creator` و برای هر فونت:
 
-صحنه‌ی خالی هیچ دوربینی ندارد. بدون دوربین، پس‌زمینه رندر نمی‌شود و صفحه‌ی Game
-خاکستری/آشغال می‌ماند. `Main Menu UI` موقع `Awake`:
+| Source Font File | Atlas | Character Set | نام فایل خروجی |
+| --- | --- | --- | --- |
+| `Roboto-Black.ttf` | 1024×1024 | `ASCII` | `Roboto-Black SDF` |
+| `Roboto-Bold.ttf` | 1024×1024 | `ASCII` | `Roboto-Bold SDF` |
+| `Vazirmatn-Black.ttf` | 1024×1024 | `Unicode Range (Hex)` = `0600-06FF, 200C` بعد `ASCII` هم اضافه کن | `Vazirmatn-Black SDF` |
+| `Vazirmatn-Bold.ttf` | 1024×1024 | همان بالا | `Vazirmatn-Bold SDF` |
 
-- اگر `Camera.main` نبود، یک دوربین ساده با پس‌زمینه‌ی تک‌رنگ می‌سازد.
-- اگر `EventSystem` نبود، یکی با `Input System UI Input Module` می‌سازد
-  (با `Standalone Input Module` کلیک کار نمی‌کند، چون پروژه فقط Input System دارد).
+برای فونت فارسی، در Font Asset Creator:
 
-## دکمه‌ها
+1. `Character Set` = **Unicode Range (Hex)**
+2. در کادر بنویس: `0600-06FF,200C,0020-007E`
+3. `Render Mode` = `SDFAA`
+4. `Generate Font Atlas` → `Save` → همه را در `Assets/_Project/Art/Fonts/` ذخیره کن
 
-- **شروع بازی** → `SceneManager.LoadScene("Sandbox")`
-- **خروج** → در ادیتور از Play خارج می‌شود، در بیلد برنامه بسته می‌شود
+اگر حروف فارسی در آتلاس جا نشدند، `Atlas Resolution` را `2048×2048` بگذار.
 
-اگر صحنه در Build Profiles نباشد، جای کرش کردن، این پیام را می‌دهد:
+## کار ۳ — صحنه
 
-```
-[Menu] صحنه‌ی «Sandbox» در Build Profiles نیست.
-```
+۱. `File > New Scene` → **Empty**
+۲. `GameObject > Create Empty` → نام: `MainMenu`
+۳. `Add Component` → `Main Menu UI`
+۴. فیلدها:
 
-## تست
+| فیلد | مقدار |
+| --- | --- |
+| `Background Sprite` | `bgmenu` |
+| `Marker Sprite` | `menu_end` |
+| `English Fonts > Title` | `Roboto-Black SDF` |
+| `English Fonts > Label` | `Roboto-Bold SDF` |
+| `Persian Fonts > Title` | `Vazirmatn-Black SDF` |
+| `Persian Fonts > Label` | `Vazirmatn-Bold SDF` |
+| `Persian` | تیک خورده یا نه، سلیقه‌ای |
+| `Game Scene Name` | `Sandbox` |
 
-۱. صحنه‌ی `MainMenu` را باز کن و `Play` بزن → عنوان و دو دکمه باید دیده شوند.
-۲. موس را روی «شروع بازی» ببر → دکمه روشن‌تر شود.
-۳. کلیک کن → صحنه‌ی `Sandbox` باز شود و بازی مثل قبل کار کند.
-۴. برگرد به `MainMenu` و `Play` → «خروج» → در ادیتور، Play تمام شود.
+۵. `Ctrl + S` → `Assets/_Project/Scenes/MainMenu`
+۶. `File > Build Profiles` → `Scene List`:
+   - `MainMenu` **index 0**
+   - `Sandbox` **index 1**
 
-## نکته
+## ورودی‌ها
 
-`Time.timeScale = 1f` در `Awake` گذاشته شده. بدون آن، اگر یک بار از منوی توقف
-به منو برگردیم، بازی بعدی با زمان متوقف شروع می‌شود.
+| کلید | کار |
+| --- | --- |
+| `↑` `↓` یا `W` `S` | جابه‌جایی بین آیتم‌ها |
+| `Enter` / `Space` | انتخاب |
+| موس | هاور و کلیک |
+| `F1` | عوض کردن زبان (موقت) |
+| `Esc` | خروج |
+
+## آزمایش
+
+۱. صحنه‌ی `MainMenu` → `Play` → تصویر دفتر باید تمام صفحه باشد، پرچم سمت چپ.
+۲. `HOME` طلایی، سه آیتم خاکستری، لوزی + خط زیر لیست.
+۳. با `↓` بین آیتم‌ها حرکت کن → نوار تیره پشت آیتم انتخاب‌شده.
+۴. `F1` → متن‌ها فارسی شوند و **همان استایل** بماند.
+۵. `SANDBOX TEST` → صحنه‌ی `Sandbox` باز شود.
+
+## نکته‌ها
+
+- اگر پیام `صحنه‌ی Sandbox در Build Profiles نیست` آمد، کار ۳ بند ۶ را انجام بده.
+- اگر متن‌ها با فونت پیش‌فرض دیده شدند، یعنی فونت اَسِت‌ها در Inspector وصل نشده‌اند.
+- `OPTIONS` فعلاً فقط یک پیام کوتاه نشان می‌دهد تا صفحه‌ی تنظیمات ساخته شود.

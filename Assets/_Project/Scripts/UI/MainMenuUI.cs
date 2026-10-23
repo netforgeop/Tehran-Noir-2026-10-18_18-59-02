@@ -77,8 +77,9 @@ namespace TehranNoir.UI
 
         private readonly List<MenuItem> _items = new List<MenuItem>();
 
+        private RectTransform _canvasRect;
         private RectTransform _background;
-        private Vector2 _lastScreen;
+        private Vector2 _lastCanvasSize;
 
         private TMP_Text _titleText;
         private TMP_Text _hintText;
@@ -116,20 +117,27 @@ namespace TehranNoir.UI
             AnimateFrames();
         }
 
-        /// تصویر پس‌زمینه را طوری اندازه می‌کند که کل صفحه پوشیده شود، بدون کشیدگی.
+        /// <summary>
+        /// تصویر پس‌زمینه را طوری اندازه می‌کند که کل کانواس پوشیده شود، بدون کشیدگی.
+        /// اندازه‌گیری با واحدِ کانواس انجام می‌شود، نه پیکسل صفحه؛ چون CanvasScaler
+        /// مقیاس را عوض می‌کند و این دو یکی نیستند.
+        /// </summary>
         private void FitBackground()
         {
-            if (_background == null || backgroundSprite == null) return;
+            if (_canvasRect == null || _background == null || backgroundSprite == null) return;
 
-            Vector2 screen = new Vector2(Screen.width, Screen.height);
-            if (screen == _lastScreen) return;
+            Vector2 canvasSize = _canvasRect.rect.size;
+            if (canvasSize.x <= 0f || canvasSize.y <= 0f) return;
 
-            _lastScreen = screen;
+            if (canvasSize == _lastCanvasSize) return;
+
+            _lastCanvasSize = canvasSize;
 
             Vector2 sprite = new Vector2(backgroundSprite.rect.width, backgroundSprite.rect.height);
             if (sprite.x <= 0f || sprite.y <= 0f) return;
 
-            float scale = Mathf.Max(screen.x / sprite.x, screen.y / sprite.y);
+            // بزرگ‌ترین ضریب: هر دو بُعد پوشیده می‌شوند و اضافه از لبه‌ها بیرون می‌زند
+            float scale = Mathf.Max(canvasSize.x / sprite.x, canvasSize.y / sprite.y);
             _background.sizeDelta = sprite * scale;
         }
 
@@ -320,6 +328,8 @@ namespace TehranNoir.UI
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
 
+            _canvasRect = canvasObject.GetComponent<RectTransform>();
+
             BuildBackground(canvasObject.transform);
             BuildMenu(canvasObject.transform);
         }
@@ -348,7 +358,7 @@ namespace TehranNoir.UI
             rect.anchoredPosition = Vector2.zero;
 
             _background = rect;
-            _lastScreen = Vector2.zero;
+            _lastCanvasSize = Vector2.zero;
             FitBackground();
 
             // در Godot همین عکس با flip_h آینه می‌شد تا پرچم سمت چپ بیفتد

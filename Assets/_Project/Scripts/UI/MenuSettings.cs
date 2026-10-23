@@ -54,6 +54,27 @@ namespace TehranNoir.UI
         /// <summary>ریشه‌ی صفحه؛ میزبان با فعال/غیرفعال کردنش نشانش می‌دهد یا پنهانش می‌کند.</summary>
         public RectTransform Root => _root;
 
+        /// <summary>شماره‌ی بخش باز. میزبان قبل از بازسازی رابط نگهش می‌دارد.</summary>
+        public int SectionIndex => _section;
+
+        /// <summary>شماره‌ی ردیف انتخاب‌شده.</summary>
+        public int SelectedIndex => _selected;
+
+        /// <summary>رفتن به یک بخش مشخص؛ برای برگشتن به همان‌جا بعد از تغییر زبان.</summary>
+        public void ShowSection(int index)
+        {
+            BuildSection(Mathf.Clamp(index, 0, SectionCount - 1));
+        }
+
+        /// <summary>انتخاب یک ردیف مشخص.</summary>
+        public void Select(int index)
+        {
+            if (_rows.Count == 0) return;
+
+            _selected = Mathf.Clamp(index, 0, _rows.Count - 1);
+            Highlight();
+        }
+
         /* ============================================================
            ساخت
            ============================================================ */

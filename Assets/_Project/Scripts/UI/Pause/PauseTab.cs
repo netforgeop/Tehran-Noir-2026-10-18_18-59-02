@@ -89,6 +89,20 @@ namespace TehranNoir.UI
         }
 
         /// <summary>
+        /// وضعیت داخلی تب، پیش از بازسازی کل رابط (مثلاً تغییر زبان).
+        /// تبی که صفحه‌ی تو در تو دارد (تنظیمات) آن را نگه می‌دارد تا کاربر توی بخش اشتباه نیفتد.
+        /// </summary>
+        public virtual object SaveState()
+        {
+            return null;
+        }
+
+        /// <summary>برگرداندن همان وضعیت بعد از بازسازی.</summary>
+        public virtual void LoadState(object state)
+        {
+        }
+
+        /// <summary>
         /// Enter یا کلیک: ردیف منو کارش را انجام می‌دهد؛
         /// ردیف تنظیمات دکمه ندارد، پس مقدارش یک پله جلو می‌رود.
         /// </summary>

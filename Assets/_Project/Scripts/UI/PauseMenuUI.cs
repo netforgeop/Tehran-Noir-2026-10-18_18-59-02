@@ -152,6 +152,9 @@ namespace TehranNoir.UI
             int tab = Mathf.Clamp(_activeTab, 0, Mathf.Max(0, _tabs.Count - 1));
             int row = _tabs.Count > 0 ? _tabs[tab].Selected : 0;
 
+            // تب تنظیمات ممکن است صفحه‌ی تو در تو باز داشته باشد؛ همان‌جا باید بماند
+            object state = _tabs.Count > 0 ? _tabs[tab].SaveState() : null;
+
             if (_canvas != null)
             {
                 _canvas.SetActive(false);
@@ -178,6 +181,7 @@ namespace TehranNoir.UI
             _activeTab = Mathf.Clamp(tab, 0, _tabs.Count - 1);
             ShowTab(_activeTab);
             _tabs[_activeTab].Select(row);
+            _tabs[_activeTab].LoadState(state);
         }
 
         /* ============================================================

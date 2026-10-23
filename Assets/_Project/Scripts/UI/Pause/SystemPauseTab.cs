@@ -165,5 +165,38 @@ namespace TehranNoir.UI
             base.OnShow();
             ShowRoot();
         }
+
+        /* ============================================================
+           نگه‌داشتن وضعیت بین دو بازسازی
+           ============================================================ */
+
+        /// <summary>بخش و ردیفی که کاربر در صفحه‌ی تنظیمات داشته.</summary>
+        private sealed class SettingsState
+        {
+            public int Section;
+            public int Row;
+        }
+
+        public override object SaveState()
+        {
+            if (!SettingsVisible) return null;
+
+            SettingsState state = new SettingsState();
+            state.Section = _settings.SectionIndex;
+            state.Row = _settings.SelectedIndex;
+
+            return state;
+        }
+
+        public override void LoadState(object state)
+        {
+            SettingsState saved = state as SettingsState;
+            if (saved == null) return;
+
+            OpenSettings();
+
+            _settings.ShowSection(saved.Section);
+            _settings.Select(saved.Row);
+        }
     }
 }

@@ -711,9 +711,16 @@ namespace TehranNoir.UI
 
             if (_settingsOverlay == null) return;
 
-            // صفحه‌ی تنظیمات با فونت زبان تازه از نو ساخته می‌شود
+            // صفحه‌ی تنظیمات با فونت و متن زبان تازه از نو ساخته می‌شود،
+            // ولی کاربر باید توی همان بخش و همان ردیف بماند — نه اینکه بپرد به بخش صدا
+            int section = _settingsPage.SectionIndex;
+            int row = _settingsPage.SelectedIndex;
+
             CloseSettings();
             Options();
+
+            _settingsPage.ShowSection(section);
+            _settingsPage.Select(row);
         }
 
         private void ApplyLanguage()

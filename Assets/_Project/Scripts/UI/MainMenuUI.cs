@@ -72,11 +72,11 @@ namespace TehranNoir.UI
         }
 
         private readonly List<MenuItem> _items = new List<MenuItem>();
-        private readonly List<KeyValuePair<TMP_Text, bool>> _texts = new List<KeyValuePair<TMP_Text, bool>>();
 
         private TMP_Text _titleText;
         private TMP_Text _hintText;
-        private TMP_Text _languageText;
+        private TMP_Text _languageKey;
+        private TMP_Text _languageName;
         private int _selected;
 
         private static Type _rtlType;
@@ -238,6 +238,7 @@ namespace TehranNoir.UI
             if (_hintText == null) return;
 
             _hintText.text = message;
+            SetRtl(_hintText, persian);
         }
 
         /* ============================================================
@@ -292,7 +293,7 @@ namespace TehranNoir.UI
             }
             else
             {
-                Debug.LogWarning("[Menu] Background Sprite خالی است؛ پس‌زمینه تکرنگ می‌شود.");
+                Debug.LogWarning("[Menu] Background Sprite خالی است؛ پس‌زمینه تک‌رنگ می‌شود.");
                 image.color = BackgroundFallback;
             }
 
@@ -319,7 +320,7 @@ namespace TehranNoir.UI
             titleRect.anchoredPosition = Vector2.zero;
             titleRect.sizeDelta = new Vector2(ColumnWidth, TitleHeight);
 
-            _titleText = CreateText("TitleText", titleRect, TitleSize, GoldColor, true);
+            _titleText = CreateText("TitleText", titleRect, TitleSize, GoldColor);
             _titleText.characterSpacing = 2f;
 
             // آیتم‌ها
@@ -355,7 +356,7 @@ namespace TehranNoir.UI
                 marker.color = new Color(GoldColor.r, GoldColor.g, GoldColor.b, 0.35f);
             }
 
-            // پیام موقت پایین صفحه
+            // پیام موقت، پایین-چپ
             RectTransform hintRect = CreateNode("Hint", parent);
             hintRect.anchorMin = new Vector2(0f, 0f);
             hintRect.anchorMax = new Vector2(0f, 0f);
@@ -363,19 +364,29 @@ namespace TehranNoir.UI
             hintRect.anchoredPosition = new Vector2(MenuX, 90f);
             hintRect.sizeDelta = new Vector2(900f, 34f);
 
-            _hintText = CreateText("HintText", hintRect, 24f, ItemNormalColor, false);
+            _hintText = CreateText("HintText", hintRect, 24f, ItemNormalColor);
             _hintText.text = string.Empty;
 
-            // سوییچ زبان — موقت تا منوی تنظیمات ساخته شود
-            RectTransform languageRect = CreateNode("Language", parent);
-            languageRect.anchorMin = new Vector2(1f, 0f);
-            languageRect.anchorMax = new Vector2(1f, 0f);
-            languageRect.pivot = new Vector2(1f, 0f);
-            languageRect.anchoredPosition = new Vector2(-48f, 40f);
-            languageRect.sizeDelta = new Vector2(220f, 40f);
+            // سوییچ زبان، پایین-راست؛ دو خط جدا تا هیچ متنی دوخطی نشود
+            RectTransform keyRect = CreateNode("LanguageKey", parent);
+            keyRect.anchorMin = new Vector2(1f, 0f);
+            keyRect.anchorMax = new Vector2(1f, 0f);
+            keyRect.pivot = new Vector2(1f, 0f);
+            keyRect.anchoredPosition = new Vector2(-48f, 62f);
+            keyRect.sizeDelta = new Vector2(260f, 26f);
 
-            _languageText = CreateText("LanguageText", languageRect, 22f, ItemNormalColor, false);
-            _languageText.alignment = TextAlignmentOptions.BottomRight;
+            _languageKey = CreateText("LanguageKeyText", keyRect, 20f, ItemNormalColor);
+            _languageKey.alignment = TextAlignmentOptions.BottomRight;
+
+            RectTransform nameRect = CreateNode("LanguageName", parent);
+            nameRect.anchorMin = new Vector2(1f, 0f);
+            nameRect.anchorMax = new Vector2(1f, 0f);
+            nameRect.pivot = new Vector2(1f, 0f);
+            nameRect.anchoredPosition = new Vector2(-48f, 32f);
+            nameRect.sizeDelta = new Vector2(260f, 32f);
+
+            _languageName = CreateText("LanguageNameText", nameRect, 24f, ItemSelectedColor);
+            _languageName.alignment = TextAlignmentOptions.BottomRight;
         }
 
         private void CreateItem(RectTransform parent, float y, string key, Action action)
@@ -395,7 +406,7 @@ namespace TehranNoir.UI
             Stretch(labelRect);
             labelRect.offsetMin = new Vector2(TextLeftPadding, 0f);
 
-            TMP_Text label = CreateText("LabelText", labelRect, ItemSize, ItemNormalColor, false);
+            TMP_Text label = CreateText("LabelText", labelRect, ItemSize, ItemNormalColor);
             label.alignment = TextAlignmentOptions.MidlineLeft;
 
             MenuItem item = new MenuItem();
@@ -415,31 +426,25 @@ namespace TehranNoir.UI
         {
             MenuFonts fonts = persian ? persianFonts : englishFonts;
 
-            _titleText.text = persian ? "خانه" : "HOME";
-
-            TMP_FontAsset titleFont = fonts.title != null ? fonts.title : fonts.label;
-            if (titleFont != null) _titleText.font = titleFont;
+            SetText(_titleText, persian ? "خانه" : "HOME", fonts.title != null ? fonts.title : fonts.label, persian);
 
             for (int i = 0; i < _items.Count; i++)
             {
                 MenuItem item = _items[i];
-                item.Label.text = LabelFor(item.Key, persian);
-                if (fonts.label != null) item.Label.font = fonts.label;
+                SetText(item.Label, LabelFor(item.Key, persian), fonts.label, persian);
             }
 
-            if (_languageText != null)
+            if (_hintText != null) SetText(_hintText, string.Empty, fonts.label, persian);
+
+            // کلید F1 همیشه لاتین است، پس همیشه با فونت انگلیسی نوشته می‌شود
+            if (_languageKey != null) SetText(_languageKey, "F1", englishFonts.label, false);
+
+            // نام زبانِ مقصد، با فونت و جهت خودش
+            if (_languageName != null)
             {
-                _languageText.text = persian ? "F1: English" : "F1: فارسی";
-                if (fonts.label != null) _languageText.font = fonts.label;
+                MenuFonts targetFonts = persian ? englishFonts : persianFonts;
+                SetText(_languageName, persian ? "ENGLISH" : "فارسی", targetFonts.label, !persian);
             }
-
-            if (_hintText != null)
-            {
-                _hintText.text = string.Empty;
-                if (fonts.label != null) _hintText.font = fonts.label;
-            }
-
-            ApplyRtl();
         }
 
         private static string LabelFor(string key, bool fa)
@@ -454,17 +459,26 @@ namespace TehranNoir.UI
             return key;
         }
 
-        /// اگر RTLTMPro نصب باشد، متن فارسی درست شکل می‌گیرد؛ برای انگلیسی خاموش می‌شود.
-        private void ApplyRtl()
+        private static void SetText(TMP_Text text, string value, TMP_FontAsset font, bool farsi)
         {
-            for (int i = 0; i < _texts.Count; i++)
-            {
-                Component rtl = FindRtlComponent(_texts[i].Key.gameObject);
-                if (rtl == null) continue;
+            if (text == null) return;
 
-                SetBoolMember(rtl, "Farsi", persian);
-                SetBoolMember(rtl, "FixTags", true);
-            }
+            text.text = value;
+            if (font != null) text.font = font;
+
+            SetRtl(text, farsi);
+        }
+
+        /// هر متن، جهت خودش را دارد؛ برای همین یک متن انگلیسی همیشه لاتین می‌ماند.
+        private static void SetRtl(TMP_Text text, bool farsi)
+        {
+            if (text == null) return;
+
+            Component rtl = FindRtlComponent(text.gameObject);
+            if (rtl == null) return;
+
+            SetBoolMember(rtl, "Farsi", farsi);
+            SetBoolMember(rtl, "FixTags", true);
         }
 
         /* ============================================================
@@ -487,7 +501,7 @@ namespace TehranNoir.UI
             rect.offsetMax = Vector2.zero;
         }
 
-        private TMP_Text CreateText(string name, RectTransform parent, float size, Color color, bool isTitle)
+        private static TMP_Text CreateText(string name, RectTransform parent, float size, Color color)
         {
             RectTransform rect = CreateNode(name, parent);
             Stretch(rect);
@@ -499,7 +513,6 @@ namespace TehranNoir.UI
             text.raycastTarget = false;
             text.alignment = TextAlignmentOptions.MidlineLeft;
 
-            _texts.Add(new KeyValuePair<TMP_Text, bool>(text, isTitle));
             return text;
         }
 

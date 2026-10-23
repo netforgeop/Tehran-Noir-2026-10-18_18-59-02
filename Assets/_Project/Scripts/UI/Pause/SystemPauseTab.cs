@@ -154,7 +154,9 @@ namespace TehranNoir.UI
             {
                 GameObject old = _rowsRoot.GetChild(i).gameObject;
                 old.SetActive(false);
-                Destroy(old);
+
+                // این کلاس MonoBehaviour نیست، پس Destroy را باید از خود UnityEngine.Object بگیری
+                UnityEngine.Object.Destroy(old);
             }
 
             Rows.Clear();

@@ -4,6 +4,11 @@
 lang.fa = Persian
 lang.en = English
 
+menu.title = HOME
+menu.sandbox = SANDBOX TEST
+menu.options = OPTIONS
+menu.quit = QUIT
+
 # --- Pause menu ---
 pause.tab.system = Settings
 pause.tab.map = Map

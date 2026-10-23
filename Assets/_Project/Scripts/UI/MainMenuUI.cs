@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using TehranNoir.Settings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -12,7 +13,7 @@ namespace TehranNoir.UI
     /// <summary>
     /// منوی اصلی به سبک Mafia: پس‌زمینه‌ی تمام‌صفحه، عنوان طلایی، آیتم‌های
     /// خاکستری با کادر نازک طلایی (بالا، پایین، چپ) زیر آیتم انتخاب‌شده.
-    /// تمام رابط در زمان اجرا ساخته می‌شود.
+    /// زبان از Loc می‌آید و فقط از داخل «تنظیمات» عوض می‌شود، نه با F1.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MainMenuUI : MonoBehaviour
@@ -26,9 +27,6 @@ namespace TehranNoir.UI
         [Header("فونت")]
         [SerializeField] private MenuFonts englishFonts = new MenuFonts();
         [SerializeField] private MenuFonts persianFonts = new MenuFonts();
-
-        [Header("زبان")]
-        [SerializeField] private bool persian;
 
         [Header("صحنه بازی")]
         [Tooltip("نام فایل صحنه، بدون .unity")]
@@ -83,13 +81,21 @@ namespace TehranNoir.UI
 
         private TMP_Text _titleText;
         private TMP_Text _hintText;
-        private TMP_Text _languageKey;
-        private TMP_Text _languageName;
         private int _selected;
+
+        private GameObject _settingsOverlay;
+        private MenuSettings _settingsPage;
 
         private static Type _rtlType;
         private static bool _rtlSearched;
         private static Sprite _fadeSprite;
+
+        /// <summary>زبان رابط از کانال «منو» می‌آید؛ همان کانالی که منوی توقف استفاده می‌کند.</summary>
+        private bool Persian => Loc.IsRtl(Loc.Channel.Menu);
+
+        private TMP_FontAsset LabelFont => Pick(englishFonts, persianFonts);
+
+        private TMP_FontAsset TitleFont => PickTitle(englishFonts, persianFonts);
 
         /* ============================================================
            چرخه
@@ -108,12 +114,22 @@ namespace TehranNoir.UI
             Build();
             ApplyLanguage();
             SelectIndex(0);
+
+            Loc.Changed += OnLanguageChanged;
+        }
+
+        private void OnDestroy()
+        {
+            Loc.Changed -= OnLanguageChanged;
         }
 
         private void Update()
         {
             FitBackground();
-            HandleInput();
+
+            if (_settingsPage != null) HandleSettingsInput();
+            else HandleInput();
+
             AnimateFrames();
         }
 
@@ -142,7 +158,7 @@ namespace TehranNoir.UI
         }
 
         /* ============================================================
-           ورودی
+           ورودی منو
            ============================================================ */
 
         private void HandleInput()
@@ -159,7 +175,6 @@ namespace TehranNoir.UI
                 if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
                     keyboard.spaceKey.wasPressedThisFrame) Activate(_selected);
 
-                if (keyboard.f1Key.wasPressedThisFrame) ToggleLanguage();
                 if (keyboard.escapeKey.wasPressedThisFrame) QuitGame();
             }
 
@@ -185,6 +200,59 @@ namespace TehranNoir.UI
 
                 return;
             }
+        }
+
+        /* ============================================================
+           ورودی صفحه‌ی تنظیمات
+           ============================================================ */
+
+        private void HandleSettingsInput()
+        {
+            Keyboard keyboard = Keyboard.current;
+            Gamepad gamepad = Gamepad.current;
+
+            if (keyboard != null)
+            {
+                if (keyboard.escapeKey.wasPressedThisFrame)
+                {
+                    CloseSettings();
+                    return;
+                }
+
+                if (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame) _settingsPage.Move(1);
+                if (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame) _settingsPage.Move(-1);
+
+                if (keyboard.leftArrowKey.wasPressedThisFrame || keyboard.aKey.wasPressedThisFrame) _settingsPage.Step(-1);
+                if (keyboard.rightArrowKey.wasPressedThisFrame || keyboard.dKey.wasPressedThisFrame) _settingsPage.Step(1);
+
+                if (keyboard.tabKey.wasPressedThisFrame) _settingsPage.NextSection();
+
+                if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
+                    keyboard.spaceKey.wasPressedThisFrame) _settingsPage.Activate();
+            }
+
+            if (gamepad != null)
+            {
+                if (gamepad.startButton.wasPressedThisFrame || gamepad.buttonEast.wasPressedThisFrame)
+                {
+                    CloseSettings();
+                    return;
+                }
+
+                if (gamepad.dpad.down.wasPressedThisFrame || gamepad.leftStick.down.wasPressedThisFrame) _settingsPage.Move(1);
+                if (gamepad.dpad.up.wasPressedThisFrame || gamepad.leftStick.up.wasPressedThisFrame) _settingsPage.Move(-1);
+
+                if (gamepad.dpad.left.wasPressedThisFrame || gamepad.leftStick.left.wasPressedThisFrame) _settingsPage.Step(-1);
+                if (gamepad.dpad.right.wasPressedThisFrame || gamepad.leftStick.right.wasPressedThisFrame) _settingsPage.Step(1);
+
+                if (gamepad.buttonNorth.wasPressedThisFrame) _settingsPage.NextSection();
+                if (gamepad.buttonSouth.wasPressedThisFrame) _settingsPage.Activate();
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null) return;
+
+            _settingsPage.Pointer(mouse.position.ReadValue(), mouse.leftButton.wasPressedThisFrame);
         }
 
         private static bool PointerInside(RectTransform rect, Vector2 screenPoint)
@@ -249,9 +317,32 @@ namespace TehranNoir.UI
             SceneManager.LoadScene(gameSceneName);
         }
 
+        /// <summary>تنظیمات، همان صفحه‌ای است که منوی توقف هم استفاده می‌کند.</summary>
         private void Options()
         {
-            ShowHint(persian ? "تنظیمات هنوز ساخته نشده است." : "Options are not built yet.");
+            if (_settingsOverlay != null) return;
+
+            ShowHint(string.Empty);
+
+            RectTransform overlay = CreateNode("SettingsOverlay", _canvasRect);
+            Stretch(overlay);
+
+            Image backdrop = overlay.gameObject.AddComponent<Image>();
+            backdrop.color = new Color(0.02f, 0.02f, 0.02f, 0.97f);
+            backdrop.raycastTarget = false;
+
+            _settingsOverlay = overlay.gameObject;
+            _settingsPage = new MenuSettings(overlay, LabelFont, Persian, CloseSettings);
+        }
+
+        private void CloseSettings()
+        {
+            if (_settingsOverlay == null) return;
+
+            Destroy(_settingsOverlay);
+
+            _settingsOverlay = null;
+            _settingsPage = null;
         }
 
         private void QuitGame()
@@ -263,18 +354,12 @@ namespace TehranNoir.UI
 #endif
         }
 
-        private void ToggleLanguage()
-        {
-            persian = !persian;
-            ApplyLanguage();
-        }
-
         private void ShowHint(string message)
         {
             if (_hintText == null) return;
 
             _hintText.text = message;
-            SetRtl(_hintText, persian);
+            SetRtl(_hintText, Persian);
         }
 
         /* ============================================================
@@ -428,27 +513,6 @@ namespace TehranNoir.UI
 
             _hintText = CreateText("HintText", hintRect, 24f, ItemNormalColor);
             _hintText.text = string.Empty;
-
-            // سوییچ زبان، پایین-راست؛ دو خط جدا تا هیچ متنی دوخطی نشود
-            RectTransform keyRect = CreateNode("LanguageKey", parent);
-            keyRect.anchorMin = new Vector2(1f, 0f);
-            keyRect.anchorMax = new Vector2(1f, 0f);
-            keyRect.pivot = new Vector2(1f, 0f);
-            keyRect.anchoredPosition = new Vector2(-48f, 62f);
-            keyRect.sizeDelta = new Vector2(260f, 26f);
-
-            _languageKey = CreateText("LanguageKeyText", keyRect, 20f, ItemNormalColor);
-            _languageKey.alignment = TextAlignmentOptions.BottomRight;
-
-            RectTransform nameRect = CreateNode("LanguageName", parent);
-            nameRect.anchorMin = new Vector2(1f, 0f);
-            nameRect.anchorMax = new Vector2(1f, 0f);
-            nameRect.pivot = new Vector2(1f, 0f);
-            nameRect.anchoredPosition = new Vector2(-48f, 32f);
-            nameRect.sizeDelta = new Vector2(260f, 32f);
-
-            _languageName = CreateText("LanguageNameText", nameRect, 24f, ItemSelectedColor);
-            _languageName.alignment = TextAlignmentOptions.BottomRight;
         }
 
         private void CreateItem(RectTransform parent, float y, string key, Action action)
@@ -577,41 +641,53 @@ namespace TehranNoir.UI
            زبان
            ============================================================ */
 
+        private void OnLanguageChanged()
+        {
+            ApplyLanguage();
+
+            if (_settingsOverlay == null) return;
+
+            // صفحه‌ی تنظیمات با فونت زبان تازه از نو ساخته می‌شود
+            CloseSettings();
+            Options();
+        }
+
         private void ApplyLanguage()
         {
-            MenuFonts fonts = persian ? persianFonts : englishFonts;
+            TMP_FontAsset title = TitleFont;
+            TMP_FontAsset label = LabelFont;
 
-            SetText(_titleText, persian ? "خانه" : "HOME", fonts.title != null ? fonts.title : fonts.label, persian);
+            SetText(_titleText, Loc.Get(Loc.Channel.Menu, "menu.title"), title, Persian);
 
             for (int i = 0; i < _items.Count; i++)
             {
                 MenuItem item = _items[i];
-                SetText(item.Label, LabelFor(item.Key, persian), fonts.label, persian);
+                SetText(item.Label, Loc.Get(Loc.Channel.Menu, "menu." + item.Key), label, Persian);
             }
 
-            if (_hintText != null) SetText(_hintText, string.Empty, fonts.label, persian);
-
-            // کلید F1 همیشه لاتین است، پس همیشه با فونت انگلیسی نوشته می‌شود
-            if (_languageKey != null) SetText(_languageKey, "F1", englishFonts.label, false);
-
-            // نام زبانِ مقصد، با فونت و جهت خودش
-            if (_languageName != null)
-            {
-                MenuFonts targetFonts = persian ? englishFonts : persianFonts;
-                SetText(_languageName, persian ? "ENGLISH" : "فارسی", targetFonts.label, !persian);
-            }
+            if (_hintText != null) SetText(_hintText, string.Empty, label, Persian);
         }
 
-        private static string LabelFor(string key, bool fa)
+        private TMP_FontAsset Pick(MenuFonts english, MenuFonts persian)
         {
-            switch (key)
-            {
-                case "sandbox": return fa ? "تست سندباکس" : "SANDBOX TEST";
-                case "options": return fa ? "تنظیمات" : "OPTIONS";
-                case "quit": return fa ? "خروج" : "QUIT";
-            }
+            MenuFonts fonts = Persian ? persian : english;
+            if (fonts.label != null) return fonts.label;
+            if (fonts.title != null) return fonts.title;
 
-            return key;
+            MenuFonts other = Persian ? english : persian;
+
+            return other.label != null ? other.label : other.title;
+        }
+
+        private TMP_FontAsset PickTitle(MenuFonts english, MenuFonts persian)
+        {
+            MenuFonts fonts = Persian ? persian : english;
+            if (fonts.title != null) return fonts.title;
+            if (fonts.label != null) return fonts.label;
+
+            MenuFonts other = Persian ? english : persian;
+
+            return other.title != null ? other.title : other.label;
         }
 
         private static void SetText(TMP_Text text, string value, TMP_FontAsset font, bool farsi)

@@ -4,6 +4,11 @@
 lang.fa = فارسی
 lang.en = انگلیسی
 
+menu.title = خانه
+menu.sandbox = تست سندباکس
+menu.options = تنظیمات
+menu.quit = خروج
+
 # --- منوی توقف ---
 pause.tab.system = تنظیمات
 pause.tab.map = نقشه

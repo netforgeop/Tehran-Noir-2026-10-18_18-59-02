@@ -220,6 +220,9 @@ namespace TehranNoir.UI
             AddSetting(_rowsRoot, SettingsLayout.RowX, SettingsLayout.RowWidth,
                 Loc.Get(Loc.Channel.Menu, "settings.vsync"), y, YesNoText(() => GameSettings.VSync),
                 delta => GameSettings.ToggleVSync());
+            y += SettingsLayout.RowHeight;
+
+            AddApply(y);
         }
 
         private static string ResolutionText()
@@ -271,14 +274,23 @@ namespace TehranNoir.UI
                 GameSettings.StepTexture);
             y += SettingsLayout.RowHeight;
 
-            AddSetting(_rowsRoot, SettingsLayout.RowX, SettingsLayout.RowWidth,
-                Loc.Get(Loc.Channel.Menu, "settings.aa"), y, AntiAliasingText,
-                GameSettings.StepAntiAliasing);
-            y += SettingsLayout.RowHeight;
+            AddApply(y);
+        }
 
+        /// <summary>
+        /// ردیف «اعمال تغییرات»: تا وقتی زده نشود، تصویر و گرافیک عوض نمی‌شوند.
+        /// </summary>
+        private void AddApply(float y)
+        {
             AddSetting(_rowsRoot, SettingsLayout.RowX, SettingsLayout.RowWidth,
-                Loc.Get(Loc.Channel.Menu, "settings.shadows"), y, ShadowText,
-                GameSettings.StepShadows);
+                Loc.Get(Loc.Channel.Menu, "settings.apply"), y, ApplyText, null, GameSettings.Apply);
+        }
+
+        private static string ApplyText()
+        {
+            return GameSettings.HasPending
+                ? Loc.Get(Loc.Channel.Menu, "settings.apply.pending")
+                : Loc.Get(Loc.Channel.Menu, "settings.apply.done");
         }
 
         private static string QualityText()
@@ -296,24 +308,6 @@ namespace TehranNoir.UI
                 case 1: return Loc.Get(Loc.Channel.Menu, "settings.texture.half");
                 case 2: return Loc.Get(Loc.Channel.Menu, "settings.texture.quarter");
                 default: return Loc.Get(Loc.Channel.Menu, "settings.texture.full");
-            }
-        }
-
-        private static string AntiAliasingText()
-        {
-            int[] values = { 0, 2, 4, 8 };
-            int value = values[Mathf.Clamp(GameSettings.AntiAliasingIndex, 0, values.Length - 1)];
-
-            return value <= 0 ? Loc.Get(Loc.Channel.Menu, "settings.off") : value + "x";
-        }
-
-        private static string ShadowText()
-        {
-            switch (GameSettings.ShadowIndex)
-            {
-                case 0: return Loc.Get(Loc.Channel.Menu, "settings.shadows.off");
-                case 1: return Loc.Get(Loc.Channel.Menu, "settings.shadows.hard");
-                default: return Loc.Get(Loc.Channel.Menu, "settings.shadows.all");
             }
         }
 

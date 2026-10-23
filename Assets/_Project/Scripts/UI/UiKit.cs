@@ -105,6 +105,32 @@ namespace TehranNoir.UI
             SetBoolMember(rtl, "FixTags", true);
         }
 
+        /// <summary>
+        /// آیا رشته حرف فارسی/عربی دارد؟ فونت و جهت هر متن از روی خودِ رشته انتخاب می‌شود،
+        /// نه از روی زبان منو؛ وگرنه «فارسی» در منوی انگلیسی مربع می‌شود.
+        /// </summary>
+        public static bool HasPersian(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return false;
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+
+                if (c >= '\u0600' && c <= '\u06FF') return true;
+                if (c >= '\uFB50' && c <= '\uFDFF') return true;
+                if (c >= '\uFE70' && c <= '\uFEFF') return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>جهت متن را بعد از عوض‌شدن رشته هم درست می‌کند.</summary>
+        public static void SetFarsi(TMP_Text text, bool farsi)
+        {
+            SetRtl(text, farsi);
+        }
+
         private static Type FindRtlTextType()
         {
             if (_rtlSearched) return _rtlType;

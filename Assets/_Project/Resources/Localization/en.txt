@@ -15,6 +15,9 @@ pause.switch = Switch tab
 pause.soon = This section is coming in a later step.
 
 # --- Settings page ---
+settings.apply = Apply changes
+settings.apply.pending = Not applied
+settings.apply.done = Up to date
 settings.back = Back
 settings.audio = Audio
 settings.video = Video

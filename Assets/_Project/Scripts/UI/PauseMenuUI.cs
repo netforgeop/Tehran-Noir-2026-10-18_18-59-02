@@ -73,6 +73,17 @@ namespace TehranNoir.UI
 
         public TMP_FontAsset Font => !Persian && latinFont != null ? latinFont : font;
 
+        /// <summary>
+        /// فونتی که این رشته را واقعاً دارد: متن دارای حرف فارسی همیشه با فونت فارسی،
+        /// بقیه با فونت زبان منو. این‌طوری «فارسی» در منوی انگلیسی هم مربع نمی‌شود.
+        /// </summary>
+        public TMP_FontAsset FontFor(string text)
+        {
+            if (UiKit.HasPersian(text)) return font;
+
+            return Font;
+        }
+
         /// <summary>زبان رابط از کانال «منو» می‌آید.</summary>
         public bool Persian => Loc.IsRtl(Loc.Channel.Menu);
 

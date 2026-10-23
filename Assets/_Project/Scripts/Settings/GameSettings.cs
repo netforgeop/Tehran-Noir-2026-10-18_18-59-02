@@ -6,12 +6,12 @@ namespace TehranNoir.Settings
 {
     /// <summary>
     /// تنها جای خواندن و نوشتن تنظیمات بازی: صدا، تصویر، گرافیک.
-    /// همه‌چیز در PlayerPrefs ذخیره می‌شود و بعد از هر تغییر فوراً اعمال می‌شود.
-    /// برای تنظیم تازه: یک مقدار، یک ذخیره، یک Apply — و یک ردیف در SettingsView.
+    /// صدا فوراً اعمال می‌شود؛ تصویر و گرافیک اول در حافظه ذخیره می‌شوند
+    /// و با GameSettings.Apply() — همان دکمه‌ی «اعمال تغییرات» — واقعاً اعمال می‌شوند.
+    /// برای تنظیم تازه: یک مقدار، یک ذخیره، یک Apply — و یک ردیف در صفحه‌ی تنظیمات.
     /// </summary>
     public static class GameSettings
     {
-        /// <summary>کانال‌های صدا. Master روی AudioListener اثر می‌گذارد، بقیه روی هر AudioSource.</summary>
         public enum Band
         {
             Master,
@@ -24,7 +24,6 @@ namespace TehranNoir.Settings
 
         private static readonly float[] VolumeValues = { 1f, 0.8f, 0.8f, 0.8f };
         private static readonly int[] FpsValues = { 30, 60, 90, 120, 144, 240, 0 };
-        private static readonly int[] AntiAliasingValues = { 0, 2, 4, 8 };
 
         private static readonly FullScreenMode[] Modes =
         {
@@ -36,6 +35,7 @@ namespace TehranNoir.Settings
         private static readonly List<Vector2Int> ResolutionList = new List<Vector2Int>();
 
         private static bool _loaded;
+        private static bool _pending;
 
         public static event Action VolumeChanged;
         public static event Action VideoChanged;
@@ -48,8 +48,16 @@ namespace TehranNoir.Settings
         public static int ModeIndex { get; private set; } = 1;
         public static int QualityIndex { get; private set; }
         public static int TextureIndex { get; private set; }
-        public static int AntiAliasingIndex { get; private set; }
-        public static int ShadowIndex { get; private set; }
+
+        /// <summary>تغییری هست که هنوز دکمه‌ی اعمال زده نشده.</summary>
+        public static bool HasPending
+        {
+            get
+            {
+                EnsureLoaded();
+                return _pending;
+            }
+        }
 
         public static IReadOnlyList<Vector2Int> Resolutions
         {
@@ -129,8 +137,6 @@ namespace TehranNoir.Settings
             QualityIndex = Mathf.Clamp(PlayerPrefs.GetInt(Prefix + "quality", QualitySettings.GetQualityLevel()),
                 0, Mathf.Max(0, QualitySettings.names.Length - 1));
             TextureIndex = Mathf.Clamp(PlayerPrefs.GetInt(Prefix + "texture", 0), 0, 2);
-            AntiAliasingIndex = Mathf.Clamp(PlayerPrefs.GetInt(Prefix + "aa", 0), 0, AntiAliasingValues.Length - 1);
-            ShadowIndex = Mathf.Clamp(PlayerPrefs.GetInt(Prefix + "shadows", 2), 0, 2);
         }
 
         private static void Save()
@@ -144,14 +150,12 @@ namespace TehranNoir.Settings
             PlayerPrefs.SetInt(Prefix + "mode", ModeIndex);
             PlayerPrefs.SetInt(Prefix + "quality", QualityIndex);
             PlayerPrefs.SetInt(Prefix + "texture", TextureIndex);
-            PlayerPrefs.SetInt(Prefix + "aa", AntiAliasingIndex);
-            PlayerPrefs.SetInt(Prefix + "shadows", ShadowIndex);
 
             PlayerPrefs.Save();
         }
 
         /* ============================================================
-           صدا
+           صدا — فوری
            ============================================================ */
 
         public static float Volume(Band band)
@@ -192,30 +196,18 @@ namespace TehranNoir.Settings
         }
 
         /* ============================================================
-           تصویر
+           تصویر و گرافیک — با تأیید
            ============================================================ */
 
-        public static void StepFps(int direction)
+        /// <summary>مقادیر انتخاب‌شده را واقعاً روی بازی اعمال می‌کند.</summary>
+        public static void Apply()
         {
             EnsureLoaded();
 
-            FpsIndex = (FpsIndex + direction + FpsValues.Length) % FpsValues.Length;
-
-            // با V-Sync روشن، محدودیت فریم اعمال نمی‌شود
-            VSync = false;
-
             ApplyVideo(applyResolution: true);
-            Save();
-            VideoChanged?.Invoke();
-        }
 
-        public static void ToggleVSync()
-        {
-            EnsureLoaded();
+            _pending = false;
 
-            VSync = !VSync;
-
-            ApplyVideo(applyResolution: true);
             Save();
             VideoChanged?.Invoke();
         }
@@ -226,9 +218,7 @@ namespace TehranNoir.Settings
 
             ResolutionIndex = (ResolutionIndex + direction + ResolutionList.Count) % ResolutionList.Count;
 
-            ApplyVideo(applyResolution: true);
-            Save();
-            VideoChanged?.Invoke();
+            MarkPending();
         }
 
         public static void StepMode(int direction)
@@ -237,9 +227,28 @@ namespace TehranNoir.Settings
 
             ModeIndex = (ModeIndex + direction + Modes.Length) % Modes.Length;
 
-            ApplyVideo(applyResolution: true);
-            Save();
-            VideoChanged?.Invoke();
+            MarkPending();
+        }
+
+        public static void StepFps(int direction)
+        {
+            EnsureLoaded();
+
+            FpsIndex = (FpsIndex + direction + FpsValues.Length) % FpsValues.Length;
+
+            // با V-Sync روشن، سقف فریم اعمال نمی‌شود
+            VSync = false;
+
+            MarkPending();
+        }
+
+        public static void ToggleVSync()
+        {
+            EnsureLoaded();
+
+            VSync = !VSync;
+
+            MarkPending();
         }
 
         public static void StepQuality(int direction)
@@ -249,10 +258,7 @@ namespace TehranNoir.Settings
             int count = Mathf.Max(1, QualitySettings.names.Length);
             QualityIndex = (QualityIndex + direction + count) % count;
 
-            QualitySettings.SetQualityLevel(QualityIndex, true);
-
-            Save();
-            VideoChanged?.Invoke();
+            MarkPending();
         }
 
         public static void StepTexture(int direction)
@@ -261,31 +267,12 @@ namespace TehranNoir.Settings
 
             TextureIndex = (TextureIndex + direction + 3) % 3;
 
-            QualitySettings.globalTextureMipmapLimit = TextureIndex;
-
-            Save();
-            VideoChanged?.Invoke();
+            MarkPending();
         }
 
-        public static void StepAntiAliasing(int direction)
+        private static void MarkPending()
         {
-            EnsureLoaded();
-
-            AntiAliasingIndex = (AntiAliasingIndex + direction + AntiAliasingValues.Length) % AntiAliasingValues.Length;
-
-            QualitySettings.antiAliasing = AntiAliasingValues[AntiAliasingIndex];
-
-            Save();
-            VideoChanged?.Invoke();
-        }
-
-        public static void StepShadows(int direction)
-        {
-            EnsureLoaded();
-
-            ShadowIndex = (ShadowIndex + direction + 3) % 3;
-
-            QualitySettings.shadows = (ShadowQuality)ShadowIndex;
+            _pending = true;
 
             Save();
             VideoChanged?.Invoke();
@@ -300,8 +287,6 @@ namespace TehranNoir.Settings
             QualitySettings.vSyncCount = VSync ? 1 : 0;
 
             QualitySettings.globalTextureMipmapLimit = TextureIndex;
-            QualitySettings.antiAliasing = AntiAliasingValues[AntiAliasingIndex];
-            QualitySettings.shadows = (ShadowQuality)ShadowIndex;
 
             if (!applyResolution) return;
             if (ResolutionList.Count == 0) return;

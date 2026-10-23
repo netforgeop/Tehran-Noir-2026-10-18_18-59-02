@@ -72,6 +72,23 @@ namespace TehranNoir.UI
         }
 
         /// <summary>
+        /// تب بخش‌های داخلی دارد (مثل صفحه‌ی تنظیمات)؛ آن‌وقت چپ/راست به‌جای عوض‌کردن تب،
+        /// بخش را عوض می‌کند. قالب منو از همین پرچم تصمیم می‌گیرد.
+        /// </summary>
+        public virtual bool UsesSections => false;
+
+        /// <summary>چپ/راست در سطح بخش‌ها. Q منفی، E مثبت.</summary>
+        public virtual void Section(int delta)
+        {
+        }
+
+        /// <summary>Esc یا دکمه‌ی برگشت. اگر تب خودش مصرف کرد true برمی‌گرداند.</summary>
+        public virtual bool Back()
+        {
+            return false;
+        }
+
+        /// <summary>
         /// Enter یا کلیک: ردیف منو کارش را انجام می‌دهد؛
         /// ردیف تنظیمات دکمه ندارد، پس مقدارش یک پله جلو می‌رود.
         /// </summary>

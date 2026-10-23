@@ -28,6 +28,7 @@ namespace TehranNoir.UI
 
         private int _section;
         private int _selected;
+        private bool _applied;
 
         public MenuSettings(RectTransform parent, TMP_FontAsset font, bool persian, Action back)
         {
@@ -113,6 +114,8 @@ namespace TehranNoir.UI
 
             AddSetting(Loc.Get(Loc.Channel.Menu, "settings.back"), SettingsLayout.BackY, null, null, _back);
 
+            _applied = false;
+
             HighlightRail();
             _selected = 0;
             Highlight();
@@ -186,14 +189,30 @@ namespace TehranNoir.UI
         /// <summary>ردیف «اعمال تغییرات»: تا وقتی زده نشود، تصویر و گرافیک عوض نمی‌شوند.</summary>
         private void AddApply(float y)
         {
-            AddSetting(Loc.Get(Loc.Channel.Menu, "settings.apply"), y, ApplyText, null, GameSettings.Apply);
+            AddSetting(Loc.Get(Loc.Channel.Menu, "settings.apply"), y, ApplyText, null, ApplyAll);
         }
 
-        private static string ApplyText()
+        /// <summary>
+        /// اعمال واقعی. بعد از آن ردیف باید فوراً بگوید «اعمال شد»؛
+        /// وگرنه کاربر فکر می‌کند دکمه کار نکرده است.
+        /// </summary>
+        private void ApplyAll()
         {
-            return GameSettings.HasPending
-                ? Loc.Get(Loc.Channel.Menu, "settings.apply.pending")
-                : Loc.Get(Loc.Channel.Menu, "settings.apply.done");
+            GameSettings.Apply();
+
+            _applied = true;
+        }
+
+        private string ApplyText()
+        {
+            if (GameSettings.HasPending)
+            {
+                _applied = false;
+
+                return Loc.Get(Loc.Channel.Menu, "settings.apply.pending");
+            }
+
+            return Loc.Get(Loc.Channel.Menu, _applied ? "settings.applied" : "settings.apply.done");
         }
 
         /* ============================================================
@@ -360,6 +379,7 @@ namespace TehranNoir.UI
             if (row.Action != null)
             {
                 row.Action();
+                Refresh();
                 return;
             }
 
@@ -372,7 +392,18 @@ namespace TehranNoir.UI
 
         public void NextSection()
         {
-            BuildSection((_section + 1) % SectionCount);
+            Section(1);
+        }
+
+        /// <summary>بخش بعدی/قبلی؛ Q و E و Tab همه از همین راه می‌روند.</summary>
+        public void Section(int delta)
+        {
+            if (delta == 0 || SectionCount == 0) return;
+
+            int index = (_section + delta) % SectionCount;
+            if (index < 0) index += SectionCount;
+
+            BuildSection(index);
         }
 
         /// <summary>ماوس: ریل بخش‌ها اول، بعد ردیف‌ها. هاور انتخاب می‌کند، کلیک اجرا.</summary>

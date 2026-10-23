@@ -304,15 +304,17 @@ namespace TehranNoir.UI
 
             if (keyboard != null)
             {
+                // Esc اول به تب می‌رسد: داخل تنظیمات یعنی «برگشت»، نه بستن کل منو
                 if (keyboard.escapeKey.wasPressedThisFrame)
                 {
-                    Resume();
+                    Back();
                     return;
                 }
 
-                // Q سمت چپ، E سمت راست — همان‌جایی که بج‌ها نشسته‌اند
-                if (keyboard.qKey.wasPressedThisFrame) SwitchTab(1);
-                if (keyboard.eKey.wasPressedThisFrame) SwitchTab(-1);
+                // Q سمت چپ، E سمت راست — همان‌جایی که بج‌ها نشسته‌اند.
+                // تب تنظیمات بخش دارد، پس داخلش Q/E بخش را عوض می‌کند، نه تب را.
+                if (keyboard.qKey.wasPressedThisFrame) Horizontal(-1);
+                if (keyboard.eKey.wasPressedThisFrame) Horizontal(1);
                 if (keyboard.tabKey.wasPressedThisFrame) _tabs[_activeTab].NextSection();
 
                 if (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame) _tabs[_activeTab].Move(1);
@@ -329,12 +331,12 @@ namespace TehranNoir.UI
             {
                 if (gamepad.startButton.wasPressedThisFrame || gamepad.buttonEast.wasPressedThisFrame)
                 {
-                    Resume();
+                    Back();
                     return;
                 }
 
-                if (gamepad.leftShoulder.wasPressedThisFrame) SwitchTab(1);
-                if (gamepad.rightShoulder.wasPressedThisFrame) SwitchTab(-1);
+                if (gamepad.leftShoulder.wasPressedThisFrame) Horizontal(-1);
+                if (gamepad.rightShoulder.wasPressedThisFrame) Horizontal(1);
                 if (gamepad.buttonNorth.wasPressedThisFrame) _tabs[_activeTab].NextSection();
 
                 if (gamepad.dpad.down.wasPressedThisFrame || gamepad.leftStick.down.wasPressedThisFrame) _tabs[_activeTab].Move(1);
@@ -380,6 +382,37 @@ namespace TehranNoir.UI
             }
 
             return -1;
+        }
+
+        /// <summary>
+        /// Esc یا دکمه‌ی برگشت: اول فعال‌ترین تب شانس دارد (تنظیمات → فهرست خودش)،
+        /// وگرنه منو بسته می‌شود. یک کلید، یک معنی، بدون شرط‌های پراکنده در چند جا.
+        /// </summary>
+        private void Back()
+        {
+            if (_tabs.Count > 0 && _tabs[_activeTab].Back()) return;
+
+            Resume();
+        }
+
+        /// <summary>
+        /// چپ/راست در سطح منو. Q منفی، E مثبت.
+        /// اگر تب فعال بخش‌های داخلی داشته باشد (تنظیمات)، بخش عوض می‌شود؛
+        /// وگرنه تب قبلی/بعدی. چیدمان راست‌به‌چپ است، پس «چپ» یعنی تب قبلی.
+        /// </summary>
+        private void Horizontal(int delta)
+        {
+            if (_tabs.Count == 0 || delta == 0) return;
+
+            PauseTab tab = _tabs[_activeTab];
+
+            if (tab.UsesSections)
+            {
+                tab.Section(delta);
+                return;
+            }
+
+            SwitchTab(-delta);
         }
 
         /// <summary>+1 یعنی تب سمت چپ، -1 یعنی تب سمت راست (چیدمان راست‌به‌چپ).</summary>

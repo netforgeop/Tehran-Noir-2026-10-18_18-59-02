@@ -26,6 +26,7 @@ pause.soon = این بخش در مرحله‌ی بعد ساخته می‌شود.
 settings.apply = اعمال تغییرات
 settings.apply.pending = اعمال‌نشده
 settings.apply.done = بدون تغییر
+settings.applied = اعمال شد
 settings.back = بازگشت
 settings.audio = صدا
 settings.video = تصویر

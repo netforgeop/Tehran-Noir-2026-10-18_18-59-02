@@ -82,7 +82,8 @@ namespace TehranNoir.UI
             Rows.Clear();
         }
 
-        private bool SettingsVisible => _settings != null && _settings.Root.gameObject.activeSelf;
+        /// <summary>activeInHierarchy، نه activeSelf: وقتی کل پنل تب خاموش است، صفحه هم خاموش حساب شود.</summary>
+        private bool SettingsVisible => _settings != null && _settings.Root.gameObject.activeInHierarchy;
 
         private void SwapRows(List<PauseRow> source)
         {
@@ -130,6 +131,22 @@ namespace TehranNoir.UI
         public override void NextSection()
         {
             if (SettingsVisible) _settings.NextSection();
+        }
+
+        public override bool UsesSections => SettingsVisible;
+
+        public override void Section(int delta)
+        {
+            if (SettingsVisible) _settings.Section(delta);
+        }
+
+        /// <summary>Esc داخل تنظیمات یعنی برگشت به فهرست، نه بستن منوی توقف.</summary>
+        public override bool Back()
+        {
+            if (!SettingsVisible) return false;
+
+            ShowRoot();
+            return true;
         }
 
         public override void Pointer(Vector2 screenPoint, bool clicked)

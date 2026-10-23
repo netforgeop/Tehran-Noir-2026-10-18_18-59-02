@@ -86,6 +86,9 @@ namespace TehranNoir.UI
         private GameObject _settingsOverlay;
         private MenuSettings _settingsPage;
 
+        /// <summary>در حال رفتن از این صحنه؛ تا محو تمام نشود، هیچ کلیدی کار نمی‌کند.</summary>
+        private bool _leaving;
+
         private static Type _rtlType;
         private static bool _rtlSearched;
         private static Sprite _fadeSprite;
@@ -126,11 +129,13 @@ namespace TehranNoir.UI
         private void Update()
         {
             FitBackground();
+            AnimateFrames();
+
+            // وسط محو شدن، ورودی نمی‌گیریم؛ وگرنه دو بار Enter یعنی دو بار لود
+            if (_leaving) return;
 
             if (_settingsPage != null) HandleSettingsInput();
             else HandleInput();
-
-            AnimateFrames();
         }
 
         /// <summary>
@@ -169,8 +174,11 @@ namespace TehranNoir.UI
 
             if (keyboard != null)
             {
-                if (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame) SelectIndex(_selected + 1);
-                if (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame) SelectIndex(_selected - 1);
+                if (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame ||
+                    keyboard.dKey.wasPressedThisFrame || keyboard.eKey.wasPressedThisFrame) SelectIndex(_selected + 1);
+
+                if (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame ||
+                    keyboard.aKey.wasPressedThisFrame || keyboard.qKey.wasPressedThisFrame) SelectIndex(_selected - 1);
 
                 if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
                     keyboard.spaceKey.wasPressedThisFrame) Activate(_selected);
@@ -225,6 +233,8 @@ namespace TehranNoir.UI
                 if (keyboard.leftArrowKey.wasPressedThisFrame || keyboard.aKey.wasPressedThisFrame) _settingsPage.Step(-1);
                 if (keyboard.rightArrowKey.wasPressedThisFrame || keyboard.dKey.wasPressedThisFrame) _settingsPage.Step(1);
 
+                if (keyboard.qKey.wasPressedThisFrame) _settingsPage.Section(-1);
+                if (keyboard.eKey.wasPressedThisFrame) _settingsPage.Section(1);
                 if (keyboard.tabKey.wasPressedThisFrame) _settingsPage.NextSection();
 
                 if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
@@ -314,7 +324,44 @@ namespace TehranNoir.UI
                 return;
             }
 
-            SceneManager.LoadScene(gameSceneName);
+            LeaveTo(gameSceneName);
+        }
+
+        /// <summary>
+        /// هر خروجی از منو از این‌جا رد می‌شود: اول تصویر و موزیک محو می‌شوند،
+        /// بعد صحنه عوض می‌شود. صحنه‌ی تازه خودش از سیاه روشن می‌شود (ScreenFade).
+        /// </summary>
+        private void LeaveTo(string scene)
+        {
+            if (_leaving) return;
+
+            _leaving = true;
+
+            ShowHint(string.Empty);
+            FadeMusic();
+
+            if (ScreenFade.Instance != null)
+            {
+                ScreenFade.Instance.FadeOut(0.45f, () => SceneManager.LoadScene(scene));
+                return;
+            }
+
+            SceneManager.LoadScene(scene);
+        }
+
+        private void FadeMusic()
+        {
+            MenuMusic music = GetComponent<MenuMusic>();
+
+            if (music != null)
+            {
+                music.FadeOut(0.45f);
+                return;
+            }
+
+            // موزیک ممکن است روی یک فرزند نشسته باشد
+            music = GetComponentInChildren<MenuMusic>();
+            if (music != null) music.FadeOut(0.45f);
         }
 
         /// <summary>تنظیمات، همان صفحه‌ای است که منوی توقف هم استفاده می‌کند.</summary>
@@ -346,6 +393,23 @@ namespace TehranNoir.UI
         }
 
         private void QuitGame()
+        {
+            if (_leaving) return;
+
+            _leaving = true;
+
+            FadeMusic();
+
+            if (ScreenFade.Instance != null)
+            {
+                ScreenFade.Instance.FadeOut(0.4f, QuitNow);
+                return;
+            }
+
+            QuitNow();
+        }
+
+        private static void QuitNow()
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;

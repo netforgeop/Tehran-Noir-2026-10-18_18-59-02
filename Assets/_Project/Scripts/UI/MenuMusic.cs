@@ -95,6 +95,38 @@ namespace TehranNoir.UI
             _source.Stop();
         }
 
+        /// <summary>
+        /// محو شدن و قطع تدریجی؛ برای خروج از منو.
+        /// بدون این، با عوض‌شدن صحنه صدا یک‌دفعه قطع می‌شود و تو گوش می‌خورد.
+        /// </summary>
+        public void FadeOut(float seconds)
+        {
+            if (_source == null) return;
+
+            if (_fade != null) StopCoroutine(_fade);
+
+            _fade = StartCoroutine(FadeOutRoutine(Mathf.Max(0.01f, seconds)));
+        }
+
+        private IEnumerator FadeOutRoutine(float seconds)
+        {
+            float from = _source.volume;
+            float elapsed = 0f;
+
+            while (elapsed < seconds)
+            {
+                elapsed += Time.unscaledDeltaTime;
+
+                _source.volume = Mathf.Lerp(from, 0f, elapsed / seconds);
+                yield return null;
+            }
+
+            _source.volume = 0f;
+            _source.Stop();
+
+            _fade = null;
+        }
+
         /// <summary>برای تغییر حجم از بیرون.</summary>
         public void SetVolume(float target)
         {

@@ -109,12 +109,26 @@ namespace TehranNoir.Settings
                 if (!ResolutionList.Contains(size)) ResolutionList.Add(size);
             }
 
+            // در بعضی محیط‌ها فهرست خالی یا تک‌عضوی است؛ آن‌وقت ردیف رزولوشن هیچ‌وقت عوض نمی‌شود.
+            if (ResolutionList.Count < 2)
+            {
+                AddResolution(1280, 720);
+                AddResolution(1600, 900);
+                AddResolution(1920, 1080);
+            }
+
             if (ResolutionList.Count == 0)
                 ResolutionList.Add(new Vector2Int(Screen.width, Screen.height));
 
             ResolutionList.Sort((a, b) => a.x == b.x ? a.y.CompareTo(b.y) : a.x.CompareTo(b.x));
 
             ResolutionIndex = FindCurrentResolution();
+        }
+
+        private static void AddResolution(int width, int height)
+        {
+            Vector2Int size = new Vector2Int(width, height);
+            if (!ResolutionList.Contains(size)) ResolutionList.Add(size);
         }
 
         private static int FindCurrentResolution()
@@ -270,11 +284,14 @@ namespace TehranNoir.Settings
             MarkPending();
         }
 
+        /// <summary>
+        /// فقط در حافظه؛ هیچ‌جا ذخیره نمی‌شود. اگر ذخیره شود، با یک بار خروج و ورود
+        /// همان تغییرِ اعمال‌نشده روی بازی می‌نشیند و «اعمال» بی‌معنی می‌شود.
+        /// </summary>
         private static void MarkPending()
         {
             _pending = true;
 
-            Save();
             VideoChanged?.Invoke();
         }
 
@@ -293,6 +310,10 @@ namespace TehranNoir.Settings
 
             Vector2Int size = ResolutionList[Mathf.Clamp(ResolutionIndex, 0, ResolutionList.Count - 1)];
             Screen.SetResolution(size.x, size.y, Mode);
+
+            // در ادیتور رزولوشنِ پنجره عوض نمی‌شود؛ این خط تنها مدرکِ اعمال‌شدن است.
+            Debug.Log("[Settings] applied " + size.x + "\u00d7" + size.y + " · " + Mode +
+                      " · " + Application.targetFrameRate + " fps · V-Sync " + (VSync ? "on" : "off"));
         }
     }
 }

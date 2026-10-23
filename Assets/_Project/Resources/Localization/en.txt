@@ -26,6 +26,7 @@ pause.soon = This section is coming in a later step.
 settings.apply = Apply changes
 settings.apply.pending = Not applied
 settings.apply.done = Up to date
+settings.applied = Applied
 settings.back = Back
 settings.audio = Audio
 settings.video = Video

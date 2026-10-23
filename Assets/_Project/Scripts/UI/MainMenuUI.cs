@@ -11,7 +11,7 @@ namespace TehranNoir.UI
 {
     /// <summary>
     /// منوی اصلی به سبک Mafia: پس‌زمینه‌ی تمام‌صفحه، عنوان طلایی، آیتم‌های
-    /// خاکستری با نوار تیره زیر آیتم انتخاب‌شده و لوزی + خط ثابت زیر لیست.
+    /// خاکستری با کادر نازک طلایی (بالا، پایین، چپ) زیر آیتم انتخاب‌شده.
     /// تمام رابط در زمان اجرا ساخته می‌شود.
     /// </summary>
     [DisallowMultipleComponent]
@@ -55,18 +55,20 @@ namespace TehranNoir.UI
         private const float TitleSize = 90f;
         private const float ItemSize = 56f;
         private const float TextLeftPadding = 54f;
+        private const float FrameLine = 2f;
 
         private static readonly Color GoldColor = new Color(0.659f, 0.502f, 0.188f);
         private static readonly Color ItemNormalColor = new Color(0.588f, 0.573f, 0.541f);
         private static readonly Color ItemSelectedColor = new Color(0.933f, 0.937f, 0.925f);
-        private static readonly Color BarColor = new Color(0.10f, 0.09f, 0.07f, 0.82f);
+        private static readonly Color FrameLineColor = new Color(0.78f, 0.64f, 0.34f, 0.95f);
+        private static readonly Color FrameFillColor = new Color(0.72f, 0.60f, 0.33f, 0.16f);
         private static readonly Color BackgroundFallback = new Color(0.05f, 0.045f, 0.04f);
 
         private sealed class MenuItem
         {
             public string Key;
             public RectTransform Rect;
-            public Image Bar;
+            public CanvasGroup Frame;
             public TMP_Text Label;
             public Action Action;
         }
@@ -81,6 +83,7 @@ namespace TehranNoir.UI
 
         private static Type _rtlType;
         private static bool _rtlSearched;
+        private static Sprite _fadeSprite;
 
         /* ============================================================
            چرخه
@@ -93,7 +96,9 @@ namespace TehranNoir.UI
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            EnsureCamera();
+            Camera menuCamera = EnsureCamera();
+            EnsureAudioListener(menuCamera);
+
             Build();
             ApplyLanguage();
             SelectIndex(0);
@@ -102,7 +107,7 @@ namespace TehranNoir.UI
         private void Update()
         {
             HandleInput();
-            AnimateBars();
+            AnimateFrames();
         }
 
         /* ============================================================
@@ -174,18 +179,18 @@ namespace TehranNoir.UI
             action();
         }
 
-        /// <summary>پرش نرم نوار انتخاب؛ هر فریم آلفا را به هدف نزدیک می‌کند.</summary>
-        private void AnimateBars()
+        /// <summary>کادر انتخاب هر فریم به سمت هدف می‌رود؛ پرش ندارد.</summary>
+        private void AnimateFrames()
         {
             for (int i = 0; i < _items.Count; i++)
             {
                 MenuItem item = _items[i];
-                if (item.Bar == null) continue;
 
-                float target = i == _selected ? BarColor.a : 0f;
-                Color color = item.Bar.color;
-                color.a = Mathf.MoveTowards(color.a, target, 8f * Time.unscaledDeltaTime);
-                item.Bar.color = color;
+                if (item.Frame != null)
+                {
+                    float target = i == _selected ? 1f : 0f;
+                    item.Frame.alpha = Mathf.MoveTowards(item.Frame.alpha, target, 9f * Time.unscaledDeltaTime);
+                }
 
                 item.Label.color = i == _selected ? ItemSelectedColor : ItemNormalColor;
             }
@@ -242,23 +247,40 @@ namespace TehranNoir.UI
         }
 
         /* ============================================================
-           ساخت رابط
+           صحنه
            ============================================================ */
 
-        private void EnsureCamera()
+        private Camera EnsureCamera()
         {
-            if (Camera.main != null) return;
+            Camera camera = Camera.main;
+            if (camera != null) return camera;
 
             GameObject cameraObject = new GameObject("MenuCamera", typeof(Camera));
             cameraObject.tag = "MainCamera";
             cameraObject.transform.SetParent(transform, false);
 
-            Camera camera = cameraObject.GetComponent<Camera>();
+            camera = cameraObject.GetComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = BackgroundFallback;
             camera.orthographic = true;
             camera.orthographicSize = 5f;
+
+            return camera;
         }
+
+        /// بدون AudioListener هیچ صدایی پخش نمی‌شود؛ صحنه‌ی خالی هیچ ندارد.
+        private static void EnsureAudioListener(Camera camera)
+        {
+            if (camera == null) return;
+
+            if (camera.GetComponent<AudioListener>() != null) return;
+
+            camera.gameObject.AddComponent<AudioListener>();
+        }
+
+        /* ============================================================
+           ساخت رابط
+           ============================================================ */
 
         private void Build()
         {
@@ -398,9 +420,7 @@ namespace TehranNoir.UI
             rect.anchoredPosition = new Vector2(0f, y);
             rect.sizeDelta = new Vector2(ColumnWidth, ItemHeight);
 
-            Image bar = rect.gameObject.AddComponent<Image>();
-            bar.color = new Color(BarColor.r, BarColor.g, BarColor.b, 0f);
-            bar.raycastTarget = false;
+            CanvasGroup frame = CreateFrame(rect);
 
             RectTransform labelRect = CreateNode("Label", rect);
             Stretch(labelRect);
@@ -412,10 +432,105 @@ namespace TehranNoir.UI
             MenuItem item = new MenuItem();
             item.Key = key;
             item.Rect = rect;
-            item.Bar = bar;
+            item.Frame = frame;
             item.Label = label;
             item.Action = action;
             _items.Add(item);
+        }
+
+        /// کادر انتخاب: پرکردن محو + سه خط نازک (چپ، بالا، پایین). سمت راست باز است.
+        private static CanvasGroup CreateFrame(RectTransform parent)
+        {
+            RectTransform root = CreateNode("Frame", parent);
+            Stretch(root);
+
+            CanvasGroup group = root.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+            group.interactable = false;
+
+            // پرکردن: از چپ روشن، به سمت راست محو
+            RectTransform fillRect = CreateNode("Fill", root);
+            Stretch(fillRect);
+
+            Image fill = fillRect.gameObject.AddComponent<Image>();
+            fill.sprite = FadeSprite;
+            fill.type = Image.Type.Simple;
+            fill.color = FrameFillColor;
+            fill.raycastTarget = false;
+
+            // خط چپ: یکدست
+            RectTransform leftRect = CreateNode("LineLeft", root);
+            leftRect.anchorMin = new Vector2(0f, 0f);
+            leftRect.anchorMax = new Vector2(0f, 1f);
+            leftRect.pivot = new Vector2(0f, 0.5f);
+            leftRect.offsetMin = new Vector2(0f, 0f);
+            leftRect.offsetMax = new Vector2(FrameLine, 0f);
+
+            Image left = leftRect.gameObject.AddComponent<Image>();
+            left.color = FrameLineColor;
+            left.raycastTarget = false;
+
+            CreateLine(root, "LineTop", true);
+            CreateLine(root, "LineBottom", false);
+
+            return group;
+        }
+
+        /// خط افقی؛ از چپ پر و به راست محو می‌شود.
+        private static void CreateLine(RectTransform parent, string name, bool top)
+        {
+            RectTransform rect = CreateNode(name, parent);
+
+            if (top)
+            {
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(0f, 1f);
+                rect.offsetMin = new Vector2(0f, -FrameLine);
+                rect.offsetMax = new Vector2(0f, 0f);
+            }
+            else
+            {
+                rect.anchorMin = new Vector2(0f, 0f);
+                rect.anchorMax = new Vector2(1f, 0f);
+                rect.pivot = new Vector2(0f, 0f);
+                rect.offsetMin = new Vector2(0f, 0f);
+                rect.offsetMax = new Vector2(0f, FrameLine);
+            }
+
+            Image image = rect.gameObject.AddComponent<Image>();
+            image.sprite = FadeSprite;
+            image.color = FrameLineColor;
+            image.raycastTarget = false;
+        }
+
+        /// بافت محو از چپ به راست؛ یک بار ساخته و همه‌جا استفاده می‌شود.
+        private static Sprite FadeSprite
+        {
+            get
+            {
+                if (_fadeSprite != null) return _fadeSprite;
+
+                const int width = 256;
+                Texture2D texture = new Texture2D(width, 1, TextureFormat.RGBA32, false);
+                texture.wrapMode = TextureWrapMode.Clamp;
+                texture.filterMode = FilterMode.Bilinear;
+                texture.name = "MenuFade";
+
+                for (int x = 0; x < width; x++)
+                {
+                    float t = 1f - x / (float)(width - 1);
+                    float alpha = Mathf.Pow(t, 1.8f);
+                    texture.SetPixel(x, 0, new Color(1f, 1f, 1f, alpha));
+                }
+
+                texture.Apply();
+
+                _fadeSprite = Sprite.Create(texture, new Rect(0f, 0f, width, 1f), new Vector2(0.5f, 0.5f), 100f);
+                _fadeSprite.name = "MenuFade";
+                return _fadeSprite;
+            }
         }
 
         /* ============================================================

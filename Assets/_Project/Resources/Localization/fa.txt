@@ -1,0 +1,56 @@
+@name = فارسی
+@rtl = true
+
+# --- منوی توقف ---
+pause.tab.system = تنظیمات
+pause.tab.map = نقشه
+pause.tab.codex = دفترچه
+pause.tab.cases = پرونده‌ها
+pause.resume = ادامه بازی
+pause.settings = تنظیمات
+pause.mainmenu = بازگشت به منوی اصلی
+pause.quit = خروج از بازی
+pause.close = بستن
+pause.switch = تعویض تب
+pause.soon = این بخش در مرحله‌ی بعد ساخته می‌شود.
+
+# --- صفحه‌ی تنظیمات ---
+settings.back = بازگشت
+settings.audio = صدا
+settings.video = تصویر
+settings.graphics = گرافیک
+settings.language = زبان
+
+settings.master = صدای کل
+settings.music = موسیقی
+settings.fx = افکت‌ها
+settings.dialogue = دیالوگ
+
+settings.resolution = رزولوشن
+settings.fullscreen = حالت نمایش
+settings.fps = محدودیت فریم
+settings.vsync = همگام‌سازی عمودی
+
+settings.quality = کیفیت کلی
+settings.texture = کیفیت بافت
+settings.aa = آنتی‌آلیاسینگ
+settings.shadows = سایه‌ها
+
+settings.lang.master = زبان کل
+settings.lang.menu = زبان منو
+settings.lang.subtitles = زیرنویس دیالوگ
+
+# --- مقادیر ---
+settings.on = روشن
+settings.off = خاموش
+settings.mixed = ترکیبی
+settings.fps.unlimited = نامحدود
+settings.windowed = پنجره
+settings.borderless = بدون قاب
+settings.exclusive = تمام‌صفحه
+settings.texture.full = کامل
+settings.texture.half = نصف
+settings.texture.quarter = یک‌چهارم
+settings.shadows.off = خاموش
+settings.shadows.hard = سخت
+settings.shadows.all = کامل

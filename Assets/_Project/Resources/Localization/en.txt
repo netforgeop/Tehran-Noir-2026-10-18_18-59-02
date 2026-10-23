@@ -1,0 +1,56 @@
+@name = English
+@rtl = false
+
+# --- Pause menu ---
+pause.tab.system = Settings
+pause.tab.map = Map
+pause.tab.codex = Notebook
+pause.tab.cases = Cases
+pause.resume = Resume Game
+pause.settings = Settings
+pause.mainmenu = Quit to Main Menu
+pause.quit = Exit Game
+pause.close = Close
+pause.switch = Switch tab
+pause.soon = This section is coming in a later step.
+
+# --- Settings page ---
+settings.back = Back
+settings.audio = Audio
+settings.video = Video
+settings.graphics = Graphics
+settings.language = Language
+
+settings.master = Master volume
+settings.music = Music
+settings.fx = Effects
+settings.dialogue = Dialogue
+
+settings.resolution = Resolution
+settings.fullscreen = Display mode
+settings.fps = Frame limit
+settings.vsync = V-Sync
+
+settings.quality = Overall quality
+settings.texture = Texture quality
+settings.aa = Anti-aliasing
+settings.shadows = Shadows
+
+settings.lang.master = Overall language
+settings.lang.menu = Menu language
+settings.lang.subtitles = Subtitle language
+
+# --- Values ---
+settings.on = On
+settings.off = Off
+settings.mixed = Mixed
+settings.fps.unlimited = Unlimited
+settings.windowed = Windowed
+settings.borderless = Borderless
+settings.exclusive = Fullscreen
+settings.texture.full = Full
+settings.texture.half = Half
+settings.texture.quarter = Quarter
+settings.shadows.off = Off
+settings.shadows.hard = Hard
+settings.shadows.all = All

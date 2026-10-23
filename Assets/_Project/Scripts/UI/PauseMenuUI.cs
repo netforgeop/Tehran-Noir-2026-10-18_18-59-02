@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TehranNoir.Dialogue;
 using TehranNoir.Inputs;
+using TehranNoir.Settings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,8 +12,7 @@ namespace TehranNoir.UI
 {
     /// <summary>
     /// منوی توقف به سبک Mafia: نوار تب در بالا، صفحه‌ی مشکی، نوار راهنما در پایین.
-    /// هر تب یک کلاس جدا دارد (PauseTab)؛ این کلاس فقط پوسته و ناوبری را می‌داند.
-    /// نوارها به لبه‌های صفحه چسبیده‌اند، پس در هر نسبت تصویر درست می‌مانند.
+    /// هر تب یک کلاس جدا دارد (PauseTab)؛ این کلاس فقط پوسته، ناوبری و زبان را می‌داند.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PauseMenuUI : MonoBehaviour
@@ -30,13 +30,17 @@ namespace TehranNoir.UI
         private const float TabGap = 56f;
         private const float TabFont = 30f;
         private const float UnderlineHeight = 2f;
-        private const float BadgeHeight = 30f;
-        private const float BadgeTop = 51f;
-        private const float BottomBadgeTop = 30f;
+        private const float BadgeSize = 34f;
+        private const float BadgeTop = 33f;
+        private const float BottomBadgeTop = 28f;
         private const float HintFont = 22f;
 
         [Header("فونت")]
+        [Tooltip("فونت فارسی (وزن متریال SDF با حروف فارسی)")]
         [SerializeField] private TMP_FontAsset font;
+
+        [Tooltip("فونت انگلیسی؛ اگر خالی بماند همان فونت فارسی استفاده می‌شود")]
+        [SerializeField] private TMP_FontAsset latinFont;
 
         [Header("بازیکن")]
         [Tooltip("موقع توقف خاموش می‌شود تا ورودی بازی قطع شود")]
@@ -49,7 +53,10 @@ namespace TehranNoir.UI
         /// <summary>بقیه‌ی سیستم‌ها با این پرچم می‌فهمند بازی متوقف است.</summary>
         public static bool IsOpen { get; private set; }
 
-        public TMP_FontAsset Font => font;
+        public TMP_FontAsset Font => !Persian && latinFont != null ? latinFont : font;
+
+        /// <summary>زبان رابط از کانال «منو» می‌آید.</summary>
+        public bool Persian => Loc.IsRtl(Loc.Channel.Menu);
 
         private readonly List<PauseTab> _tabs = new List<PauseTab>();
         private readonly List<GameObject> _panels = new List<GameObject>();
@@ -70,11 +77,20 @@ namespace TehranNoir.UI
         private void Awake()
         {
             CreateTabs();
-
             Build();
 
             _canvas.SetActive(false);
             IsOpen = false;
+        }
+
+        private void OnEnable()
+        {
+            Loc.Changed += Rebuild;
+        }
+
+        private void OnDisable()
+        {
+            Loc.Changed -= Rebuild;
         }
 
         private void OnDestroy()
@@ -96,6 +112,35 @@ namespace TehranNoir.UI
             }
 
             HandleOpenInput();
+        }
+
+        /// <summary>تغییر زبان: کل رابط از نو ساخته می‌شود؛ ساده‌تر و بی‌خطاتر از عوض‌کردن تک‌تک متن‌ها.</summary>
+        private void Rebuild()
+        {
+            int tab = Mathf.Clamp(_activeTab, 0, Mathf.Max(0, _tabs.Count - 1));
+            int row = _tabs.Count > 0 ? _tabs[tab].Selected : 0;
+
+            if (_canvas != null)
+            {
+                _canvas.SetActive(false);
+                Destroy(_canvas);
+            }
+
+            _tabs.Clear();
+            _panels.Clear();
+            _tabLabels.Clear();
+            _tabUnderlines.Clear();
+
+            CreateTabs();
+            Build();
+
+            _canvas.SetActive(IsOpen);
+
+            if (!IsOpen) return;
+
+            _activeTab = Mathf.Clamp(tab, 0, _tabs.Count - 1);
+            ShowTab(_activeTab);
+            _tabs[_activeTab].Select(row);
         }
 
         /* ============================================================
@@ -174,9 +219,13 @@ namespace TehranNoir.UI
 
                 if (keyboard.qKey.wasPressedThisFrame) SwitchTab(-1);
                 if (keyboard.eKey.wasPressedThisFrame) SwitchTab(1);
+                if (keyboard.tabKey.wasPressedThisFrame) _tabs[_activeTab].NextSection();
 
                 if (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame) _tabs[_activeTab].Move(1);
                 if (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame) _tabs[_activeTab].Move(-1);
+
+                if (keyboard.leftArrowKey.wasPressedThisFrame || keyboard.aKey.wasPressedThisFrame) _tabs[_activeTab].Step(-1);
+                if (keyboard.rightArrowKey.wasPressedThisFrame || keyboard.dKey.wasPressedThisFrame) _tabs[_activeTab].Step(1);
 
                 if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
                     keyboard.spaceKey.wasPressedThisFrame) _tabs[_activeTab].Activate();
@@ -192,9 +241,13 @@ namespace TehranNoir.UI
 
                 if (gamepad.leftShoulder.wasPressedThisFrame) SwitchTab(-1);
                 if (gamepad.rightShoulder.wasPressedThisFrame) SwitchTab(1);
+                if (gamepad.buttonNorth.wasPressedThisFrame) _tabs[_activeTab].NextSection();
 
                 if (gamepad.dpad.down.wasPressedThisFrame || gamepad.leftStick.down.wasPressedThisFrame) _tabs[_activeTab].Move(1);
                 if (gamepad.dpad.up.wasPressedThisFrame || gamepad.leftStick.up.wasPressedThisFrame) _tabs[_activeTab].Move(-1);
+
+                if (gamepad.dpad.left.wasPressedThisFrame || gamepad.leftStick.left.wasPressedThisFrame) _tabs[_activeTab].Step(-1);
+                if (gamepad.dpad.right.wasPressedThisFrame || gamepad.leftStick.right.wasPressedThisFrame) _tabs[_activeTab].Step(1);
 
                 if (gamepad.buttonSouth.wasPressedThisFrame) _tabs[_activeTab].Activate();
             }
@@ -282,9 +335,9 @@ namespace TehranNoir.UI
         private void CreateTabs()
         {
             _tabs.Add(new SystemPauseTab());
-            _tabs.Add(new PlaceholderPauseTab("map", "نقشه"));
-            _tabs.Add(new PlaceholderPauseTab("codex", "دفترچه"));
-            _tabs.Add(new PlaceholderPauseTab("cases", "پرونده‌ها"));
+            _tabs.Add(new PlaceholderPauseTab("map", "pause.tab.map"));
+            _tabs.Add(new PlaceholderPauseTab("codex", "pause.tab.codex"));
+            _tabs.Add(new PlaceholderPauseTab("cases", "pause.tab.cases"));
         }
 
         private void Build()
@@ -332,7 +385,7 @@ namespace TehranNoir.UI
             {
                 RectTransform tab = UiKit.Box("Tab_" + _tabs[i].Id, bar, 0f, 0f, 200f, BarHeight);
 
-                TMP_Text label = UiKit.Text("Label", tab, TabFont, UiKit.Idle, font, true);
+                TMP_Text label = UiKit.Text("Label", tab, TabFont, UiKit.Idle, Font, Persian);
                 label.alignment = TextAlignmentOptions.Center;
                 label.text = _tabs[i].Label;
                 label.ForceMeshUpdate();
@@ -370,8 +423,8 @@ namespace TehranNoir.UI
                 x -= TabGap;
             }
 
-            CreateKeyBadge(strip, -94f, "Q", BadgeTop);
-            CreateKeyBadge(strip, total + 62f, "E", BadgeTop);
+            CreateKeyBadgeLeft(strip, -94f, "Q", BadgeTop);
+            CreateKeyBadgeLeft(strip, total + 62f, "E", BadgeTop);
 
             CreateTopRule(root, BarHeight);
         }
@@ -419,19 +472,22 @@ namespace TehranNoir.UI
             RectTransform bar = BottomBand(root, "BottomBar", BottomBarHeight);
 
             // چپ: تعویض تب
-            CreateKeyBadge(bar, RuleMargin, "Q/E", BottomBadgeTop);
-            CreateLabel(bar, RuleMargin + 64f, 220f, "تعویض تب", TextAlignmentOptions.MidlineLeft, BottomBadgeTop);
+            float left = CreateKeyBadgeLeft(bar, RuleMargin, "Q", BottomBadgeTop);
+            CreateKeyBadgeLeft(bar, left + BadgeSize + 4f, "E", BottomBadgeTop);
+            CreateLabel(bar, RuleMargin + 2f * BadgeSize + 24f, 220f,
+                Loc.Get(Loc.Channel.Menu, "pause.switch"), TextAlignmentOptions.MidlineLeft, BottomBadgeTop);
 
-            // راست: بستن — کلمه راست‌ترین است، بج سمت چپش
-            CreateLabel(bar, -RuleMargin, 120f, "بستن", TextAlignmentOptions.MidlineRight, BottomBadgeTop);
-            CreateKeyBadge(bar, -RuleMargin - 130f, "Esc", BottomBadgeTop);
+            // راست: بستن — کلمه راست‌ترین است
+            CreateLabel(bar, -RuleMargin, 140f, Loc.Get(Loc.Channel.Menu, "pause.close"),
+                TextAlignmentOptions.MidlineRight, BottomBadgeTop);
+            CreateKeyBadgeRight(bar, -RuleMargin - 150f, "Esc", BottomBadgeTop);
         }
 
         private void BuildHint(RectTransform root)
         {
-            RectTransform box = UiKit.Box("Hint", root, RowX, 900f, 1200f, 34f);
+            RectTransform box = UiKit.Box("Hint", root, RowX, 900f, 1400f, 34f);
 
-            _hintText = UiKit.Text("HintText", box, HintFont, UiKit.Dim, font, true);
+            _hintText = UiKit.Text("HintText", box, HintFont, UiKit.Dim, font, Persian);
         }
 
         /* ============================================================
@@ -488,30 +544,50 @@ namespace TehranNoir.UI
             image.raycastTarget = false;
         }
 
-        /// <summary>
-        /// بج کلید سفید. x نسبت به لبه‌ی چپِ والد؛ اگر منفی باشد از لبه‌ی راست حساب می‌شود.
-        /// </summary>
-        private void CreateKeyBadge(RectTransform parent, float x, string key, float top)
+        /// <summary>بج کلید از لبه‌ی چپِ والد؛ خروجی: لبه‌ی چپ بج.</summary>
+        private float CreateKeyBadgeLeft(RectTransform parent, float x, string key, float top)
         {
-            float width = BadgeWidth(key);
-            bool fromRight = x < 0f;
+            return CreateKeyBadge(parent, x, key, top, false);
+        }
+
+        /// <summary>بج کلید از لبه‌ی راستِ والد؛ x منفی یعنی فاصله از راست.</summary>
+        private void CreateKeyBadgeRight(RectTransform parent, float x, string key, float top)
+        {
+            CreateKeyBadge(parent, x, key, top, true);
+        }
+
+        private float CreateKeyBadge(RectTransform parent, float x, string key, float top, bool fromRight)
+        {
+            Sprite icon = UiKit.KeyIcon(key);
+
+            float width = icon != null ? BadgeSize : BadgeWidth(key);
 
             RectTransform badge = UiKit.Node("Key_" + key, parent);
             badge.anchorMin = new Vector2(fromRight ? 1f : 0f, 1f);
             badge.anchorMax = badge.anchorMin;
             badge.pivot = new Vector2(fromRight ? 1f : 0f, 1f);
             badge.anchoredPosition = new Vector2(x, -top);
-            badge.sizeDelta = new Vector2(width, BadgeHeight);
+            badge.sizeDelta = new Vector2(width, BadgeSize);
 
-            Image background = badge.gameObject.AddComponent<Image>();
-            background.sprite = UiKit.RoundedRect;
-            background.type = Image.Type.Sliced;
-            background.color = Color.white;
-            background.raycastTarget = false;
+            Image image = badge.gameObject.AddComponent<Image>();
+            image.raycastTarget = false;
+
+            if (icon != null)
+            {
+                image.sprite = icon;
+                image.preserveAspect = true;
+                return x + width;
+            }
+
+            image.sprite = UiKit.RoundedRect;
+            image.type = Image.Type.Sliced;
+            image.color = Color.white;
 
             TMP_Text label = UiKit.Text("Key", badge, 18f, new Color(0.05f, 0.05f, 0.05f), font, false);
             label.alignment = TextAlignmentOptions.Center;
             label.text = key;
+
+            return x + width;
         }
 
         private void CreateLabel(RectTransform parent, float x, float width, string text,
@@ -524,16 +600,16 @@ namespace TehranNoir.UI
             box.anchorMax = box.anchorMin;
             box.pivot = new Vector2(fromRight ? 1f : 0f, 1f);
             box.anchoredPosition = new Vector2(x, -top);
-            box.sizeDelta = new Vector2(width, BadgeHeight);
+            box.sizeDelta = new Vector2(width, BadgeSize);
 
-            TMP_Text label = UiKit.Text("Text", box, HintFont, Color.white, font, true);
+            TMP_Text label = UiKit.Text("Text", box, HintFont, Color.white, Font, Persian);
             label.alignment = alignment;
             label.text = text;
         }
 
         private static float BadgeWidth(string key)
         {
-            return Mathf.Max(30f, 12f * key.Length + 16f);
+            return Mathf.Max(BadgeSize, 12f * key.Length + 16f);
         }
     }
 }

@@ -1,11 +1,12 @@
 using System.Collections;
+using TehranNoir.Settings;
 using UnityEngine;
 
 namespace TehranNoir.UI
 {
     /// <summary>
     /// موسیقی صحنه. با فید نرم شروع می‌شود، لوپ می‌شود و در خروج از صحنه
-    /// خودش را قطع می‌کند. هم برای منو، هم بعداً برای صحنه‌های بازی.
+    /// خودش را قطع می‌کند. حجم نهایی از کانال «موسیقی» در تنظیمات می‌آید.
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public sealed class MenuMusic : MonoBehaviour
@@ -26,6 +27,9 @@ namespace TehranNoir.UI
 
         public AudioSource Source { get { return _source; } }
 
+        /// <summary>حجم پایه ضربدر کانال موسیقی در تنظیمات.</summary>
+        private float TargetVolume => volume * GameSettings.SourceVolume(GameSettings.Band.Music);
+
         private void Awake()
         {
             _source = GetComponent<AudioSource>();
@@ -33,6 +37,16 @@ namespace TehranNoir.UI
             _source.loop = true;
             _source.spatialBlend = 0f;   // دو بعدی؛ با دوربین جابه‌جا نمی‌شود
             _source.volume = 0f;
+        }
+
+        private void OnEnable()
+        {
+            GameSettings.VolumeChanged += OnVolumeChanged;
+        }
+
+        private void OnDisable()
+        {
+            GameSettings.VolumeChanged -= OnVolumeChanged;
         }
 
         private void Start()
@@ -56,12 +70,20 @@ namespace TehranNoir.UI
             while (elapsed < fadeInSeconds)
             {
                 elapsed += Time.unscaledDeltaTime;
-                _source.volume = Mathf.Lerp(0f, volume, elapsed / fadeInSeconds);
+                _source.volume = Mathf.Lerp(0f, TargetVolume, elapsed / fadeInSeconds);
                 yield return null;
             }
 
-            _source.volume = volume;
+            _source.volume = TargetVolume;
             _fade = null;
+        }
+
+        /// <summary>اگر کاربر اسلایدر موسیقی را عوض کرد، همان لحظه اثر کند.</summary>
+        private void OnVolumeChanged()
+        {
+            if (_source == null || _fade != null) return;
+
+            _source.volume = TargetVolume;
         }
 
         private void OnDestroy()
@@ -73,11 +95,11 @@ namespace TehranNoir.UI
             _source.Stop();
         }
 
-        /// <summary>برای منوی توقف: موسیقی را کم یا زیاد کن.</summary>
+        /// <summary>برای تغییر حجم از بیرون.</summary>
         public void SetVolume(float target)
         {
             volume = Mathf.Clamp01(target);
-            if (_source != null) _source.volume = volume;
+            if (_source != null && _fade == null) _source.volume = TargetVolume;
         }
     }
 }

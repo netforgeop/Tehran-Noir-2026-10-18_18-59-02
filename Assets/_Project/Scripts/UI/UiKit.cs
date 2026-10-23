@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace TehranNoir.UI
         private static Type _rtlType;
         private static bool _rtlSearched;
         private static Sprite _rounded;
+        private static readonly Dictionary<string, Sprite> KeySprites = new Dictionary<string, Sprite>();
 
         /* ---------- گره ---------- */
 
@@ -140,6 +142,36 @@ namespace TehranNoir.UI
             FieldInfo field = type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
             if (field != null && field.FieldType == typeof(bool))
                 field.SetValue(component, value);
+        }
+
+        /* ---------- آیکون کلید ---------- */
+
+        /// <summary>
+        /// آیکون واقعی کلید از Resources/Icons/Keys. نام‌ها همان فایل‌های پکیج‌اند:
+        /// Esc، Q، E، Enter، Space، Tab، Left، Right، Up، Down، F1، V، W، A، S، D.
+        /// اگر فایل نبود null برمی‌گردد و فراخواننده جعبه‌ی متنی می‌سازد.
+        /// </summary>
+        public static Sprite KeyIcon(string key)
+        {
+            if (KeySprites.TryGetValue(key, out Sprite cached)) return cached;
+
+            Texture2D texture = Resources.Load<Texture2D>("Icons/Keys/T_" + key + "_Key_White");
+
+            Sprite sprite = null;
+
+            if (texture != null)
+            {
+                sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f), 100f);
+                sprite.name = "Key_" + key;
+            }
+            else
+            {
+                Debug.LogWarning("[UiKit] آیکون کلید «" + key + "» پیدا نشد: Resources/Icons/Keys/T_" + key + "_Key_White");
+            }
+
+            KeySprites[key] = sprite;
+            return sprite;
         }
 
         /* ---------- شکل ---------- */

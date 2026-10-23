@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TehranNoir.Settings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,10 +13,8 @@ namespace TehranNoir.UI
     /// </summary>
     public abstract class PauseTab
     {
-        /// <summary>شناسه‌ی لاتین برای نام‌گذاری آبجکت‌ها.</summary>
         public abstract string Id { get; }
 
-        /// <summary>نامی که روی نوار بالا نوشته می‌شود.</summary>
         public abstract string Label { get; }
 
         protected readonly List<PauseRow> Rows = new List<PauseRow>();
@@ -23,6 +22,8 @@ namespace TehranNoir.UI
         protected PauseMenuUI Menu { get; private set; }
 
         private int _selected;
+
+        public int Selected => _selected;
 
         /// <summary>ساخت پنل؛ از بیرون فقط همین صدا زده می‌شود.</summary>
         public void Build(RectTransform panel, PauseMenuUI menu)
@@ -46,7 +47,7 @@ namespace TehranNoir.UI
 
         /* ---------- ناوبری ---------- */
 
-        public void Move(int delta)
+        public virtual void Move(int delta)
         {
             if (Rows.Count == 0) return;
 
@@ -54,14 +55,47 @@ namespace TehranNoir.UI
             Highlight();
         }
 
-        public void Activate()
+        /// <summary>کلید چپ/راست: تغییر مقدار ردیف انتخاب‌شده.</summary>
+        public virtual void Step(int delta)
+        {
+            if (Rows.Count == 0) return;
+
+            Action<int> step = Rows[_selected].Step;
+            if (step == null) return;
+
+            step(delta);
+            Refresh();
+        }
+
+        /// <summary>کلید Tab: بخش بعدی (فقط تب‌هایی که بخش دارند).</summary>
+        public virtual void NextSection()
+        {
+        }
+
+        public virtual void Activate()
         {
             if (Rows.Count == 0) return;
 
             Action action = Rows[_selected].Action;
-            if (action == null) return;
+            if (action != null) action();
+        }
 
-            action();
+        public void Select(int index)
+        {
+            if (Rows.Count == 0) return;
+
+            _selected = Mathf.Clamp(index, 0, Rows.Count - 1);
+            Highlight();
+        }
+
+        /// <summary>مقادیر ردیف‌ها را از منبعشان دوباره می‌خواند.</summary>
+        public void Refresh()
+        {
+            for (int i = 0; i < Rows.Count; i++)
+            {
+                PauseRow row = Rows[i];
+                if (row.ValueText != null && row.ReadValue != null) row.ValueText.text = row.ReadValue();
+            }
         }
 
         /// <summary>موس: هاور انتخاب می‌کند، کلیک اجرا.</summary>
@@ -91,16 +125,19 @@ namespace TehranNoir.UI
                 bool active = i == _selected;
 
                 Rows[i].Label.color = active ? UiKit.Gold : UiKit.RowIdle;
+                if (Rows[i].ValueText != null) Rows[i].ValueText.color = active ? UiKit.Gold : UiKit.Dim;
                 if (Rows[i].Underline != null) Rows[i].Underline.SetActive(active);
             }
         }
 
-        /// <summary>یک ردیف فهرست می‌سازد: متن چپ‌چین و خط طلایی زیر گزینه‌ی فعال.</summary>
+        /* ---------- ساخت ردیف ---------- */
+
+        /// <summary>ردیف منو: متن چپ‌چین و خط طلایی زیر گزینه‌ی فعال.</summary>
         protected void AddRow(RectTransform panel, string label, float y, Action action)
         {
             RectTransform row = UiKit.Box("Row_" + label, panel, PauseMenuUI.RowX, y, PauseMenuUI.RowWidth, PauseMenuUI.RowHeight);
 
-            TMP_Text text = UiKit.Text("Label", row, PauseMenuUI.RowFont, UiKit.RowIdle, Menu.Font, true);
+            TMP_Text text = UiKit.Text("Label", row, PauseMenuUI.RowFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
             text.text = label;
             text.ForceMeshUpdate();
 
@@ -126,6 +163,46 @@ namespace TehranNoir.UI
 
             underline.gameObject.SetActive(false);
         }
+
+        /// <summary>
+        /// ردیف تنظیمات: برچسب سمت راست، مقدار سمت چپش. مقدارها فقط با چپ/راست عوض می‌شوند.
+        /// </summary>
+        protected void AddSetting(RectTransform panel, float x, float width, string label, float y,
+            Func<string> readValue, Action<int> step)
+        {
+            const float valueWidth = 380f;
+            const float rowHeight = SettingsLayout.RowHeight;
+
+            RectTransform row = UiKit.Box("Setting_" + label, panel, x, y, width, rowHeight);
+
+            RectTransform valueBox = UiKit.Box("Value", row, 0f, 0f, valueWidth, rowHeight);
+            TMP_Text valueText = UiKit.Text("Text", valueBox, SettingsLayout.RowFont, UiKit.Dim, Menu.Font, Menu.Persian);
+            valueText.alignment = TextAlignmentOptions.MidlineRight;
+            valueText.text = readValue != null ? readValue() : string.Empty;
+
+            RectTransform labelBox = UiKit.Box("Label", row, valueWidth + 20f, 0f, width - valueWidth - 20f, rowHeight);
+            TMP_Text text = UiKit.Text("Text", labelBox, SettingsLayout.RowFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
+            text.alignment = TextAlignmentOptions.MidlineRight;
+            text.text = label;
+
+            PauseRow data = new PauseRow();
+            data.Rect = row;
+            data.Label = text;
+            data.ValueText = valueText;
+            data.ReadValue = readValue;
+            data.Step = step;
+            Rows.Add(data);
+        }
+
+        /// <summary>عنوان بخش؛ انتخاب‌شدنی نیست.</summary>
+        protected void AddHeader(RectTransform panel, string label, float y)
+        {
+            RectTransform box = UiKit.Box("Header_" + label, panel, SettingsLayout.RowX, y, SettingsLayout.RowWidth, 34f);
+
+            TMP_Text text = UiKit.Text("Text", box, SettingsLayout.HeaderFont, UiKit.Gold, Menu.Font, Menu.Persian);
+            text.alignment = TextAlignmentOptions.MidlineRight;
+            text.text = label;
+        }
     }
 
     /// <summary>یک ردیف قابل انتخاب در فهرست یک تب.</summary>
@@ -135,5 +212,9 @@ namespace TehranNoir.UI
         public TMP_Text Label;
         public GameObject Underline;
         public Action Action;
+
+        public TMP_Text ValueText;
+        public Func<string> ReadValue;
+        public Action<int> Step;
     }
 }

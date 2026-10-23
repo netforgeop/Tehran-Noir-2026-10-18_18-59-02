@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
+using TehranNoir.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -15,7 +16,13 @@ namespace TehranNoir.Dialogue
     {
         [Header("ظاهر")]
         [SerializeField] private TMP_FontAsset font;
-        [SerializeField] private bool persian = true;
+
+        [Tooltip("برای تست: زیرنویس را همیشه فارسی نشان بده")]
+        [SerializeField] private bool forcePersian;
+
+        /// <summary>زبان زیرنویس از تنظیمات می‌آید؛ کانال Subtitles.</summary>
+        private bool persian => forcePersian || Loc.IsRtl(Loc.Channel.Subtitles);
+
         [SerializeField] private Vector2 panelSize = new Vector2(1100f, 380f);
         [SerializeField] private float panelBottom = 40f;
 

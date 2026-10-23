@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TehranNoir.Settings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -72,12 +71,27 @@ namespace TehranNoir.UI
         {
         }
 
+        /// <summary>
+        /// Enter یا کلیک: ردیف منو کارش را انجام می‌دهد؛
+        /// ردیف تنظیمات دکمه ندارد، پس مقدارش یک پله جلو می‌رود.
+        /// </summary>
         public virtual void Activate()
         {
             if (Rows.Count == 0) return;
 
-            Action action = Rows[_selected].Action;
-            if (action != null) action();
+            PauseRow row = Rows[_selected];
+
+            if (row.Action != null)
+            {
+                row.Action();
+                return;
+            }
+
+            if (row.Step != null)
+            {
+                row.Step(1);
+                Refresh();
+            }
         }
 
         public void Select(int index)
@@ -98,7 +112,15 @@ namespace TehranNoir.UI
             }
         }
 
-        /// <summary>موس: هاور انتخاب می‌کند، کلیک اجرا.</summary>
+        /// <summary>
+        /// ماوس: اول به تب فرصت داده می‌شود خودش تصمیم بگیرد (مثلاً ریل بخش‌ها)،
+        /// بعد ردیف‌های معمولی. هاور انتخاب می‌کند، کلیک اجرا.
+        /// </summary>
+        public virtual void Pointer(Vector2 screenPoint, bool clicked)
+        {
+            Tick(screenPoint, clicked);
+        }
+
         public void Tick(Vector2 pointer, bool clicked)
         {
             for (int i = 0; i < Rows.Count; i++)

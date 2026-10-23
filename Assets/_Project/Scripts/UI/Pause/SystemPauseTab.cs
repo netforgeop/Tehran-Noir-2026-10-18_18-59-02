@@ -2,13 +2,12 @@ using System.Collections.Generic;
 using TehranNoir.Settings;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace TehranNoir.UI
 {
     /// <summary>
     /// تب اول: فهرست pause (ادامه/تنظیمات/منو/خروج) و صفحه‌ی تنظیمات داخلش.
-    /// صفحه‌ی تنظیمات چهار بخش دارد: صدا، تصویر، گرافیک، زبان.
+    /// صفحه‌ی تنظیمات چهار بخش دارد: صدا، تصویر، گرافیک، زبان — هر چهارتا با ماوس هم کار می‌کنند.
     /// </summary>
     public sealed class SystemPauseTab : PauseTab
     {
@@ -366,6 +365,26 @@ namespace TehranNoir.UI
            ناوبری
            ============================================================ */
 
+        /// <summary>ماوس: اگر روی بخش‌های سمت راست بود، بخش را عوض کن؛ وگرنه ردیف‌ها.</summary>
+        public override void Pointer(Vector2 screenPoint, bool clicked)
+        {
+            if (_inside)
+            {
+                for (int i = 0; i < _railItems.Count; i++)
+                {
+                    RectTransform item = (RectTransform)_railItems[i].transform;
+
+                    if (!RectTransformUtility.RectangleContainsScreenPoint(item, screenPoint, null)) continue;
+
+                    if (clicked && i != _section) BuildSection(i);
+
+                    return;
+                }
+            }
+
+            base.Pointer(screenPoint, clicked);
+        }
+
         public override void Step(int delta)
         {
             if (!_inside)
@@ -392,7 +411,13 @@ namespace TehranNoir.UI
                 return;
             }
 
-            if (Rows.Count > 0 && Selected == Rows.Count - 1) ShowRoot();
+            if (Rows.Count > 0 && Selected == Rows.Count - 1)
+            {
+                ShowRoot();
+                return;
+            }
+
+            base.Activate();
         }
 
         public override void NextSection()

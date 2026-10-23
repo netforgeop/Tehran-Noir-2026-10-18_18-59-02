@@ -13,6 +13,7 @@ namespace TehranNoir.UI
     /// <summary>
     /// منوی توقف به سبک Mafia: نوار تب در بالا، صفحه‌ی مشکی، نوار راهنما در پایین.
     /// هر تب یک کلاس جدا دارد (PauseTab)؛ این کلاس فقط پوسته، ناوبری و زبان را می‌داند.
+    /// تب‌ها و ردیف‌ها با ماوس هم کار می‌کنند؛ باز و بسته‌شدن و موزیکش با محو نرم است.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PauseMenuUI : MonoBehaviour
@@ -34,9 +35,14 @@ namespace TehranNoir.UI
         private const float BadgeTop = 33f;
         private const float BottomBadgeTop = 28f;
         private const float HintFont = 22f;
+        private const float BadgeGap = 6f;
+        private const float TextGap = 12f;
+        private const float TabBadgeGap = 16f;
+
+        private static readonly Color HoverColor = new Color(0.86f, 0.86f, 0.84f);
 
         [Header("فونت")]
-        [Tooltip("فونت فارسی (وزن متریال SDF با حروف فارسی)")]
+        [Tooltip("فونت فارسی")]
         [SerializeField] private TMP_FontAsset font;
 
         [Tooltip("فونت انگلیسی؛ اگر خالی بماند همان فونت فارسی استفاده می‌شود")]
@@ -50,6 +56,18 @@ namespace TehranNoir.UI
         [Tooltip("نام فایل صحنه، بدون .unity")]
         [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+        [Header("صدا")]
+        [Tooltip("موزیک منوی توقف؛ خالی بماند یعنی این منو بی‌صدا است")]
+        [SerializeField] private AudioClip musicClip;
+
+        [SerializeField, Range(0f, 1f)] private float musicVolume = 0.35f;
+
+        [Tooltip("مدت محو شدن موزیک هنگام باز و بسته شدن منو")]
+        [SerializeField, Min(0.05f)] private float musicFadeSeconds = 0.8f;
+
+        [Header("محو رابط")]
+        [SerializeField, Min(0.01f)] private float uiFadeSeconds = 0.16f;
+
         /// <summary>بقیه‌ی سیستم‌ها با این پرچم می‌فهمند بازی متوقف است.</summary>
         public static bool IsOpen { get; private set; }
 
@@ -62,10 +80,20 @@ namespace TehranNoir.UI
         private readonly List<GameObject> _panels = new List<GameObject>();
         private readonly List<TMP_Text> _tabLabels = new List<TMP_Text>();
         private readonly List<GameObject> _tabUnderlines = new List<GameObject>();
+        private readonly List<RectTransform> _tabRects = new List<RectTransform>();
 
         private GameObject _canvas;
+        private CanvasGroup _group;
         private TMP_Text _hintText;
+        private AudioSource _music;
+
         private int _activeTab;
+        private int _hoverTab = -1;
+
+        private float _uiTarget;
+        private bool _closing;
+        private float _musicLevel;
+        private float _musicTarget;
 
         private CursorLockMode _previousLock;
         private bool _previousVisible;
@@ -78,6 +106,7 @@ namespace TehranNoir.UI
         {
             CreateTabs();
             Build();
+            EnsureMusic();
 
             _canvas.SetActive(false);
             IsOpen = false;
@@ -105,6 +134,9 @@ namespace TehranNoir.UI
 
         private void Update()
         {
+            // محوها با زمان واقعی کار می‌کنند، پس بعد از بسته‌شدن هم ادامه پیدا می‌کنند
+            UpdateFades();
+
             if (!IsOpen)
             {
                 TryOpen();
@@ -130,11 +162,16 @@ namespace TehranNoir.UI
             _panels.Clear();
             _tabLabels.Clear();
             _tabUnderlines.Clear();
+            _tabRects.Clear();
+
+            _hoverTab = -1;
+            _closing = false;
 
             CreateTabs();
             Build();
 
-            _canvas.SetActive(IsOpen);
+            _group.alpha = IsOpen ? 1f : 0f;
+            _group.blocksRaycasts = IsOpen;
 
             if (!IsOpen) return;
 
@@ -178,7 +215,15 @@ namespace TehranNoir.UI
             if (playerInput != null) playerInput.enabled = false;
 
             Time.timeScale = 0f;
+
             _canvas.SetActive(true);
+
+            _closing = false;
+            _group.alpha = 0f;
+            _group.blocksRaycasts = true;
+            _uiTarget = 1f;
+
+            _musicTarget = _music != null ? 1f : 0f;
 
             ShowTab(_activeTab);
         }
@@ -190,7 +235,6 @@ namespace TehranNoir.UI
             _tabs[_activeTab].OnHide();
 
             IsOpen = false;
-            _canvas.SetActive(false);
 
             Time.timeScale = 1f;
 
@@ -198,6 +242,55 @@ namespace TehranNoir.UI
 
             Cursor.lockState = _previousLock;
             Cursor.visible = _previousVisible;
+
+            // پنل تا وقتی محو شود روشن می‌ماند، بعد خاموش می‌شود
+            _uiTarget = 0f;
+            _closing = true;
+            _group.blocksRaycasts = false;
+
+            _musicTarget = 0f;
+        }
+
+        /* ============================================================
+           محو
+           ============================================================ */
+
+        private void UpdateFades()
+        {
+            float dt = Time.unscaledDeltaTime;
+
+            if (_group != null)
+            {
+                _group.alpha = Mathf.MoveTowards(_group.alpha, _uiTarget, dt / Mathf.Max(0.01f, uiFadeSeconds));
+
+                if (_closing && _group.alpha <= 0f)
+                {
+                    _closing = false;
+                    if (_canvas != null) _canvas.SetActive(false);
+                }
+            }
+
+            if (_music == null) return;
+
+            _musicLevel = Mathf.MoveTowards(_musicLevel, _musicTarget, dt / Mathf.Max(0.05f, musicFadeSeconds));
+            _music.volume = _musicLevel * musicVolume * GameSettings.SourceVolume(GameSettings.Band.Music);
+
+            if (_musicTarget > 0f && _music.clip != null && !_music.isPlaying) _music.Play();
+            if (_musicTarget <= 0f && _musicLevel <= 0.0001f && _music.isPlaying) _music.Stop();
+        }
+
+        private void EnsureMusic()
+        {
+            if (musicClip == null) return;
+
+            _music = GetComponent<AudioSource>();
+            if (_music == null) _music = gameObject.AddComponent<AudioSource>();
+
+            _music.clip = musicClip;
+            _music.loop = true;
+            _music.playOnAwake = false;
+            _music.spatialBlend = 0f;
+            _music.volume = 0f;
         }
 
         /* ============================================================
@@ -217,8 +310,9 @@ namespace TehranNoir.UI
                     return;
                 }
 
-                if (keyboard.qKey.wasPressedThisFrame) SwitchTab(-1);
-                if (keyboard.eKey.wasPressedThisFrame) SwitchTab(1);
+                // Q سمت چپ، E سمت راست — همان‌جایی که بج‌ها نشسته‌اند
+                if (keyboard.qKey.wasPressedThisFrame) SwitchTab(1);
+                if (keyboard.eKey.wasPressedThisFrame) SwitchTab(-1);
                 if (keyboard.tabKey.wasPressedThisFrame) _tabs[_activeTab].NextSection();
 
                 if (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame) _tabs[_activeTab].Move(1);
@@ -239,8 +333,8 @@ namespace TehranNoir.UI
                     return;
                 }
 
-                if (gamepad.leftShoulder.wasPressedThisFrame) SwitchTab(-1);
-                if (gamepad.rightShoulder.wasPressedThisFrame) SwitchTab(1);
+                if (gamepad.leftShoulder.wasPressedThisFrame) SwitchTab(1);
+                if (gamepad.rightShoulder.wasPressedThisFrame) SwitchTab(-1);
                 if (gamepad.buttonNorth.wasPressedThisFrame) _tabs[_activeTab].NextSection();
 
                 if (gamepad.dpad.down.wasPressedThisFrame || gamepad.leftStick.down.wasPressedThisFrame) _tabs[_activeTab].Move(1);
@@ -255,17 +349,55 @@ namespace TehranNoir.UI
             Mouse mouse = Mouse.current;
             if (mouse == null) return;
 
-            _tabs[_activeTab].Tick(mouse.position.ReadValue(), mouse.leftButton.wasPressedThisFrame);
+            Vector2 pointer = mouse.position.ReadValue();
+            bool clicked = mouse.leftButton.wasPressedThisFrame;
+
+            int hovered = HoveredTab(pointer);
+
+            if (_hoverTab != hovered)
+            {
+                _hoverTab = hovered;
+                UpdateTabColors();
+            }
+
+            if (hovered >= 0)
+            {
+                if (clicked && hovered != _activeTab) SwitchTabTo(hovered);
+                return;
+            }
+
+            _tabs[_activeTab].Pointer(pointer, clicked);
         }
 
+        private int HoveredTab(Vector2 pointer)
+        {
+            for (int i = 0; i < _tabRects.Count; i++)
+            {
+                if (_tabRects[i] == null) continue;
+                if (!RectTransformUtility.RectangleContainsScreenPoint(_tabRects[i], pointer, null)) continue;
+
+                return i;
+            }
+
+            return -1;
+        }
+
+        /// <summary>+1 یعنی تب سمت چپ، -1 یعنی تب سمت راست (چیدمان راست‌به‌چپ).</summary>
         private void SwitchTab(int delta)
         {
             if (_tabs.Count == 0) return;
 
+            SwitchTabTo((_activeTab + delta + _tabs.Count) % _tabs.Count);
+        }
+
+        private void SwitchTabTo(int index)
+        {
+            if (index < 0 || index >= _tabs.Count || index == _activeTab) return;
+
             _tabs[_activeTab].OnHide();
             _panels[_activeTab].SetActive(false);
 
-            _activeTab = (_activeTab + delta + _tabs.Count) % _tabs.Count;
+            _activeTab = index;
 
             ShowTab(_activeTab);
         }
@@ -278,11 +410,22 @@ namespace TehranNoir.UI
 
                 _panels[i].SetActive(active);
                 _tabUnderlines[i].SetActive(active);
-                _tabLabels[i].color = active ? UiKit.Gold : UiKit.Idle;
             }
 
+            UpdateTabColors();
             ClearHint();
             _tabs[index].OnShow();
+        }
+
+        private void UpdateTabColors()
+        {
+            for (int i = 0; i < _tabLabels.Count; i++)
+            {
+                TMP_Text label = _tabLabels[i];
+                if (label == null) continue;
+
+                label.color = i == _activeTab ? UiKit.Gold : (i == _hoverTab ? HoverColor : UiKit.Idle);
+            }
         }
 
         /* ============================================================
@@ -316,10 +459,28 @@ namespace TehranNoir.UI
             }
 
             Resume();
+
+            if (ScreenFade.Instance != null)
+            {
+                ScreenFade.Instance.FadeOut(0.45f, () => SceneManager.LoadScene(mainMenuSceneName));
+                return;
+            }
+
             SceneManager.LoadScene(mainMenuSceneName);
         }
 
         public void QuitGame()
+        {
+            if (ScreenFade.Instance != null)
+            {
+                ScreenFade.Instance.FadeOut(0.4f, QuitNow);
+                return;
+            }
+
+            QuitNow();
+        }
+
+        private static void QuitNow()
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
@@ -354,6 +515,10 @@ namespace TehranNoir.UI
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
+
+            _group = canvasObject.AddComponent<CanvasGroup>();
+            _group.alpha = 0f;
+            _group.blocksRaycasts = false;
 
             _canvas = canvasObject;
 
@@ -418,13 +583,15 @@ namespace TehranNoir.UI
                 tab.anchoredPosition = new Vector2(x, 0f);
                 tab.sizeDelta = new Vector2(widths[i], BarHeight);
 
+                _tabRects.Add(tab);
                 _tabUnderlines.Add(CreateUnderline(tab));
 
                 x -= TabGap;
             }
 
-            CreateKeyBadgeLeft(strip, -94f, "Q", BadgeTop);
-            CreateKeyBadgeLeft(strip, total + 62f, "E", BadgeTop);
+            // Q با فاصله‌ی برابر از لبه‌ی چپ نوار، E از لبه‌ی راست
+            CreateKeyBadge(strip, -TabBadgeGap - BadgeSize, "Q", BadgeTop, false);
+            CreateKeyBadge(strip, total + TabBadgeGap, "E", BadgeTop, false);
 
             CreateTopRule(root, BarHeight);
         }
@@ -471,16 +638,21 @@ namespace TehranNoir.UI
 
             RectTransform bar = BottomBand(root, "BottomBar", BottomBarHeight);
 
-            // چپ: تعویض تب
-            float left = CreateKeyBadgeLeft(bar, RuleMargin, "Q", BottomBadgeTop);
-            CreateKeyBadgeLeft(bar, left + BadgeSize + 4f, "E", BottomBadgeTop);
-            CreateLabel(bar, RuleMargin + 2f * BadgeSize + 24f, 220f,
-                Loc.Get(Loc.Channel.Menu, "pause.switch"), TextAlignmentOptions.MidlineLeft, BottomBadgeTop);
+            // چپ: بج‌ها، بعد متن — فاصله‌ها دقیق و ثابت
+            float x = RuleMargin;
 
-            // راست: بستن — کلمه راست‌ترین است
-            CreateLabel(bar, -RuleMargin, 140f, Loc.Get(Loc.Channel.Menu, "pause.close"),
-                TextAlignmentOptions.MidlineRight, BottomBadgeTop);
-            CreateKeyBadgeRight(bar, -RuleMargin - 150f, "Esc", BottomBadgeTop);
+            x = CreateKeyBadge(bar, x, "Q", BottomBadgeTop, false);
+            x = CreateKeyBadge(bar, x + BadgeGap, "E", BottomBadgeTop, false);
+
+            CreateHintText(bar, x + TextGap, Loc.Get(Loc.Channel.Menu, "pause.switch"), TextAlignmentOptions.MidlineLeft);
+
+            // راست: متن، بعد بج در سمت چپِ آن — فاصله با اندازه‌ی واقعی متن حساب می‌شود
+            TMP_Text close = CreateHintTextRight(bar, RuleMargin,
+                Loc.Get(Loc.Channel.Menu, "pause.close"), TextAlignmentOptions.MidlineRight);
+
+            float closeWidth = close.rectTransform.rect.width;
+
+            CreateKeyBadge(bar, -(RuleMargin + closeWidth + TextGap), "Esc", BottomBadgeTop, true);
         }
 
         private void BuildHint(RectTransform root)
@@ -544,18 +716,10 @@ namespace TehranNoir.UI
             image.raycastTarget = false;
         }
 
-        /// <summary>بج کلید از لبه‌ی چپِ والد؛ خروجی: لبه‌ی چپ بج.</summary>
-        private float CreateKeyBadgeLeft(RectTransform parent, float x, string key, float top)
-        {
-            return CreateKeyBadge(parent, x, key, top, false);
-        }
-
-        /// <summary>بج کلید از لبه‌ی راستِ والد؛ x منفی یعنی فاصله از راست.</summary>
-        private void CreateKeyBadgeRight(RectTransform parent, float x, string key, float top)
-        {
-            CreateKeyBadge(parent, x, key, top, true);
-        }
-
+        /// <summary>
+        /// بج کلید. از چپ: x لبه‌ی چپ است و لبه‌ی راست برمی‌گردد.
+        /// از راست: x لبه‌ی راست است و لبه‌ی چپ برمی‌گردد.
+        /// </summary>
         private float CreateKeyBadge(RectTransform parent, float x, string key, float top, bool fromRight)
         {
             Sprite icon = UiKit.KeyIcon(key);
@@ -576,7 +740,8 @@ namespace TehranNoir.UI
             {
                 image.sprite = icon;
                 image.preserveAspect = true;
-                return x + width;
+
+                return fromRight ? x - width : x + width;
             }
 
             image.sprite = UiKit.RoundedRect;
@@ -587,24 +752,47 @@ namespace TehranNoir.UI
             label.alignment = TextAlignmentOptions.Center;
             label.text = key;
 
-            return x + width;
+            return fromRight ? x - width : x + width;
         }
 
-        private void CreateLabel(RectTransform parent, float x, float width, string text,
-            TextAlignmentOptions alignment, float top)
+        /// <summary>متن راهنما از سمت چپ؛ عرض جعبه به اندازه‌ی واقعی متن می‌شود.</summary>
+        private TMP_Text CreateHintText(RectTransform parent, float x, string text, TextAlignmentOptions alignment)
         {
-            bool fromRight = x < 0f;
-
-            RectTransform box = UiKit.Node("Label_" + text, parent);
-            box.anchorMin = new Vector2(fromRight ? 1f : 0f, 1f);
-            box.anchorMax = box.anchorMin;
-            box.pivot = new Vector2(fromRight ? 1f : 0f, 1f);
-            box.anchoredPosition = new Vector2(x, -top);
-            box.sizeDelta = new Vector2(width, BadgeSize);
+            RectTransform box = UiKit.Node("Hint_" + text, parent);
+            box.anchorMin = new Vector2(0f, 1f);
+            box.anchorMax = new Vector2(0f, 1f);
+            box.pivot = new Vector2(0f, 1f);
+            box.anchoredPosition = new Vector2(x, -BottomBadgeTop);
+            box.sizeDelta = new Vector2(600f, BadgeSize);
 
             TMP_Text label = UiKit.Text("Text", box, HintFont, Color.white, Font, Persian);
             label.alignment = alignment;
             label.text = text;
+            label.ForceMeshUpdate();
+
+            box.sizeDelta = new Vector2(Mathf.Ceil(label.preferredWidth) + 2f, BadgeSize);
+
+            return label;
+        }
+
+        /// <summary>متن راهنما از سمت راست؛ لبه‌ی راستش دقیقاً روی حاشیه می‌نشیند.</summary>
+        private TMP_Text CreateHintTextRight(RectTransform parent, float margin, string text, TextAlignmentOptions alignment)
+        {
+            RectTransform box = UiKit.Node("Hint_" + text, parent);
+            box.anchorMin = new Vector2(1f, 1f);
+            box.anchorMax = new Vector2(1f, 1f);
+            box.pivot = new Vector2(1f, 1f);
+            box.anchoredPosition = new Vector2(-margin, -BottomBadgeTop);
+            box.sizeDelta = new Vector2(600f, BadgeSize);
+
+            TMP_Text label = UiKit.Text("Text", box, HintFont, Color.white, Font, Persian);
+            label.alignment = alignment;
+            label.text = text;
+            label.ForceMeshUpdate();
+
+            box.sizeDelta = new Vector2(Mathf.Ceil(label.preferredWidth) + 2f, BadgeSize);
+
+            return label;
         }
 
         private static float BadgeWidth(string key)

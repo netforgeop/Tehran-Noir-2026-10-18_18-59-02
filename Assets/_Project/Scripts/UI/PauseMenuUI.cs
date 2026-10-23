@@ -353,10 +353,13 @@ namespace TehranNoir.UI
             strip.anchoredPosition = new Vector2(-total * 0.5f, 0f);
             strip.sizeDelta = new Vector2(total, BarHeight);
 
-            float x = 0f;
+            // تب اول راست‌ترین است؛ ترتیب خواندن فارسی
+            float x = total;
 
             for (int i = 0; i < _tabs.Count; i++)
             {
+                x -= widths[i];
+
                 RectTransform tab = roots[i];
                 tab.SetParent(strip, false);
                 tab.anchoredPosition = new Vector2(x, 0f);
@@ -364,7 +367,7 @@ namespace TehranNoir.UI
 
                 _tabUnderlines.Add(CreateUnderline(tab));
 
-                x += widths[i] + TabGap;
+                x -= TabGap;
             }
 
             CreateKeyBadge(strip, -94f, "Q", BadgeTop);

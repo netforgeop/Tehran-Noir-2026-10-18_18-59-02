@@ -1,6 +1,9 @@
 @name = فارسی
 @rtl = true
 
+lang.fa = فارسی
+lang.en = انگلیسی
+
 # --- منوی توقف ---
 pause.tab.system = تنظیمات
 pause.tab.map = نقشه

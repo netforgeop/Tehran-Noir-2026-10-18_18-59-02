@@ -159,9 +159,24 @@ namespace TehranNoir.Settings
             return !Rtl.TryGetValue(code, out bool rtl) || rtl;
         }
 
+        /// <summary>
+        /// نام زبان، به زبانِ منو: در منوی انگلیسی «Persian»، در منوی فارسی «فارسی».
+        /// برای همین هیچ متن فارسی داخل منوی انگلیسی نمی‌افتد و مربع نمی‌شود.
+        /// کلیدها: lang.fa، lang.en — برای زبان تازه هم یک کلید همنام اضافه کن.
+        /// </summary>
         public static string Name(string code)
         {
             EnsureLoaded();
+
+            string key = "lang." + code;
+
+            if (Tables.TryGetValue(Code(Channel.Menu), out Dictionary<string, string> table) &&
+                table.TryGetValue(key, out string label))
+                return label;
+
+            if (Tables.TryGetValue(Fallback, out Dictionary<string, string> fallback) &&
+                fallback.TryGetValue(key, out string fallbackLabel))
+                return fallbackLabel;
 
             return Names.TryGetValue(code, out string name) ? name : code;
         }

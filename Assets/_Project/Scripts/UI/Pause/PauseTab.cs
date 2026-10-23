@@ -112,7 +112,6 @@ namespace TehranNoir.UI
                 if (row.ValueText == null || row.ReadValue == null) continue;
 
                 row.ValueText.text = row.ReadValue();
-                StyleText(row.ValueText);
             }
         }
 
@@ -158,18 +157,6 @@ namespace TehranNoir.UI
 
         /* ---------- ساخت ردیف ---------- */
 
-        /// <summary>
-        /// فونت و جهت هر متن را از روی خودِ رشته می‌گذارد.
-        /// لازم است، چون در منوی انگلیسی مقداری مثل «فارسی» هم وجود دارد.
-        /// </summary>
-        protected void StyleText(TMP_Text text)
-        {
-            if (text == null || Menu == null) return;
-
-            text.font = Menu.FontFor(text.text);
-            UiKit.SetFarsi(text, UiKit.HasPersian(text.text));
-        }
-
         /// <summary>ردیف منو: متن چپ‌چین و خط طلایی زیر گزینه‌ی فعال.</summary>
         protected void AddRow(RectTransform panel, string label, float y, Action action)
         {
@@ -177,7 +164,6 @@ namespace TehranNoir.UI
 
             TMP_Text text = UiKit.Text("Label", row, PauseMenuUI.RowFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
             text.text = label;
-            StyleText(text);
             text.ForceMeshUpdate();
 
             float width = Mathf.Max(20f, text.preferredWidth);
@@ -218,13 +204,11 @@ namespace TehranNoir.UI
             TMP_Text valueText = UiKit.Text("Text", valueBox, SettingsLayout.RowFont, UiKit.Dim, Menu.Font, Menu.Persian);
             valueText.alignment = TextAlignmentOptions.MidlineRight;
             valueText.text = readValue != null ? readValue() : string.Empty;
-            StyleText(valueText);
 
             RectTransform labelBox = UiKit.Box("Label", row, valueWidth + 20f, 0f, width - valueWidth - 20f, rowHeight);
             TMP_Text text = UiKit.Text("Text", labelBox, SettingsLayout.RowFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
             text.alignment = TextAlignmentOptions.MidlineRight;
             text.text = label;
-            StyleText(text);
 
             PauseRow data = new PauseRow();
             data.Rect = row;

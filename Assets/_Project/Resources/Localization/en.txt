@@ -1,6 +1,9 @@
 @name = English
 @rtl = false
 
+lang.fa = Persian
+lang.en = English
+
 # --- Pause menu ---
 pause.tab.system = Settings
 pause.tab.map = Map

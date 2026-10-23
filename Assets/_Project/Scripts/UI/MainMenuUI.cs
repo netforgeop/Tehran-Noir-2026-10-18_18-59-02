@@ -19,6 +19,8 @@ namespace TehranNoir.UI
     {
         [Header("تصاویر")]
         [SerializeField] private Sprite backgroundSprite;
+        [Tooltip("مثل flip_h در Godot؛ پرچم را از راست به چپ می‌آورد")]
+        [SerializeField] private bool mirrorBackground = true;
         [SerializeField] private Sprite markerSprite;
 
         [Header("فونت")]
@@ -75,6 +77,9 @@ namespace TehranNoir.UI
 
         private readonly List<MenuItem> _items = new List<MenuItem>();
 
+        private RectTransform _background;
+        private Vector2 _lastScreen;
+
         private TMP_Text _titleText;
         private TMP_Text _hintText;
         private TMP_Text _languageKey;
@@ -106,8 +111,26 @@ namespace TehranNoir.UI
 
         private void Update()
         {
+            FitBackground();
             HandleInput();
             AnimateFrames();
+        }
+
+        /// تصویر پس‌زمینه را طوری اندازه می‌کند که کل صفحه پوشیده شود، بدون کشیدگی.
+        private void FitBackground()
+        {
+            if (_background == null || backgroundSprite == null) return;
+
+            Vector2 screen = new Vector2(Screen.width, Screen.height);
+            if (screen == _lastScreen) return;
+
+            _lastScreen = screen;
+
+            Vector2 sprite = new Vector2(backgroundSprite.rect.width, backgroundSprite.rect.height);
+            if (sprite.x <= 0f || sprite.y <= 0f) return;
+
+            float scale = Mathf.Max(screen.x / sprite.x, screen.y / sprite.y);
+            _background.sizeDelta = sprite * scale;
         }
 
         /* ============================================================
@@ -304,25 +327,32 @@ namespace TehranNoir.UI
         private void BuildBackground(Transform parent)
         {
             RectTransform rect = CreateNode("Background", parent);
-            Stretch(rect);
 
             Image image = rect.gameObject.AddComponent<Image>();
+            image.raycastTarget = false;
 
-            if (backgroundSprite != null)
-            {
-                image.sprite = backgroundSprite;
-                image.preserveAspect = false;
-            }
-            else
+            if (backgroundSprite == null)
             {
                 Debug.LogWarning("[Menu] Background Sprite خالی است؛ پس‌زمینه تک‌رنگ می‌شود.");
                 image.color = BackgroundFallback;
+                return;
             }
 
-            image.raycastTarget = false;
+            image.sprite = backgroundSprite;
+
+            // تصویر به نسبت خودش بزرگ می‌شود تا کل صفحه را بپوشاند؛
+            // اضافه‌اش از لبه‌ها بیرون می‌زند و هیچ‌وقت کشیده نمی‌شود.
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+
+            _background = rect;
+            _lastScreen = Vector2.zero;
+            FitBackground();
 
             // در Godot همین عکس با flip_h آینه می‌شد تا پرچم سمت چپ بیفتد
-            rect.localScale = new Vector3(-1f, 1f, 1f);
+            if (mirrorBackground) rect.localScale = new Vector3(-1f, 1f, 1f);
         }
 
         private void BuildMenu(Transform parent)

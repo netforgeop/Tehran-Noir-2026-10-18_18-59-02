@@ -77,3 +77,4 @@ action.read = خواندن
 action.enter = سوار شدن
 action.drive = رانندگی
 hud.scroll = چرخ موس: هدف بعدی
+hud.verbs = کلید ۱ تا ۳: انتخاب کار

@@ -33,7 +33,7 @@ namespace TehranNoir.Interaction
         // همیشه Take است؛ فیلد Action در Inspector برای این کلاس نادیده گرفته می‌شود
         public override InteractionAction Action => InteractionAction.Take;
 
-        private void Awake()
+        protected virtual void Awake()
         {
             _renderers = GetComponentsInChildren<Renderer>(true);
             _colliders = GetComponentsInChildren<Collider>(true);

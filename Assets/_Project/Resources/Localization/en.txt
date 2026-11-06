@@ -77,3 +77,4 @@ action.read = Read
 action.enter = Enter
 action.drive = Drive
 hud.scroll = Scroll: next target
+hud.verbs = Keys 1-3: choose action

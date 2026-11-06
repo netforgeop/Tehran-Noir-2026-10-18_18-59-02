@@ -28,6 +28,8 @@ namespace TehranNoir.UI
         private const float BadgeSize = 44f;
         private const float BadgeGap = 14f;
         private const float SlidePixels = 16f;
+        private const float VerbTop = 10f;
+        private const float VerbHeight = 24f;
         private const int MaxPills = 4;
         private const int MaxPillChars = 18;
 
@@ -81,13 +83,20 @@ namespace TehranNoir.UI
         private RectTransform _card;
         private GameObject _keyIcon;
 
+        private readonly List<TMP_Text> _verbRows = new List<TMP_Text>();
+        private readonly List<InteractionAction> _verbs = new List<InteractionAction>(3);
+
         private TMP_Text _keyText;
-        private TMP_Text _verbText;
         private TMP_Text _titleText;
         private TMP_Text _subtitleText;
         private TMP_Text _hintText;
 
+        private RectTransform _titleBox;
+        private RectTransform _subtitleBox;
+        private RectTransform _hintBox;
+
         private Interactable _lastTarget;
+        private int _lastVerb = -1;
         private bool _lastGamepad;
         private bool _lastMulti;
         private float _alpha;
@@ -151,6 +160,8 @@ namespace TehranNoir.UI
 
             bool usingGamepad = input != null && input.UsingGamepad;
 
+            int verb = sensor.VerbIndex;
+
             // TMP برای هر نوشتن مِش از نو می‌سازد؛ فقط با تغییر می‌نویسیم
             if (current != _lastTarget || usingGamepad != _lastGamepad)
             {
@@ -158,6 +169,11 @@ namespace TehranNoir.UI
                 _lastGamepad = usingGamepad;
 
                 Apply(current, usingGamepad);
+            }
+            else if (verb != _lastVerb)
+            {
+                _lastVerb = verb;
+                HighlightVerbs(verb);
             }
 
             SyncStrip(list, sensor.Index);
@@ -185,14 +201,103 @@ namespace TehranNoir.UI
         {
             if (target == null) return;
 
-            _verbText.text = target.Prompt;
+            // ردیف‌ها از نو ساخته می‌شوند؛ انتخاب همیشه از اول است
+            _lastVerb = -1;
+
             _titleText.text = target.Title;
 
             string subtitle = target.Subtitle;
             _subtitleText.text = subtitle;
-            _subtitleText.gameObject.SetActive(!string.IsNullOrEmpty(subtitle));
+            _subtitleBox.gameObject.SetActive(!string.IsNullOrEmpty(subtitle));
+
+            BuildVerbs(target);
+            ApplyHint();
 
             SetKey(usingGamepad ? "X" : "E");
+        }
+
+        /// <summary>
+        /// کارهای هدف را به‌صورت ردیف می‌سازد: «باز کردن»، «برداشتن».
+        /// ارتفاع کارت با تعداد کارها حساب می‌شود، پس یک کار همان کارت کوچک قبل است.
+        /// </summary>
+        private void BuildVerbs(Interactable target)
+        {
+            for (int i = 0; i < _verbRows.Count; i++)
+            {
+                if (_verbRows[i] == null) continue;
+
+                _verbRows[i].transform.parent.gameObject.SetActive(false);
+                Destroy(_verbRows[i].transform.parent.gameObject);
+            }
+
+            _verbRows.Clear();
+            _verbs.Clear();
+
+            IReadOnlyList<InteractionAction> verbs = target.Verbs;
+            if (verbs != null)
+                for (int i = 0; i < verbs.Count && i < 3; i++) _verbs.Add(verbs[i]);
+
+            if (_verbs.Count == 0) _verbs.Add(target.Action);
+
+            float textWidth = Width - Pad * 2f - BadgeSize - BadgeGap;
+            float textX = Persian ? Pad : Pad + BadgeSize + BadgeGap;
+
+            for (int i = 0; i < _verbs.Count; i++)
+            {
+                RectTransform box = UiKit.Box("Verb_" + i, _card, textX, VerbY(i), textWidth, VerbHeight);
+
+                TMP_Text text = UiKit.Text("Text", box, 17f, SecondaryColor, Font, Persian);
+                text.alignment = Align;
+                text.text = (i + 1) + ". " + target.VerbLabel(_verbs[i]);
+
+                _verbRows.Add(text);
+            }
+
+            Layout();
+            HighlightVerbs(_lastVerb < 0 ? 0 : _lastVerb);
+        }
+
+        private static float VerbY(int index) => VerbTop + index * VerbHeight;
+
+        /// <summary>کار انتخاب‌شده روشن و بقیه خاموش؛ بدون بازسازی متن.</summary>
+        private void HighlightVerbs(int selected)
+        {
+            for (int i = 0; i < _verbRows.Count; i++)
+            {
+                bool active = i == selected;
+
+                _verbRows[i].color = active ? AccentColor : SecondaryColor;
+                _verbRows[i].fontStyle = active ? FontStyles.Bold : FontStyles.Normal;
+            }
+        }
+
+        /// <summary>هر تعداد کار، چیدمان عمودی از نو حساب می‌شود؛ یک قاعده برای هر حالت.</summary>
+        private void Layout()
+        {
+            int rows = Mathf.Max(1, _verbs.Count);
+
+            float titleY = VerbTop + rows * VerbHeight + 2f;
+            float subtitleY = titleY + 30f;
+            float hintY = subtitleY + 20f;
+
+            _titleBox.anchoredPosition = new Vector2(_titleBox.anchoredPosition.x, -titleY);
+            _subtitleBox.anchoredPosition = new Vector2(_subtitleBox.anchoredPosition.x, -subtitleY);
+            _hintBox.anchoredPosition = new Vector2(_hintBox.anchoredPosition.x, -hintY);
+
+            float height = hintY + 16f + 10f;
+
+            _card.sizeDelta = new Vector2(Width, height);
+            _strip.anchoredPosition = new Vector2(0f, height + StripGap);
+            _root.sizeDelta = new Vector2(Width, height + StripGap + PillHeight);
+        }
+
+        /// <summary>راهنمای پایین کارت: با چند کار، کلیدهای عددی؛ با چند هدف، چرخ موس.</summary>
+        private void ApplyHint()
+        {
+            bool manyVerbs = _verbs.Count > 1;
+
+            _hintText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, manyVerbs ? "hud.verbs" : "hud.scroll");
+            _hintBox.gameObject.SetActive(manyVerbs || _lastMulti);
         }
 
         /// <summary>آیکون واقعی کلید اگر در Resources باشد؛ وگرنه حرف.</summary>
@@ -240,7 +345,7 @@ namespace TehranNoir.UI
             {
                 _lastMulti = multi;
                 _strip.gameObject.SetActive(multi);
-                _hintText.gameObject.SetActive(multi);
+                ApplyHint();
             }
 
             if (multi) RebuildStripIfNeeded(list);
@@ -362,8 +467,11 @@ namespace TehranNoir.UI
         {
             _pills.Clear();
             _stripTargets.Clear();
+            _verbRows.Clear();
+            _verbs.Clear();
             _keyIcon = null;
             _lastMulti = false;
+            _lastVerb = -1;
 
             _canvasObject = MakeCanvas();
 
@@ -449,22 +557,22 @@ namespace TehranNoir.UI
             float textWidth = Width - Pad * 2f - BadgeSize - BadgeGap;
             float textX = Persian ? Pad : Pad + BadgeSize + BadgeGap;
 
-            _verbText = MakeLine("Verb", 12f, 20f, 16f, AccentColor, textX, textWidth);
-            _titleText = MakeLine("Title", 32f, 30f, 24f, PrimaryColor, textX, textWidth);
-            _subtitleText = MakeLine("Subtitle", 62f, 20f, 15f, SecondaryColor, textX, textWidth);
-            _hintText = MakeLine("Hint", 88f, 16f, 12f, MutedColor, textX, textWidth);
+            _titleBox = UiKit.Box("Title", _card, textX, 40f, textWidth, 30f);
+            _titleText = UiKit.Text("Text", _titleBox, 24f, PrimaryColor, Font, Persian);
+            _titleText.alignment = Align;
+
+            _subtitleBox = UiKit.Box("Subtitle", _card, textX, 70f, textWidth, 20f);
+            _subtitleText = UiKit.Text("Text", _subtitleBox, 15f, SecondaryColor, Font, Persian);
+            _subtitleText.alignment = Align;
+
+            _hintBox = UiKit.Box("Hint", _card, textX, 90f, textWidth, 16f);
+            _hintText = UiKit.Text("Text", _hintBox, 12f, MutedColor, Font, Persian);
+            _hintText.alignment = Align;
 
             _hintText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "hud.scroll");
-            _hintText.gameObject.SetActive(false);
-        }
+            _hintBox.gameObject.SetActive(false);
 
-        private TMP_Text MakeLine(string name, float y, float height, float size, Color color, float x, float width)
-        {
-            RectTransform box = UiKit.Box(name, _card, x, y, width, height);
-            TMP_Text text = UiKit.Text("Text", box, size, color, Font, Persian);
-
-            text.alignment = Align;
-            return text;
+            Layout();
         }
 
         private static Image Rounded(RectTransform rect, Color color)

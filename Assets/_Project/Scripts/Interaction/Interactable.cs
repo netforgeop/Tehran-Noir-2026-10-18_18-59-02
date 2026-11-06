@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using TehranNoir.Core;
 using TehranNoir.Rendering;
@@ -35,6 +36,8 @@ namespace TehranNoir.Interaction
         [Header("Visual")]
         [Tooltip("خالی بماند تا خودکار روی همین آبجکت پیدا شود")]
         [SerializeField] private OutlineEffect outline;
+
+        private readonly InteractionAction[] _single = new InteractionAction[1];
 
         public Transform Point => interactionPoint != null ? interactionPoint : transform;
         public float MaxDistance => maxDistance;
@@ -89,6 +92,31 @@ namespace TehranNoir.Interaction
 
         protected virtual void OnFocusEnter() { }
         protected virtual void OnFocusExit() { }
+
+        /// <summary>
+        /// کارهای ممکن روی این آبجکت. پیش‌فرض یک کار است (همان Action)؛
+        /// آبجکتی که چند کار دارد (مثل پرونده: باز کردن و برداشتن) این را عوض می‌کند.
+        /// </summary>
+        public virtual IReadOnlyList<InteractionAction> Verbs
+        {
+            get
+            {
+                _single[0] = Action;
+                return _single;
+            }
+        }
+
+        /// <summary>متن کار شماره‌ی داده‌شده، به زبان بازی.</summary>
+        public string VerbLabel(InteractionAction verb)
+        {
+            return Localization.Action(verb);
+        }
+
+        /// <summary>سنسور همیشه این نسخه را صدا می‌زند و کار انتخاب‌شده را می‌دهد.</summary>
+        public virtual void Interact(GameObject interactor, InteractionAction verb)
+        {
+            Interact(interactor);
+        }
 
         public abstract void Interact(GameObject interactor);
 

@@ -36,6 +36,7 @@ namespace TehranNoir.Interaction
         private PlayerInputReader input;
         private Interactable current;
         private int index;
+        private int verbIndex;
 
         /// <summary>هدف انتخاب‌شده؛ اگر چیزی نباشد null.</summary>
         public Interactable Current => current;
@@ -45,6 +46,23 @@ namespace TehranNoir.Interaction
 
         /// <summary>جای هدف انتخاب‌شده در فهرست؛ برای نوار انتخاب در HUD.</summary>
         public int Index => index;
+
+        /// <summary>جای کار انتخاب‌شده روی هدف فعلی (پرونده: ۰ باز کردن، ۱ برداشتن).</summary>
+        public int VerbIndex => verbIndex;
+
+        /// <summary>کار انتخاب‌شده؛ اگر هدفی نباشد Use.</summary>
+        public InteractionAction CurrentVerb
+        {
+            get
+            {
+                if (current == null) return InteractionAction.Use;
+
+                IReadOnlyList<InteractionAction> verbs = current.Verbs;
+                if (verbs == null || verbs.Count == 0) return current.Action;
+
+                return verbs[Mathf.Clamp(verbIndex, 0, verbs.Count - 1)];
+            }
+        }
 
         private void Awake()
         {
@@ -72,6 +90,7 @@ namespace TehranNoir.Interaction
 
             KeepSelectionValid();
             CycleByInput();
+            CycleVerbByInput();
 
             SetCurrent(candidates[index]);
 
@@ -79,7 +98,7 @@ namespace TehranNoir.Interaction
                 Debug.DrawLine(transform.position, current.Point.position, Color.yellow);
 
             if (current != null && input.InteractPressedThisFrame)
-                current.Interact(gameObject);
+                current.Interact(gameObject, CurrentVerb);
         }
 
         /// <summary>دیالوگ باز است یا منوی توقف؛ در هر دو حالت تعامل خاموش است.</summary>
@@ -134,18 +153,32 @@ namespace TehranNoir.Interaction
             index = found >= 0 ? found : 0;
         }
 
+        /// <summary>کلیدهای ۱ تا ۳، کار انتخاب‌شده روی هدف را عوض می‌کنند (باز کردن / برداشتن).</summary>
+        private void CycleVerbByInput()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null) return;
+
+            if (keyboard.digit1Key.wasPressedThisFrame) SelectVerb(0);
+            if (keyboard.digit2Key.wasPressedThisFrame) SelectVerb(1);
+            if (keyboard.digit3Key.wasPressedThisFrame) SelectVerb(2);
+        }
+
+        /// <summary>انتخاب مستقیم کار؛ عددی که بیرون از فهرست باشد نادیده گرفته می‌شود.</summary>
+        public void SelectVerb(int wanted)
+        {
+            if (current == null) return;
+
+            IReadOnlyList<InteractionAction> verbs = current.Verbs;
+            if (verbs == null || verbs.Count == 0) return;
+            if (wanted < 0 || wanted >= verbs.Count) return;
+
+            verbIndex = wanted;
+        }
+
         private void CycleByInput()
         {
             if (candidates.Count < 2) return;
-
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard != null)
-            {
-                if (keyboard.digit1Key.wasPressedThisFrame) Select(0);
-                if (keyboard.digit2Key.wasPressedThisFrame) Select(1);
-                if (keyboard.digit3Key.wasPressedThisFrame) Select(2);
-                if (keyboard.digit4Key.wasPressedThisFrame) Select(3);
-            }
 
             if (scrollSelects)
             {
@@ -188,6 +221,9 @@ namespace TehranNoir.Interaction
             if (current != null) Unfocus(current);
 
             current = next;
+
+            // هدف تازه یعنی کار تازه؛ «برداشتن» روی آدم معنا ندارد
+            verbIndex = 0;
 
             if (current != null) Focus(current);
         }

@@ -1,0 +1,54 @@
+# رضا — همکار دفتر: آشناشدن و پیشنهاد مأموریت
+# مأموریت «پرونده‌ی مهر و موم‌شده» — مرحله‌ی ۱: گرفتن کار
+# flag.quest.file:  0 = نگرفته   1 = پرونده دست نادر   2 = تحویل داده
+
+[person] reza
+[name] رضا | Reza
+[role] همکار دفتر | Office colleague
+[cast] reza
+
+[node] start
+[if] met.reza == true -> again
+[say] reza | نادر. بالاخره اومدی. | Nader. You finally came.
+[say] reza | بشین یه دقیقه. | Sit a minute.
+[do] met.reza = true
+[go] offer
+
+[node] again
+[if] flag.quest.file == 1 -> in_progress
+[go] offer
+
+[node] offer
+[say] reza | یه کار کوچیک دارم. کوچیک، ولی حساس. | Got a small job. Small, but sensitive.
+[say] reza | این پرونده مهر و موم داره. باید بره بایگانی، ثبت بشه، برگرده. | This file is sealed. It goes to the archive, gets logged, comes back.
+[say] reza | یک ساعت بیشتر نیست. | An hour, no more.
+[say] reza | فقط... بازش نکن. به هیچ بهانه‌ای. | Only thing... don't open it. Not for any reason.
+[opt] چی توش هست؟ | What is in it? -> why
+[opt] می‌برمش. | I will take it. -> accept
+[opt] الان وقتش نیست. | Not now. -> refuse
+
+[node] why
+[say] reza | اگه لازم بود بدونی، خودم می‌گفتم. | If you needed to know, I would have told you myself.
+[say] reza | مهرش برای همین است. | The seal is there for that.
+[go] offer2
+
+[node] offer2
+[opt] باشه. می‌برمش. | Fine. I will take it. -> accept
+[opt] نه، فعلاً نه. | No, not now. -> refuse
+
+[node] accept
+[say] reza | خوب. آدم درستی هستی. | Good. You are a straight one.
+[do] flag.quest.file = 1
+[do] rel.reza +5
+[say] reza | پرونده روی میزه. دستت نلرزه. | The file is on the desk. Keep your hand steady.
+[end]
+
+[node] refuse
+[say] reza | خودم می‌برمش. فکر کردم می‌تونم روی تو حساب کنم. | I will take it myself. Thought I could count on you.
+[do] rel.reza -5
+[end]
+
+[node] in_progress
+[say] reza | پرونده هنوز دست توئه؟ | Do you still have the file?
+[say] reza | بایگانی، انتهای راهرو. زود برگرد. | Archive, end of the corridor. Be quick.
+[end]

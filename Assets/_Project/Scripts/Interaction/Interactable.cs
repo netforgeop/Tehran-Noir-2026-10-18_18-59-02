@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TehranNoir.Core;
 using TehranNoir.Rendering;
 
@@ -7,6 +7,7 @@ namespace TehranNoir.Interaction
     /// <summary>
     /// پایه‌ی همه‌ی آبجکت‌های قابل تعامل.
     /// نوع تعامل (Action) داده است؛ متنش از Localization می‌آید.
+    /// نام و توضیح دوزبانه‌اند: «فارسی|English».
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public abstract class Interactable : MonoBehaviour
@@ -24,6 +25,13 @@ namespace TehranNoir.Interaction
         [Tooltip("حداکثر انحراف از جهت جلوی نقطه. 360 = از هر طرف")]
         [SerializeField, Range(10f, 360f)] private float maxAngle = 360f;
 
+        [Header("Identity")]
+        [Tooltip("نام نمایشی در کارت تعامل. دوزبانه: «رضا|Reza». خالی = نام آبجکت")]
+        [SerializeField] private string displayName = string.Empty;
+
+        [Tooltip("خط سوم کارت: نقش، نوع، توضیح. دوزبانه")]
+        [SerializeField] private string subtype = string.Empty;
+
         [Header("Visual")]
         [Tooltip("خالی بماند تا خودکار روی همین آبجکت پیدا شود")]
         [SerializeField] private OutlineEffect outline;
@@ -34,11 +42,15 @@ namespace TehranNoir.Interaction
         /// <summary>نوع تعامل. کلاس‌های فرزند می‌توانند ثابتش کنند.</summary>
         public virtual InteractionAction Action => action;
 
-        /// <summary>متن آماده‌ی نمایش، به زبان فعلی بازی.</summary>
+        /// <summary>متن دکمه‌ی تعامل، به زبان فعلی بازی («برداشتن»، «صحبت»، …).</summary>
         public string Prompt => Localization.Action(Action);
 
-        /// <summary>خط دوم پنل؛ پیش‌فرض خالی است.</summary>
-        public virtual string Detail => string.Empty;
+        /// <summary>خط اول کارت: نام.</summary>
+        public virtual string Title =>
+            string.IsNullOrWhiteSpace(displayName) ? name : Localization.Pick(displayName);
+
+        /// <summary>خط سوم کارت: نقش یا نوع. خالی یعنی نمایش داده نشود.</summary>
+        public virtual string Subtitle => Localization.Pick(subtype);
 
         /// <summary>آیا بازیکن از این موقعیت می‌تواند تعامل کند؟</summary>
         public bool IsAvailableFrom(Vector3 interactorPosition)
@@ -70,6 +82,7 @@ namespace TehranNoir.Interaction
         /// <summary>فقط InteractionSensor صدا می‌زند.</summary>
         public void Unfocus()
         {
+            if (outline == null) outline = GetComponent<OutlineEffect>();
             if (outline != null) outline.Hide();
             OnFocusExit();
         }

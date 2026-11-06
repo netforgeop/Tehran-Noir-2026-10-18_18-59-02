@@ -1,18 +1,16 @@
 using UnityEngine;
+using TehranNoir.Core;
 using TehranNoir.Dialogue;
 
 namespace TehranNoir.Interaction
 {
     /// <summary>
-    /// آدم قابل گفتگو. اسم و نقش را می‌گیرد؛ فایل دیالوگ از DialogueStarter
-    /// روی همین آبجکت خوانده می‌شود. دکمه و متن خودکارند.
+    /// آدم قابل گفتگو. نام و نقش را از بخش Identity خودِ Interactable می‌گیرد
+    /// (دوزبانه: «رضا|Reza»)؛ فایل دیالوگ از DialogueStarter روی همین آبجکت خوانده می‌شود.
+    /// دکمه و متن خودکارند.
     /// </summary>
     public class TalkInteractable : Interactable
     {
-        [Header("Person")]
-        [SerializeField] private string displayName = "Unknown";
-        [SerializeField] private string role = "";
-
         [Header("Dialogue")]
         [Tooltip("خالی بماند تا خودکار روی همین آبجکت پیدا شود")]
         [SerializeField] private DialogueStarter dialogueStarter;
@@ -22,9 +20,6 @@ namespace TehranNoir.Interaction
 
         // همیشه Talk است؛ فیلد Action در Inspector برای این کلاس نادیده گرفته می‌شود
         public override InteractionAction Action => InteractionAction.Talk;
-
-        public override string Detail =>
-            string.IsNullOrWhiteSpace(role) ? displayName : $"{displayName}\n{role}";
 
         private void Awake()
         {
@@ -41,7 +36,7 @@ namespace TehranNoir.Interaction
             }
 
             if (logInteraction)
-                Debug.Log($"{displayName} ({role}): ...", this);
+                Debug.Log(Title + ": ...", this);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using UnityEngine;
+using TehranNoir.Core;
 
 namespace TehranNoir.Interaction
 {
@@ -14,7 +15,7 @@ namespace TehranNoir.Interaction
         public override void Interact(GameObject interactor)
         {
             if (logInteraction)
-                Debug.Log($"{name}: {Prompt}", this);
+                Debug.Log(Title + ": " + Localization.Action(Action), this);
         }
     }
 }

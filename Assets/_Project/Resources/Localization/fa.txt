@@ -66,3 +66,14 @@ settings.texture.quarter = یک‌چهارم
 settings.shadows.off = خاموش
 settings.shadows.hard = سخت
 settings.shadows.all = کامل
+
+# --- تعامل ---
+action.use = استفاده
+action.open = باز کردن
+action.close = بستن
+action.talk = صحبت
+action.take = برداشتن
+action.read = خواندن
+action.enter = سوار شدن
+action.drive = رانندگی
+hud.scroll = چرخ موس: هدف بعدی

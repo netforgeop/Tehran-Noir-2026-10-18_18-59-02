@@ -66,3 +66,14 @@ settings.texture.quarter = Quarter
 settings.shadows.off = Off
 settings.shadows.hard = Hard
 settings.shadows.all = All
+
+# --- Interaction ---
+action.use = Use
+action.open = Open
+action.close = Close
+action.talk = Talk
+action.take = Take
+action.read = Read
+action.enter = Enter
+action.drive = Drive
+hud.scroll = Scroll: next target

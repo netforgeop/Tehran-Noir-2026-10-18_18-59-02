@@ -80,3 +80,4 @@ action.give = دادن
 action.place = گذاشتن
 hud.scroll = چرخ موس: هدف بعدی
 hud.verbs = کلید ۱ تا ۳: انتخاب کار
+doc.close = Esc یا E: بستن

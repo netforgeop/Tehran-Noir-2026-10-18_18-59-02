@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TehranNoir.Dialogue;
+using TehranNoir.Documents;
 
 namespace TehranNoir.Interaction
 {
@@ -15,7 +16,10 @@ namespace TehranNoir.Interaction
         [Tooltip("با باز کردن، این متغیر true می‌شود. مهر شکسته = مدرک")]
         [SerializeField] private string openedVariable = "flag.file.opened";
 
-        [Tooltip("فایل دیالوگی که محتوای پرونده را نشان می‌دهد؛ خالی = فقط Console")]
+        [Tooltip("سند کاغذی که با باز کردن نشان داده می‌شود — مسیر داخل Resources، مثل Documents/file_sealed")]
+        [SerializeField] private string documentPath = string.Empty;
+
+        [Tooltip("اگر سند کاغذی نبود: فایل دیالوگی که محتوای پرونده را نشان می‌دهد؛ خالی = فقط Console")]
         [SerializeField] private DialogueStarter contentReader;
 
         private readonly List<InteractionAction> _verbs = new List<InteractionAction>(2);
@@ -83,6 +87,13 @@ namespace TehranNoir.Interaction
                 DialogueRunner.ApplyEffect(openedVariable.Trim() + " = true", WorldStateProvider.Instance.State);
 
             Debug.Log("[File] seal broken: " + Title, this);
+
+            // اول سند کاغذی: پرونده باید مثل یک برگه باز شود، نه نوار دیالوگ
+            if (!string.IsNullOrWhiteSpace(documentPath))
+            {
+                DocumentLayer.ShowResource(documentPath, null);
+                return;
+            }
 
             if (contentReader != null && contentReader.HasDialogue)
             {

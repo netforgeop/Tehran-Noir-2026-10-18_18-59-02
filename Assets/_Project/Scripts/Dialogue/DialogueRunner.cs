@@ -29,6 +29,9 @@ namespace TehranNoir.Dialogue
         public event Action<IReadOnlyList<OptionItem>> OptionsShown;
         public event Action Finished;
 
+        /// <summary>یک سند کاغذی باید باز شود؛ مسیرش را می‌دهد و منتظر می‌ماند تا Continue صدا زده شود.</summary>
+        public event Action<string> DocumentRequested;
+
         public void Begin(DialogueDocument document, WorldState world, string startNodeId = null)
         {
             Document = document;
@@ -53,6 +56,16 @@ namespace TehranNoir.Dialogue
         {
             if (!IsRunning || IsWaitingForChoice) return;
             if (CurrentLine == null) return;
+
+            CurrentLine = null;
+            Step();
+        }
+
+        /// بعد از بسته شدن سند، دیالوگ از همان‌جا ادامه می‌دهد.
+        public void Continue()
+        {
+            if (!IsRunning) return;
+            if (IsWaitingForChoice) return;
 
             CurrentLine = null;
             Step();
@@ -122,6 +135,24 @@ namespace TehranNoir.Dialogue
                     if (available && !string.IsNullOrEmpty(redirect.Target))
                     {
                         if (!Jump(redirect.Target)) return;
+                    }
+                    continue;
+                }
+
+                ReadItem read = item as ReadItem;
+                if (read != null)
+                {
+                    if (available)
+                    {
+                        if (DocumentRequested != null)
+                        {
+                            CurrentLine = null;
+                            DocumentRequested(read.Path);
+                            return;
+                        }
+
+                        // کسی گوش نمی‌دهد؛ دیالوگ نباید قفل شود
+                        Debug.LogWarning("[Dialogue] تگ [read] آمد ولی DocumentView در صحنه نیست: " + read.Path);
                     }
                     continue;
                 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
+using TehranNoir.Documents;
 using TehranNoir.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -75,6 +76,9 @@ namespace TehranNoir.Dialogue
         /// <summary>پنل باز فعلی؛ null یعنی هیچ دیالوگی باز نیست.</summary>
         public static DialogueUI Current { get; private set; }
 
+        /// <summary>فونت فارسی صحنه؛ DocumentView هم از همین استفاده می‌کند تا یک فونت در بازی باشد.</summary>
+        public TMP_FontAsset Font { get { return font; } }
+
         public bool IsOpen { get { return _panel != null && _panel.gameObject.activeSelf; } }
 
         private void Awake()
@@ -83,6 +87,7 @@ namespace TehranNoir.Dialogue
             Runner.LineShown += HandleLine;
             Runner.OptionsShown += HandleOptions;
             Runner.Finished += HandleFinished;
+            Runner.DocumentRequested += HandleDocument;
 
             Build();
             _panel.gameObject.SetActive(false);
@@ -97,6 +102,7 @@ namespace TehranNoir.Dialogue
             Runner.LineShown -= HandleLine;
             Runner.OptionsShown -= HandleOptions;
             Runner.Finished -= HandleFinished;
+            Runner.DocumentRequested -= HandleDocument;
         }
 
         /* ============================================================
@@ -299,6 +305,22 @@ namespace TehranNoir.Dialogue
 
             _selected = 0;
             RefreshHighlight();
+        }
+
+        /// <summary>
+        /// سند کاغذی باز می‌شود؛ پنل دیالوگ زیرش می‌ماند و بعد از بسته شدن سند،
+        /// دیالوگ از همان نقطه ادامه می‌دهد.
+        /// </summary>
+        private void HandleDocument(string path)
+        {
+            bool shown = DocumentLayer.ShowResource(path, ContinueAfterDocument);
+
+            if (!shown) Runner.Continue();
+        }
+
+        private void ContinueAfterDocument()
+        {
+            if (Runner != null && Runner.IsRunning) Runner.Continue();
         }
 
         private void HandleFinished()
@@ -565,6 +587,7 @@ namespace TehranNoir.Dialogue
                 {
                     SetBoolMember(component, "Farsi", true);
                     SetBoolMember(component, "FixTags", true);
+                    SetBoolMember(component, "PreserveNumbers", true);
                     return text;
                 }
             }

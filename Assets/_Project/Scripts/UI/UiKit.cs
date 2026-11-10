@@ -103,6 +103,9 @@ namespace TehranNoir.UI
 
             SetBoolMember(rtl, "Farsi", farsi);
             SetBoolMember(rtl, "FixTags", true);
+
+            // عدد را همان‌طور که نوشته‌ایم نگه دار؛ تبدیل خودکار به رقم فارسی سردرگمی می‌سازد
+            SetBoolMember(rtl, "PreserveNumbers", true);
         }
 
         private static Type FindRtlTextType()

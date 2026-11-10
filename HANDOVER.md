@@ -516,6 +516,8 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 | `docs/19` | **طراحی مأموریت پرونده و سیستم آبرو** (مهم‌ترین سند طراحی) |
 | `docs/20` | HUD تعامل و انتخاب با اسکرول |
 | `docs/21` | چند کار روی یک آبجکت: پرونده |
+| `docs/22` | ممیزی بکاپ ۲۰۲۶-۱۱-۰۷ و پنج اتصال باقی‌مانده |
+| `docs/23` | **اسناد کاغذی**: الگو، تگ‌ها، سه راه باز کردن، RTLTMPro |
 
 ---
 
@@ -544,22 +546,49 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 چیزی که مانده پنج اتصال در Inspector است و هر پنج‌تا در `docs/22` با مقدار دقیق فیلدها آمده‌اند:
 
 ۱. `OutlineEffect` روی `Reza` و `Cube` با متریال `M_Outline`.
-۲. `Cube`: تعویض `PickupInteractable` با `FileInteractable` + `Content Reader` روی `file_sealed.txt`.
+۲. `Cube`: تعویض `PickupInteractable` با `FileInteractable` و پر کردن `Document Path`
+   با `Documents/file_sealed`. (`Content Reader` دیگر لازم نیست.)
 ۳. `Reza`: `Handover Variable = flag.file.taken` (وگرنه کار «دادن» هرگز نمی‌آید).
 ۴. `DeskPoint` زیر میز با `PlaceInteractable` و سه اثر `flag.delivery = desk`،
    `flag.quest.file = 2`، `flag.file.taken = false`.
-۵. اجرای `Tehran Noir/ساخت بایگانی و مأموریت` و بعد `Ctrl+S`.
+۵. `Tehran Noir/ساخت لایه‌ی اسناد و اتصال پرونده` — این خودش `DocumentLayer` را می‌سازد
+   و `Document Path` پرونده را ست می‌کند.
+۶. اجرای `Tehran Noir/ساخت بایگانی و مأموریت` و بعد `Ctrl+S`.
 
 تا شماره ۲ انجام نشود `flag.file.opened` همیشه false است و سه گره
 (`handover_broken`, `desk_open`, `broken`) دست‌نیافتنی می‌مانند.
 
 بعد از اتصال، آزمایش این ترتیب است: گرفتن کار از رضا → برداشتن پرونده → `۱` (باز کردن)
-→ `۲` (برداشتن) → بستن با `E` → رفتن به رضا → کار «دادن» → دیدن «چرا درش بازه؟».
+→ دیدن برگه‌ی کاغذی → بستن با `Esc` → `۲` (برداشتن) → رفتن به رضا → کار «دادن»
+→ دیدن «چرا درش بازه؟».
 هیچ‌کدام از این‌ها بدون آن پنج اتصال قابل آزمایش نیست.
 
 ---
 
-## ۱۸. ممیزی بکاپ ۲۰۲۶-۱۱-۰۷ (جلسه‌ی ۱۰)
+## ۱۸. اسناد کاغذی (جلسه‌ی ۱۰)
+
+خواندن پرونده دیگر مثل دیالوگ نیست: یک برگه‌ی واقعی وسط صفحه می‌آید
+(مثل Mafia: The Old Country). یک الگو، هر تعداد سند؛ متن در `.txt`.
+
+| قطعه | نقش |
+| --- | --- |
+| `Scripts/Documents/DocumentText.cs` | خواندن فایل سند، دو زبان، تگ‌ها |
+| `Scripts/Documents/DocumentView.cs` | ساخت برگه در زمان اجرا، دو قالب `letter` / `note` |
+| `Scripts/Documents/DocumentLayer.cs` | `DocumentLayer.ShowResource("Documents/...")` |
+| `Scripts/Documents/DocumentInteractable.cs` | کاغذ روی میز، کار «خواندن» |
+| `Resources/Documents/*.txt` | سندها؛ نمونه: `file_sealed.txt` |
+| `Editor/DocumentBuilder.cs` | `Tehran Noir/ساخت لایه‌ی اسناد و اتصال پرونده` |
+| `Assets/RTLTMPro/` | شکل‌دهی فارسی (MIT، فقط runtime) |
+
+- تگ‌ها: `[template] [agency] [office] [number] [date] [title] [stamp] [emblem] [seal]`
+- خط بدنه: `فارسی | English`؛ خط خالی = پاراگراف تازه.
+- سه راه باز شدن: `DocumentInteractable`، فیلد `Document Path` روی `FileInteractable`،
+  یا تگ `[read] Documents/...` داخل دیالوگ (دیالوگ بعد از بسته شدن سند ادامه می‌دهد).
+- جزئیات: `docs/23-documents.md`.
+
+---
+
+## ۱۹. ممیزی بکاپ ۲۰۲۶-۱۱-۰۷ (جلسه‌ی ۱۰)
 
 خلاصه‌ی `docs/22`:
 

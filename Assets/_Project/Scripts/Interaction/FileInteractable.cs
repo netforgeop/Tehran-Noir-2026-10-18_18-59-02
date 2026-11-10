@@ -91,8 +91,9 @@ namespace TehranNoir.Interaction
             // اول سند کاغذی: پرونده باید مثل یک برگه باز شود، نه نوار دیالوگ
             if (!string.IsNullOrWhiteSpace(documentPath))
             {
-                DocumentLayer.ShowResource(documentPath, null);
-                return;
+                if (DocumentLayer.ShowResource(documentPath, null)) return;
+
+                Debug.LogWarning("[File] سند «" + documentPath + "» پیدا نشد؛ برگشت به دیالوگ.", this);
             }
 
             if (contentReader != null && contentReader.HasDialogue)

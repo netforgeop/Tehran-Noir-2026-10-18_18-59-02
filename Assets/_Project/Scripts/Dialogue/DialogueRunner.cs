@@ -142,18 +142,15 @@ namespace TehranNoir.Dialogue
                 ReadItem read = item as ReadItem;
                 if (read != null)
                 {
-                    if (available)
+                    // این کلاس عمداً به UnityEngine وابسته نیست؛ گزارش دادن کارِ لایه‌ی UI است.
+                    if (available && DocumentRequested != null)
                     {
-                        if (DocumentRequested != null)
-                        {
-                            CurrentLine = null;
-                            DocumentRequested(read.Path);
-                            return;
-                        }
-
-                        // کسی گوش نمی‌دهد؛ دیالوگ نباید قفل شود
-                        Debug.LogWarning("[Dialogue] تگ [read] آمد ولی DocumentView در صحنه نیست: " + read.Path);
+                        CurrentLine = null;
+                        DocumentRequested(read.Path);
+                        return;
                     }
+
+                    // کسی گوش نمی‌دهد؛ دیالوگ نباید قفل شود و از خط رد می‌شود
                     continue;
                 }
 

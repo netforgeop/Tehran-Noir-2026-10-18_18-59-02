@@ -97,9 +97,12 @@ namespace TehranNoir.UI
 
         private Interactable _lastTarget;
         private int _lastVerb = -1;
+        private int _lastSignature;
         private bool _lastGamepad;
         private bool _lastMulti;
         private float _alpha;
+
+        private static readonly Interactable[] NoTargets = new Interactable[0];
 
         private bool Persian => Localization.Persian;
 
@@ -155,18 +158,27 @@ namespace TehranNoir.UI
             // بدون سنسور هیچ‌چیز نیست؛ ولی نبودِ ورودی نباید HUD را کامل خاموش کند
             if (_group == null || sensor == null) return;
 
-            IReadOnlyList<Interactable> list = sensor.Candidates;
-            Interactable current = sensor.Current;
+            // سنسور خاموش است یعنی چیزی برای تعامل نیست (سند باز، دیالوگ)؛
+            // کارت باید برود، نه اینکه روی آخرین حالت یخ بزند.
+            bool live = sensor.enabled;
+
+            IReadOnlyList<Interactable> list = live ? sensor.Candidates : NoTargets;
+            Interactable current = live ? sensor.Current : null;
 
             bool usingGamepad = input != null && input.UsingGamepad;
 
             int verb = sensor.VerbIndex;
 
+            // فهرست کارهای هدف هم می‌تواند عوض شود (پرونده بعد از باز شدن «خواندن» می‌شود).
+            // پس فقط تغییر هدف کافی نیست؛ امضای کارها هم باید بررسی شود.
+            int signature = VerbSignature(current);
+
             // TMP برای هر نوشتن مِش از نو می‌سازد؛ فقط با تغییر می‌نویسیم
-            if (current != _lastTarget || usingGamepad != _lastGamepad)
+            if (current != _lastTarget || usingGamepad != _lastGamepad || signature != _lastSignature)
             {
                 _lastTarget = current;
                 _lastGamepad = usingGamepad;
+                _lastSignature = signature;
 
                 Apply(current, usingGamepad);
             }
@@ -191,6 +203,22 @@ namespace TehranNoir.UI
         public void Refresh()
         {
             _lastTarget = null;
+            _lastSignature = 0;
+        }
+
+        /// <summary>اثر انگشت فهرست کارهای هدف؛ با هر تغییر کارها عوض می‌شود.</summary>
+        private static int VerbSignature(Interactable target)
+        {
+            if (target == null) return 0;
+
+            IReadOnlyList<InteractionAction> verbs = target.Verbs;
+            if (verbs == null || verbs.Count == 0) return 1;
+
+            int hash = 17;
+            for (int i = 0; i < verbs.Count; i++)
+                hash = hash * 31 + (int)verbs[i];
+
+            return hash;
         }
 
         /* ============================================================

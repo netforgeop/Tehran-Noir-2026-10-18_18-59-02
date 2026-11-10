@@ -6,9 +6,10 @@ using TehranNoir.Documents;
 namespace TehranNoir.Interaction
 {
     /// <summary>
-    /// پرونده‌ی مهر و موم‌شده: دو کار دارد — باز کردن و برداشتن.
+    /// پرونده‌ی مهر و موم‌شده: دو کار دارد — باز کردن (یا بعداً خواندن) و برداشتن.
     /// باز کردن، مهر را می‌شکند و همین یک مدرک، کل مسیر داستان را می‌سازد.
-    /// بعد از باز شدن، کار «باز کردن» از فهرست می‌رود و فقط «برداشتن» می‌ماند.
+    /// بعد از باز شدن، «باز کردن» جای خودش را به «خواندن» می‌دهد؛
+    /// پرونده هر وقت بخواهی دوباره باز می‌شود، ولی مهر فقط یک بار می‌شکند.
     /// </summary>
     public class FileInteractable : PickupInteractable
     {
@@ -31,7 +32,7 @@ namespace TehranNoir.Interaction
 
         protected override void Awake()
         {
-            // بدون این، رندررها و کالایدرها کش نمی‌شوند و برداشتن کار نمی‌کند
+            // بدون این، رندررها و کالایدرها کش می‌شوند و برداشتن کار می‌کند
             base.Awake();
 
             ReadWorld();
@@ -52,13 +53,14 @@ namespace TehranNoir.Interaction
             _opened = World.Get(openedVariable).Truthy();
         }
 
+        /// <summary>مهروموم‌شده: باز کردن + برداشتن. بازشده: خواندن + برداشتن.</summary>
         public override IReadOnlyList<InteractionAction> Verbs
         {
             get
             {
                 _verbs.Clear();
 
-                if (!_opened) _verbs.Add(InteractionAction.Open);
+                _verbs.Add(_opened ? InteractionAction.Read : InteractionAction.Open);
                 _verbs.Add(InteractionAction.Take);
 
                 return _verbs;
@@ -73,13 +75,23 @@ namespace TehranNoir.Interaction
                 return;
             }
 
+            if (verb == InteractionAction.Read)
+            {
+                ShowContent();
+                return;
+            }
+
             base.Interact(interactor, verb);
         }
 
-        /// <summary>باز کردن: نوشتن پرچم + خواندن محتوا. پرونده جایش نمی‌ماند، پس همه‌چیز ثبت می‌شود.</summary>
+        /// <summary>باز کردن: نوشتن پرچم + نشان دادن محتوا. مهر فقط همین یک بار می‌شکند.</summary>
         private void Open(GameObject interactor)
         {
-            if (_opened) return;
+            if (_opened)
+            {
+                ShowContent();
+                return;
+            }
 
             _opened = true;
 
@@ -88,7 +100,15 @@ namespace TehranNoir.Interaction
 
             Debug.Log("[File] seal broken: " + Title, this);
 
-            // اول سند کاغذی: پرونده باید مثل یک برگه باز شود، نه نوار دیالوگ
+            ShowContent();
+        }
+
+        /// <summary>
+        /// یک جا برای هر دو کار: سند کاغذی اول، وگرنه دیالوگ.
+        /// «خواندن» هیچ چیزی در دنیا عوض نمی‌کند؛ فقط دوباره نشان می‌دهد.
+        /// </summary>
+        private void ShowContent()
+        {
             if (!string.IsNullOrWhiteSpace(documentPath))
             {
                 if (DocumentLayer.ShowResource(documentPath, null)) return;

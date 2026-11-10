@@ -12,6 +12,8 @@
         Take,
         Read,
         Enter,
-        Drive
+        Drive,
+        Give,
+        Place
     }
 }

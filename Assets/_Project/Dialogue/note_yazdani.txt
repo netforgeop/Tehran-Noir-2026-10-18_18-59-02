@@ -1,0 +1,13 @@
+# یادداشت دست‌نویس — خواندنی روی پیشخوان بایگانی
+
+[person] note
+[name] یادداشت | Note
+[role] دست‌نویس | Handwritten
+[cast] note
+
+[node] read
+[say] note | «شریفی خودش را نکشت.» | "Sharifi did not kill himself."
+[say] note | «تا وقتی این پرونده باز است، هیچ‌کس امن نیست.» | "While this file stays open, no one is safe."
+[say] note | امضا: یزدانی — بدون تاریخ | Signed: Yazdani — undated
+[do] flag.clue.note = true
+[end]

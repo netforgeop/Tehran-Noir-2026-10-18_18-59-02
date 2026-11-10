@@ -18,6 +18,15 @@ namespace TehranNoir.Dialogue
         [ContextMenu("شروع دیالوگ")]
         public void StartDialogue()
         {
+            StartDialogue(startNodeId);
+        }
+
+        /// <summary>
+        /// پخش از یک گره مشخص. کار «دادن پرونده» از همین استفاده می‌کند تا
+        /// دیالوگ از گره‌ی handover شروع شود، نه از گره‌ی اول.
+        /// </summary>
+        public void StartDialogue(string nodeId)
+        {
             if (dialogueFile == null)
             {
                 Debug.LogError("[Dialogue] فایل دیالوگ انتخاب نشده: " + name);
@@ -47,7 +56,7 @@ namespace TehranNoir.Dialogue
                 ? WorldStateProvider.Instance.State
                 : null;
 
-            dialogueUI.Play(document, world, startNodeId);
+            dialogueUI.Play(document, world, nodeId);
         }
     }
 }

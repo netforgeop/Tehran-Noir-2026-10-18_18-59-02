@@ -1,0 +1,14 @@
+# دفتر ثبت بایگانی — خواندنی روی پیشخوان
+# خواندنش flag.clue.log را روشن می‌کند و جعبه‌ی ۱۳۵۲ را از قفسه بیرون می‌آورد
+
+[person] logbook
+[name] دفتر ثبت بایگانی | Archive logbook
+[role] ۱۳۵۲ تا ۱۳۵۳ | 1352 to 1353
+[cast] logbook
+
+[node] read
+[say] logbook | صفحه‌ی ۴۱. | Page 41.
+[say] logbook | ۱۳۵۲/۱۱۴ — پرونده‌ی کریم شریفی. مهر سالم. تحویل به سرگرد یزدانی. | 1352/114 — Karim Sharifi. Seal intact. Handed to Major Yazdani.
+[say] logbook | حاشیه، با خودکار قرمز: «جعبه‌ی ۳، قفسه‌ی شرقی». | Margin, in red pen: "Box 3, east shelf."
+[do] flag.clue.log = true
+[end]

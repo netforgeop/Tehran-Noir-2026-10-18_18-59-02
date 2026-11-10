@@ -1,6 +1,18 @@
-# رضا — همکار دفتر: آشناشدن و پیشنهاد مأموریت
-# مأموریت «پرونده‌ی مهر و موم‌شده» — مرحله‌ی ۱: گرفتن کار
+# رضا — همکار دفتر: آشناشدن، گرفتن کار، تحویل و رویارویی
+# مأموریت «پرونده‌ی مهر و موم‌شده» — مرحله‌ی ۳
+#
 # flag.quest.file:  0 = نگرفته   1 = پرونده دست نادر   2 = تحویل داده
+# flag.file.taken:  پرونده در دست نادر است
+# flag.file.opened: مهر شکسته (مدرک)
+# flag.delivery:    personal (دستی) یا desk (روی میز)
+# flag.claim.seal:  opened | already | none | unknown   (آخرین ادعا)
+# flag.claim.told:  یک بار ادعا کرده‌ای
+# flag.claim.settled: موضوع مهر بسته شده
+# flag.lie.seal:    ادعایت با واقعیت نمی‌خواند (بدهی دروغ)
+# known.reza.seal:  رضا مهر شکسته را دیده
+# known.reza.lie:   رضا فهمیده دروغ گفتی
+#
+# قاعده: مدرک + تناقض = فهمیدن. «یادم نیست» تناقض نمی‌سازد، فقط rel.reza را کم می‌کند.
 
 [person] reza
 [name] رضا | Reza
@@ -15,6 +27,9 @@
 [go] offer
 
 [node] again
+[if] flag.quest.file == 4 -> finished
+[if] flag.quest.file == 3 -> archive_done
+[if] flag.quest.file == 2 -> after
 [if] flag.file.taken == true -> carrying
 [if] flag.quest.file == 1 -> go_get
 [go] offer
@@ -55,4 +70,194 @@
 
 [node] carrying
 [say] reza | بایگانی، انتهای راهرو. زود برگرد. | Archive, end of the corridor. Be quick.
+[say] reza | یا همین‌جا بده به من؛ خودم می‌برم. | Or just hand it to me here. I will take it.
+[end]
+
+# ---------------------------------------------------------------
+# تحویل دستی — کار «دادن» روی رضا از همین گره شروع می‌شود
+# ---------------------------------------------------------------
+
+[node] handover
+[do] met.reza = true
+[do] flag.delivery = personal
+[do] flag.delivery.seen = true
+[do] flag.quest.file = 2
+[do] flag.file.taken = false
+[if] flag.file.opened == true -> handover_broken
+[say] reza | خوب. سالم رسید. | Good. It came in whole.
+[say] reza | این یکی زود می‌رفت بایگانی. حالا خودم می‌برمش. | This one was due at the archive early. I will take it myself now.
+[do] rel.reza +5
+[end]
+
+[node] handover_broken
+[say] reza | این چیه؟ | What is this?
+[say] reza | مهرش شکسته. | The seal is broken.
+[do] known.reza.seal = true
+[say] reza | چرا درش بازه؟ | Why is it open?
+[opt] خودم بازش کردم. | I opened it myself. -> break_truth
+[opt] از قبل باز بود. | It was already open. -> break_already
+[opt] دست نزدم. | I never touched it. -> break_none
+[opt] یادم نیست. | I do not remember. -> break_unknown
+
+[node] break_truth
+[do] flag.claim.seal = opened
+[do] flag.claim.told = true
+[do] flag.claim.settled = true
+[say] reza | لااقل راستشو گفتی. | At least you told me straight.
+[say] reza | ولی این پرونده مال من نبود. مال من هم نیست که ببخشمش. | But this file was not mine. And it is not mine to forgive.
+[say] reza | برو. تا خبری نشده، به من نزدیک نشو. | Go. Until I send word, stay away from me.
+[do] rel.reza -5
+[end]
+
+[node] break_already
+[do] flag.claim.seal = already
+[do] flag.claim.told = true
+[do] flag.claim.settled = false
+[do] flag.lie.seal = true
+[say] reza | از قبل باز بود. | It was already open.
+[say] reza | ... باشه. | ... Fine.
+[say] reza | فعلاً همین رو قبول می‌کنم. | For now, I will take that.
+[end]
+
+[node] break_none
+[do] flag.claim.seal = none
+[do] flag.claim.told = true
+[do] flag.claim.settled = true
+[do] flag.lie.seal = true
+[say] reza | مهر شکسته، تو هم می‌گی دست نزدی. | The seal is broken and you say you never touched it.
+[say] reza | یکی از ما داره دروغ می‌گه، و من می‌دونم من نیستم. | One of us is lying, and I know it is not me.
+[do] rel.reza -10
+[end]
+
+[node] break_unknown
+[do] flag.claim.seal = unknown
+[do] flag.claim.told = true
+[do] flag.claim.settled = true
+[say] reza | «یادم نیست» جواب یک آدم نیست. جواب یک دیواره. | "I do not remember" is not an answer. It is a wall.
+[do] rel.reza -5
+[end]
+
+# ---------------------------------------------------------------
+# بازدید بعدی — سه مسیر: میز، دروغ لو رفته، یا کار تمام
+# ---------------------------------------------------------------
+
+[node] after
+[if] flag.delivery == desk -> desk_after
+[if] known.reza.lie == true -> delivered
+[if] flag.claim.seal == already and flag.claim.settled == false -> reask
+[go] delivered
+
+[node] delivered
+[say] reza | پرونده رسید. کاری برات ندارم. | The file is in. I have nothing for you.
+[end]
+
+# ---------------------------------------------------------------
+# مسیر بایگانی: پرونده به خانم فرهادی رسیده (flag.quest.file == 3)
+# ---------------------------------------------------------------
+
+[node] archive_done
+[if] known.reza.lie == true -> witness_done
+[if] flag.lie.seal == true and flag.clue.log == true -> witness
+[if] flag.clue.note == true -> note
+[say] reza | ثبت شد؟ | Logged?
+[do] flag.quest.file = 4
+[do] rel.reza +2
+[say] reza | خوب. حالا بشین، یه چیز دیگه هم هست. | Good. Now sit down, there is something else.
+[end]
+
+[node] witness
+[do] known.reza.lie = true
+[do] flag.quest.file = 4
+[say] reza | خانم فرهادی دفتر رو نشونم داد. | Mrs. Farhadi showed me the log.
+[say] reza | نوشته: مهر سالم تحویل داده شده. | It says: seal intact at handover.
+[say] reza | تو گفتی از قبل باز بود. | You told me it was already open.
+[say] reza | یکی از این دو تا دروغه، و این یکی رو خودم دیدم. | One of those is a lie, and I saw this one with my own eyes.
+[do] rel.reza -12
+[end]
+
+[node] note
+[say] reza | این یادداشت رو از کجا آوردی؟ | Where did you get this note?
+[do] flag.quest.file = 4
+[do] rel.reza +3
+[say] reza | دست یزدانیه. این رو هیچ‌کس نباید می‌دید. | That is Yazdani's hand. No one was supposed to see this.
+[end]
+
+[node] witness_done
+[say] reza | دیگه حرفی نداریم. | We have nothing more to say.
+[end]
+
+[node] finished
+[say] reza | پرونده بسته شد. فعلاً. | The case is closed. For now.
+[end]
+
+# ---------------------------------------------------------------
+# مسیر میز: رضا همان لحظه چیزی نمی‌گوید، بعداً پرونده را برمی‌دارد
+# ---------------------------------------------------------------
+
+[node] desk_after
+[if] flag.delivery.seen == true -> delivered
+[do] flag.delivery.seen = true
+[if] known.reza.seal == true -> delivered
+[if] flag.file.opened == true -> desk_open
+[go] desk_closed
+
+[node] desk_closed
+[say] reza | پرونده رو گذاشتی روی میزم. سالم بود. | You left the file on my desk. It was intact.
+[say] reza | کارت تمومه. | You are done.
+[do] rel.reza +2
+[end]
+
+[node] desk_open
+[say] reza | پرونده رو گذاشتی روی میزم. | You left the file on my desk.
+[say] reza | دستم بهش خورد. مهرش شکسته بود. | I picked it up. The seal was broken.
+[do] known.reza.seal = true
+[say] reza | کی بازش کرد؟ | Who opened it?
+[opt] خودم بازش کردم. | I opened it myself. -> break_truth
+[opt] از قبل باز بود. | It was already open. -> break_already
+[opt] دست نزدم. | I never touched it. -> break_none
+[opt] یادم نیست. | I do not remember. -> break_unknown
+
+# ---------------------------------------------------------------
+# بدهی دروغ: ادعای «از قبل باز بود» یک بار دیگر پرسیده می‌شود
+# ---------------------------------------------------------------
+
+[node] reask
+[say] reza | یه سؤال. همون پرونده. | One question. That file.
+[say] reza | مطمئنی از قبل باز بود؟ | Are you sure it was already open?
+[opt] گفتم که. از قبل باز بود. | I told you. It was already open. -> reask_hold
+[opt] راستش... خودم بازش کردم. | Truth is... I opened it. -> reask_confess
+[opt] دست نزدم. | I never touched it. -> reask_caught
+[opt] یادم نیست. | I do not remember. -> reask_unknown
+
+[node] reask_hold
+[do] flag.claim.settled = true
+[say] reza | باشه. | Fine.
+[say] reza | برو سراغ کارت. | Go mind your work.
+[end]
+
+[node] reask_confess
+[do] known.reza.lie = true
+[do] flag.claim.seal = opened
+[do] flag.claim.settled = true
+[say] reza | می‌دونستم. | I knew.
+[say] reza | از اولش می‌دونستم، ولی می‌خواستم خودت بگی. | I knew from the start. I wanted to hear it from you.
+[say] reza | این یکی رو می‌تونم ببخشم. اون یکی رو نه. | This one I can forgive. The other one, no.
+[do] rel.reza -10
+[end]
+
+[node] reask_caught
+[do] known.reza.lie = true
+[do] flag.claim.seal = none
+[do] flag.claim.settled = true
+[say] reza | قبلاً گفتی از قبل باز بود. | Earlier you said it was already open.
+[say] reza | حالا می‌گی دست نزدی. | Now you say you never touched it.
+[say] reza | یکی از این دو تا دروغه. | One of those two is a lie.
+[do] rel.reza -15
+[end]
+
+[node] reask_unknown
+[do] flag.claim.seal = unknown
+[do] flag.claim.settled = true
+[say] reza | دیروز یادت بود. امروز نه. | Yesterday you remembered. Today you do not.
+[do] rel.reza -5
 [end]

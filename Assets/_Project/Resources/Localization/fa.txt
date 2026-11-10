@@ -76,5 +76,7 @@ action.take = برداشتن
 action.read = خواندن
 action.enter = سوار شدن
 action.drive = رانندگی
+action.give = دادن
+action.place = گذاشتن
 hud.scroll = چرخ موس: هدف بعدی
 hud.verbs = کلید ۱ تا ۳: انتخاب کار

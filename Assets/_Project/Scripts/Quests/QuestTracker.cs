@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using TehranNoir.Core;
 using TehranNoir.Dialogue;
 using TehranNoir.Documents;
@@ -241,7 +242,7 @@ namespace TehranNoir.Quests
             bar.sizeDelta = new Vector2(BarWidth, -6f);
             bar.anchoredPosition = Vector2.zero;
 
-            UnityEngine.UI.Image barImage = bar.gameObject.AddComponent<UnityEngine.UI.Image>();
+            Image barImage = bar.gameObject.AddComponent<Image>();
             barImage.color = AccentColor;
             barImage.raycastTarget = false;
 
@@ -297,7 +298,7 @@ namespace TehranNoir.Quests
         private void Build()
         {
             _canvasObject = new GameObject("Quest Canvas (runtime)",
-                typeof(Canvas), typeof(CanvasScaler), typeof(UnityEngine.UI.GraphicRaycaster));
+                typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
 
             _canvasObject.transform.SetParent(null, false);
 

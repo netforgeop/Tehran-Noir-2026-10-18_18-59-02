@@ -22,7 +22,6 @@ namespace TehranNoir.Quests
     {
         private enum Corner
         {
-            Auto,
             Left,
             Right
         }
@@ -35,8 +34,8 @@ namespace TehranNoir.Quests
         [SerializeField] private TMP_FontAsset latinFont;
 
         [Header("چیدمان")]
-        [Tooltip("Auto یعنی فارسی بالا-راست، انگلیسی بالا-چپ")]
-        [SerializeField] private Corner corner = Corner.Auto;
+        [Tooltip("گوشه‌ی فهرست: چپ (پیش‌فرض) یا راست")]
+        [SerializeField] private Corner corner = Corner.Left;
 
         [SerializeField] private int maxEntries = 3;
         [SerializeField] private float margin = 48f;
@@ -97,13 +96,7 @@ namespace TehranNoir.Quests
 
         private bool AnchorRight
         {
-            get
-            {
-                if (corner == Corner.Right) return true;
-                if (corner == Corner.Left) return false;
-
-                return Localization.Persian;
-            }
+            get { return corner == Corner.Right; }
         }
 
         private TextAlignmentOptions Align

@@ -1,0 +1,46 @@
+# کارها — پرونده‌ی محرمانه
+# ------------------------------
+# نحو همان نحو دیالوگ است:
+#   [quest] شناسه
+#   [name]  فارسی | English
+#   [type]  main | side
+#   [summary] فارسی | English
+#   [start] شرط شروع   (یک بار که برقرار شد، کار باز می‌ماند)
+#   [done]  شرط پایان
+#   [step]  شناسه‌ی قدم
+#   [text]  فارسی | English   — جمله‌ای که «همین حالا چه کار کنم» را می‌گوید
+#   [when]  شرط فعال بودن این قدم
+#
+# ترتیب قدم‌ها مهم است: اولین قدمی که شرطش برقرار باشد، قدم فعلی است.
+# ------------------------------
+
+[quest] first_day
+[name] اولین روز | First day
+[type] main
+[summary] رضا در دفتر منتظر توست. | Reza is waiting for you at the office.
+[start] true
+[done] met.reza == true
+
+[step] talk
+[text] با رضا در دفتر صحبت کن | Talk to Reza at the office
+[when] true
+
+
+[quest] case_file
+[name] پرونده‌ی محرمانه | The sealed file
+[type] main
+[summary] پرونده‌ای مهروموم‌شده باید به بایگانی برسد. | A sealed file has to reach the archive.
+[start] flag.quest.file == 1
+[done] flag.quest.file == 4
+
+[step] report
+[text] با رضا درباره‌ی پرونده حرف بزن | Talk to Reza about the file
+[when] flag.quest.file == 2
+
+[step] deliver
+[text] پرونده را به بایگانی برسان | Take the file to the archive
+[when] flag.file.taken == true
+
+[step] pickup
+[text] پرونده را از میز رضا بردار | Pick the file up from Reza's desk
+[when] true

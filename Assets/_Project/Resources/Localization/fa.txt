@@ -81,3 +81,5 @@ action.place = گذاشتن
 hud.scroll = چرخ موس: هدف بعدی
 hud.verbs = کلید ۱ تا ۳: انتخاب کار
 doc.close = Esc یا E: بستن
+quest.main = اصلی
+quest.side = جانبی

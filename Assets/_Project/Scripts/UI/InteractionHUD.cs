@@ -64,7 +64,14 @@ namespace TehranNoir.UI
         [Tooltip("بچه‌های قدیمی این آبجکت (کارت قدیمی) در Awake پاک شوند")]
         [SerializeField] private bool clearExistingChildren = true;
 
-        [SerializeField] private float fadeSpeed = 12f;
+        [Tooltip("مدت باز شدن کارت، ثانیه")]
+        [SerializeField] private float openSeconds = 0.20f;
+
+        [Tooltip("مدت بسته شدن کارت، ثانیه")]
+        [SerializeField] private float closeSeconds = 0.14f;
+
+        [Tooltip("اندازه در حالت بسته؛ کمتر از ۱ یعنی کارت هنگام آمدن کمی جمع است")]
+        [SerializeField, Range(0.5f, 1f)] private float hiddenScale = 0.94f;
 
         private sealed class Pill
         {
@@ -100,9 +107,15 @@ namespace TehranNoir.UI
         private int _lastSignature;
         private bool _lastGamepad;
         private bool _lastMulti;
-        private float _alpha;
+        private PanelMotion _motion;
 
         private static readonly Interactable[] NoTargets = new Interactable[0];
+
+        /// <summary>آیا کارت همین حالا روی صفحه است (یا در حال آمدن). کمان این را می‌خواند.</summary>
+        public static bool IsShown
+        {
+            get { return _active != null && _active._lastTarget != null; }
+        }
 
         private bool Persian => Localization.Persian;
 
@@ -190,13 +203,8 @@ namespace TehranNoir.UI
 
             SyncStrip(list, sensor.Index);
 
-            float target = current != null ? 1f : 0f;
-            _alpha = Mathf.MoveTowards(_alpha, target, fadeSpeed * Time.unscaledDeltaTime);
-
-            _group.alpha = _alpha;
-
-            // پنهان: کمی به سمت لبه‌ی راست می‌رود؛ پیداشدن هم از همان‌جا برمی‌گردد
-            _root.anchoredPosition = new Vector2(-MarginX + (1f - _alpha) * SlidePixels, MarginY);
+            // حرکت کارت همه‌اش در PanelMotion است: مقیاس + آلفا + جابه‌جایی از لبه
+            _motion.SetVisible(current != null);
         }
 
         /// <summary>بعد از عوض شدن زبان یا از بیرون صدا زده می‌شود.</summary>
@@ -482,11 +490,11 @@ namespace TehranNoir.UI
                 _canvasObject = null;
             }
 
-            float previous = _alpha;
+            bool wasVisible = _motion != null && _motion.IsOpen;
 
             Build();
 
-            _alpha = previous;
+            _motion.SnapVisible(wasVisible);
             _lastTarget = null;
             _lastMulti = false;
         }
@@ -514,6 +522,12 @@ namespace TehranNoir.UI
             _group.blocksRaycasts = false;
             _group.interactable = false;
             _group.alpha = 0f;
+
+            _motion = _root.gameObject.AddComponent<PanelMotion>();
+            _motion.Configure(_root, _group, hiddenScale, SlidePixels, PanelMotion.Edge.Right,
+                openSeconds, closeSeconds);
+            _motion.SetRestPosition(new Vector2(-MarginX, MarginY));
+            _motion.SnapVisible(false);
 
             // نوار بالا، کارت پایین؛ ترتیب ساخت یعنی کارت روی نوار کشیده می‌شود
             _strip = UiKit.Node("Strip", _root);

@@ -70,10 +70,23 @@ namespace TehranNoir.UI
         [Tooltip("چند ثانیه یک ویژگیِ تازه‌عوض‌شده جای شرافت را بگیرد")]
         [SerializeField] private float focusSeconds = 25f;
 
+        [Tooltip("سرعت کم‌رنگ و پررنگ شدن در حالت بی‌حرکتی")]
         [SerializeField] private float fadeSpeed = 6f;
+
+        [Tooltip("وقتی کارت تعامل باز است، کمان کنار برود (فریم‌های مرجع همین را نشان می‌دهند)")]
+        [SerializeField] private bool hideWhileCardShown = true;
+
+        [Header("حرکت")]
+        [SerializeField, Min(0.02f)] private float openSeconds = 0.22f;
+        [SerializeField, Min(0.02f)] private float closeSeconds = 0.16f;
+
+        [Tooltip("اندازه در حالت بسته")]
+        [SerializeField, Range(0.5f, 1f)] private float hiddenScale = 0.9f;
 
         private GameObject _canvasObject;
         private CanvasGroup _group;
+        private CanvasGroup _idle;
+        private PanelMotion _motion;
         private RectTransform _labelBox;
         private TMP_Text _nameText;
         private TMP_Text _valueText;
@@ -91,7 +104,7 @@ namespace TehranNoir.UI
         private float _focusUntil;
         private float _activeUntil;
         private float _pulsePhase;
-        private float _alpha;
+        private float _idleAlpha = 1f;
         private bool _persian;
 
         private void Awake()
@@ -102,8 +115,7 @@ namespace TehranNoir.UI
 
             Build();
 
-            _alpha = 0f;
-            _group.alpha = 0f;
+            _motion.SnapVisible(false);
         }
 
         private void OnEnable()
@@ -141,9 +153,7 @@ namespace TehranNoir.UI
             UpdateFocus(now);
             UpdatePulse();
             UpdateLabel();
-            UpdateFade();
-
-            _group.alpha = _alpha;
+            UpdatePresence();
         }
 
         /* ============================================================
@@ -308,13 +318,23 @@ namespace TehranNoir.UI
             return true;
         }
 
-        private void UpdateFade()
+        /// <summary>
+        /// دو چیز جدا: «بودن» کمان (انیمیشن ورود و خروج) و «پررنگی» آن (بی‌حرکتی).
+        /// اگر هر دو روی یک CanvasGroup بودند، محو شدن تدریجی، حرکت را خنثی می‌کرد.
+        /// </summary>
+        private void UpdatePresence()
         {
             bool blocked = DialogueUI.Current != null || DocumentView.IsOpen || PauseMenuUI.IsOpen;
 
-            float target = blocked ? 0f : (Time.time < _activeUntil ? 1f : idleAlpha);
+            bool visible = !blocked && !(hideWhileCardShown && InteractionHUD.IsShown);
 
-            _alpha = Mathf.MoveTowards(_alpha, target, fadeSpeed * Time.unscaledDeltaTime);
+            _motion.SetVisible(visible);
+
+            float target = Time.time < _activeUntil ? 1f : idleAlpha;
+
+            _idleAlpha = Mathf.MoveTowards(_idleAlpha, target, fadeSpeed * Time.unscaledDeltaTime);
+
+            if (_idle != null) _idle.alpha = _idleAlpha;
         }
 
         /* ============================================================
@@ -348,20 +368,38 @@ namespace TehranNoir.UI
             _group.blocksRaycasts = false;
             _group.interactable = false;
 
+            _motion = root.gameObject.AddComponent<PanelMotion>();
+            _motion.Configure(root, _group, hiddenScale, 26f, PanelMotion.Edge.Right,
+                openSeconds, closeSeconds);
+            _motion.SetRestPosition(new Vector2(-CenterRightOffset, 0f));
+
+            // بدنه: هر چیزی که با بی‌حرکتی کم‌رنگ می‌شود. مقیاس و ورود/خروج روی ریشه است.
+            RectTransform body = UiKit.Node("Body", root);
+            body.anchorMin = new Vector2(0.5f, 0.5f);
+            body.anchorMax = new Vector2(0.5f, 0.5f);
+            body.pivot = new Vector2(0.5f, 0.5f);
+            body.anchoredPosition = Vector2.zero;
+            body.sizeDelta = new Vector2(RootSize, RootSize);
+
+            _idle = body.gameObject.AddComponent<CanvasGroup>();
+            _idle.blocksRaycasts = false;
+            _idle.interactable = false;
+            _idle.alpha = 1f;
+
             // ریل‌های تیره: بدون این‌ها کمان روی زمین روشن گم می‌شود
-            MakeTrack(root, "Health Track", OuterRadius, OuterThickness, LeftStart, LeftEnd);
-            MakeTrack(root, "Stamina Track", InnerRadius, InnerThickness, LeftStart, LeftEnd);
-            MakeTrack(root, "Trait Track", OuterRadius, OuterThickness - 1f, RightStart, RightEnd);
+            MakeTrack(body, "Health Track", OuterRadius, OuterThickness, LeftStart, LeftEnd);
+            MakeTrack(body, "Stamina Track", InnerRadius, InnerThickness, LeftStart, LeftEnd);
+            MakeTrack(body, "Trait Track", OuterRadius, OuterThickness - 1f, RightStart, RightEnd);
 
-            _health = MakeArc(root, "Health", OuterRadius, OuterThickness, HealthColor);
-            _armor = MakeArc(root, "Armor", OuterRadius, OuterThickness, ArmorColor);
-            _stamina = MakeArc(root, "Stamina", InnerRadius, InnerThickness, StaminaColor);
-            _right = MakeArc(root, "Trait", OuterRadius, OuterThickness - 1f, NameColor);
+            _health = MakeArc(body, "Health", OuterRadius, OuterThickness, HealthColor);
+            _armor = MakeArc(body, "Armor", OuterRadius, OuterThickness, ArmorColor);
+            _stamina = MakeArc(body, "Stamina", InnerRadius, InnerThickness, StaminaColor);
+            _right = MakeArc(body, "Trait", OuterRadius, OuterThickness - 1f, NameColor);
 
-            _pulse = MakeArc(root, "Pulse", PulseRadius, PulseThickness, new Color(PulseColor.r, PulseColor.g, PulseColor.b, 0f));
+            _pulse = MakeArc(body, "Pulse", PulseRadius, PulseThickness, new Color(PulseColor.r, PulseColor.g, PulseColor.b, 0f));
             _pulse.SetAngles(0f, 360f);
 
-            BuildLabel(root);
+            BuildLabel(body);
         }
 
         private static ArcGraphic MakeArc(RectTransform parent, string name, float radius,

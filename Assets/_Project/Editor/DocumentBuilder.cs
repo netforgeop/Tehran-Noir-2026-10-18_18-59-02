@@ -131,7 +131,7 @@ namespace TehranNoir.EditorTools
             if (existing != null) return existing;
 
             PickupInteractable[] pickups = UnityEngine.Object.FindObjectsByType<PickupInteractable>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
 
             for (int i = 0; i < pickups.Length; i++)
             {

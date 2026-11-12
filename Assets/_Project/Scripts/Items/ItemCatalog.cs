@@ -299,7 +299,8 @@ namespace TehranNoir.Items
                             else
                             {
                                 draft.Broken = true;
-                                Debug.LogWarning("[Items] خط " + number + " شرط خراب در «" + key + "»: " + error);
+                                Debug.LogError("[Items] خط " + number + " («" + id + "») شرط «" + key +
+                                               "» خوانده نشد و آن قاعده حذف شد: " + error);
                             }
                             break;
 

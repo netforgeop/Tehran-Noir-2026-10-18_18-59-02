@@ -451,7 +451,10 @@ namespace TehranNoir.Items
             {
                 string id = all[i].Id;
 
-                int projection = Mathf.RoundToInt((float)world.Get(Inventory.Key(id)).AsNumber());
+                double raw = world.Get(Inventory.Key(id)).AsNumber();
+
+                // متغیر تعریف‌نشده NaN می‌دهد و تبدیل NaN به int در C# تعریف‌نشده است.
+                int projection = double.IsNaN(raw) || raw <= 0d ? 0 : Mathf.RoundToInt((float)raw);
                 int actual = CarriedTotal(id);
 
                 if (projection > actual) Take(id, projection - actual);

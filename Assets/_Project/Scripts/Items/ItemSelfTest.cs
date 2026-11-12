@@ -102,7 +102,16 @@ namespace TehranNoir.Items
             ItemDefinition document = ItemCatalog.Get("file.sealed");
 
             Check("سند بودن از doc می‌آید", document.IsDocument);
-            Check("قاعده‌ها پارس شدند", document.Rules.Count >= 2, "قاعده‌ها: " + document.Rules.Count);
+            // file.sealed دو قاعده دارد: open و read (هر کدام if و do)
+            Check("قاعده‌ها پارس شدند", document.Rules.Count == 2, "قاعده‌ها: " + document.Rules.Count);
+
+            // یک شرط با «=» تنها باید خوانده شود، وگرنه قاعده بی‌صدا حذف می‌شود.
+            Condition probe = ConditionParser.Parse("state.sealed = 1");
+            WorldState probeWorld = new WorldState();
+
+            probeWorld.Set("state.sealed", 1d);
+
+            Check("شرط با = تنها", probe.IsTrue(probeWorld));
         }
 
         private void TestCreate()
@@ -258,10 +267,16 @@ namespace TehranNoir.Items
             InventoryManager.Take("ammo.9mm", 10);
 
             ItemResult reload = ItemRuntime.Perform(pistol, ItemVerb.Reload);
+
+            // ترتیب مهم است: اگر شلیک قبل از خواندن بیاید، عدد ۸ را ۷ می‌بینیم.
+            string afterReload = pistol.GetState("ammo");
+
+            Check("پرکردن", reload.Ok && afterReload == "8", "خشاب: " + afterReload);
+
             ItemResult fire = ItemRuntime.Perform(pistol, ItemVerb.Use);
 
-            Check("پرکردن", reload.Ok && pistol.GetState("ammo") == "8");
-            Check("شلیک یکی کم می‌کند", fire.Ok && pistol.GetState("ammo") == "7");
+            Check("شلیک یکی کم می‌کند", fire.Ok && pistol.GetState("ammo") == "7",
+                "خشاب: " + pistol.GetState("ammo"));
         }
 
         private void TestEvents()

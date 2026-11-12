@@ -98,6 +98,168 @@ def has_operator(effect):
     return False
 
 
+# ---------------------------------------------------------------------------
+#  گرامر شرط — همان چیزی که DialogueCondition می‌خواند
+#  اگر شرطی خوانده نشود، قاعده بی‌صدا حذف می‌شود؛ پس همان‌جا باید گرفته شود.
+# ---------------------------------------------------------------------------
+
+OPERATORS = ("==", "!=", ">=", "<=", ">", "<", "=")
+KEYWORDS = ("and", "or", "not")
+
+
+class ConditionError(Exception):
+    pass
+
+
+def tokenize_condition(source):
+    tokens = []
+    index = 0
+    text = source or ""
+
+    while index < len(text):
+        char = text[index]
+
+        if char.isspace():
+            index += 1
+            continue
+
+        pair = text[index:index + 2]
+
+        if pair in ("==", "!=", ">=", "<="):
+            tokens.append(("op", pair))
+            index += 2
+            continue
+
+        if char in "><=":
+            tokens.append(("op", char))
+            index += 1
+            continue
+
+        if char == "(":
+            tokens.append(("open", char))
+            index += 1
+            continue
+
+        if char == ")":
+            tokens.append(("close", char))
+            index += 1
+            continue
+
+        if char in "\"'":
+            quote = char
+            cursor = index + 1
+            buffer = []
+
+            while cursor < len(text) and text[cursor] != quote:
+                buffer.append(text[cursor])
+                cursor += 1
+
+            tokens.append(("text", "".join(buffer)))
+            index = cursor + 1
+            continue
+
+        if char.isdigit():
+            cursor = index
+            while cursor < len(text) and (text[cursor].isdigit() or text[cursor] == "."):
+                cursor += 1
+            tokens.append(("number", text[index:cursor]))
+            index = cursor
+            continue
+
+        if char.isalpha() or char == "_" or "\u0600" <= char <= "\u06ff":
+            cursor = index
+            while cursor < len(text) and (
+                text[cursor].isalnum() or text[cursor] in "_." or "\u0600" <= text[cursor] <= "\u06ff"
+            ):
+                cursor += 1
+            tokens.append(("word", text[index:cursor]))
+            index = cursor
+            continue
+
+        raise ConditionError("کاراکتر ناشناخته: «%s»" % char)
+
+    return tokens
+
+
+class ConditionParserMirror:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.position = 0
+
+    def peek(self):
+        return self.tokens[self.position] if self.position < len(self.tokens) else None
+
+    def take(self):
+        token = self.peek()
+        if token is not None:
+            self.position += 1
+        return token
+
+    def keyword(self, name):
+        token = self.peek()
+        return token is not None and token[0] == "word" and token[1].lower() == name
+
+    def parse_all(self):
+        self.parse_or()
+        token = self.peek()
+        if token is not None:
+            raise ConditionError("بخش اضافه در شرط: «%s»" % token[1])
+
+    def parse_or(self):
+        self.parse_and()
+        while self.keyword("or"):
+            self.take()
+            self.parse_and()
+
+    def parse_and(self):
+        self.parse_not()
+        while self.keyword("and"):
+            self.take()
+            self.parse_not()
+
+    def parse_not(self):
+        if self.keyword("not"):
+            self.take()
+            self.parse_not()
+            return
+        self.parse_compare()
+
+    def parse_compare(self):
+        self.parse_primary()
+        token = self.peek()
+        if token is not None and token[0] == "op":
+            op = token[1]
+            if op == "=":
+                op = "=="
+            if op in ("==", "!=", ">", "<", ">=", "<="):
+                self.take()
+                self.parse_primary()
+
+    def parse_primary(self):
+        token = self.take()
+        if token is None:
+            raise ConditionError("شرط ناقص است")
+
+        if token[0] in ("number", "text", "word"):
+            return
+
+        if token[0] == "open":
+            self.parse_or()
+            closing = self.take()
+            if closing is None or closing[0] != "close":
+                raise ConditionError("پرانتز بسته نشده")
+            return
+
+        raise ConditionError("عبارت شرط نامعتبر: «%s»" % token[1])
+
+
+def check_condition(raw, problems, line_no, label):
+    try:
+        ConditionParserMirror(tokenize_condition(raw)).parse_all()
+    except ConditionError as error:
+        problems.append((line_no, "%s شرط خوانده نمی‌شود: %s  →  «%s»" % (label, error, raw)))
+
+
 def check_effects(raw, problems, line_no, label):
     for piece in raw.split(";"):
         piece = piece.strip()
@@ -246,7 +408,13 @@ def main():
                 problems.append((index, "فعل ناشناس: " + verb))
                 continue
 
-            if field == "consume":
+            if field == "if":
+                if not value.strip():
+                    problems.append((index, "%s.if خالی است (برای «همیشه» فیلد را ننویس)" % verb))
+                else:
+                    check_condition(value, problems, index, "%s.if" % verb)
+
+            elif field == "consume":
                 if normalize(value) not in BOOLEANS:
                     problems.append((index, "مقدار مصرف باید ۰ یا ۱ باشد: " + value))
 

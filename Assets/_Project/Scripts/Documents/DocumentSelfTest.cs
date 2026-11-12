@@ -37,7 +37,7 @@ namespace TehranNoir.Documents
             get { return string.IsNullOrWhiteSpace(notePath) ? "Documents/note_yazdani" : notePath.Trim(); }
         }
 
-        private readonly List<string> _report = new List<string>(16);
+        private readonly List<string> _report = new List<string>(24);
 
         private int _passed;
         private int _failed;
@@ -161,6 +161,24 @@ namespace TehranNoir.Documents
                 Check("یادداشت سه خط دارد", noteLines == 3, "خط: " + noteLines);
                 Check("یادداشت دست‌نویس است", note.Handwritten);
             }
+
+            // دفتر دیده‌ها: هر سندی که باز شود یک نشانه در دنیا می‌گذارد و بخش
+            // «پرونده‌ها» فقط همان نشانه را می‌خواند. اگر این قرارداد بشکند،
+            // فهرست یا خالی می‌ماند یا سندِ نخوانده را نشان می‌دهد.
+            Check("کلید دیده‌شدن",
+                DocumentLog.KeyOf("Documents/note_yazdani.txt") == "flag.seen.note_yazdani",
+                DocumentLog.KeyOf("Documents/note_yazdani.txt"));
+
+            WorldState log = new WorldState();
+
+            DocumentText probe = DocumentText.Parse(
+                "[template] note\n[title] یادداشت | Note\nیک خط | One line\n", "note_yazdani");
+
+            Check("سند تازه در دفتر نیست", !DocumentLog.Seen(probe, log));
+
+            DocumentLog.Note(probe, log);
+
+            Check("سند خوانده‌شده ثبت شد", DocumentLog.Seen(probe, log));
 
             Report();
         }

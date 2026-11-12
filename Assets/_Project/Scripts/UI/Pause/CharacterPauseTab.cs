@@ -15,7 +15,9 @@ namespace TehranNoir.UI
     ///   خلاصه — یک نشان بزرگ (شرافت) و پنج ساعت گرد، یکی برای هر ویژگی.
     ///           کم = سرخ، زیاد = سفید؛ همان قاعده‌ی نشان شرافت در Red Dead Redemption 2.
     ///           درصدِ هر ساعت، خودِ مقدار ۰..۱۰۰ است.
-    ///   وسایل / کارها / پرونده‌ها — تا منبع داده‌شان ساخته نشود، پیام صادقانه.
+    ///   وسایل — شبکه‌ی کارت‌ها، دسته‌ها و فعل‌ها؛ کلاس خودش را دارد.
+    ///   کارها — فهرست کارهای باز با قدم فعلی؛ از QuestLog.
+    ///   پرونده‌ها — کاغذهایی که خوانده‌ای؛ از DocumentLog. کلیک = بازخوانی.
     ///
     /// عدد در این کلاس ساخته نمی‌شود: همه از CharacterStats می‌آید و به‌صورت ASCII
     /// به TMP داده می‌شود. تبدیل به رقم فارسی و جهت‌دهی کار RTLTMPro است؛ اگر خودمان
@@ -108,6 +110,9 @@ namespace TehranNoir.UI
 
         private CharacterItemsSection _itemsSection;
 
+        private DossierSection _jobsSection;
+        private DossierSection _casesSection;
+
         private int _section;
 
         public override string Id => "character";
@@ -127,8 +132,10 @@ namespace TehranNoir.UI
             BuildHeader(panel);
             BuildContent(panel);
 
-            // بخش وسایل کلاس خودش را دارد؛ تب فقط صدا‌اش می‌زند
+            // هر بخش کلاس خودش را دارد؛ تب فقط صدا‌شان می‌زند
             _itemsSection = new CharacterItemsSection(Menu);
+            _jobsSection = new DossierSection(Menu, DossierSection.Mode.Jobs);
+            _casesSection = new DossierSection(Menu, DossierSection.Mode.Documents);
 
             BuildSection();
             RefreshRail();
@@ -235,6 +242,16 @@ namespace TehranNoir.UI
 
                 case 1:
                     _itemsSection.Build(_content);
+                    return;
+
+                case 2:
+                    HideNote();
+                    _jobsSection.Build(_content);
+                    return;
+
+                case 3:
+                    HideNote();
+                    _casesSection.Build(_content);
                     return;
 
                 default:
@@ -396,6 +413,8 @@ namespace TehranNoir.UI
             }
 
             if (_section == 1) _itemsSection.Tick();
+            if (_section == 2) _jobsSection.Tick();
+            if (_section == 3) _casesSection.Tick();
         }
 
         private void RefreshTraits()
@@ -448,13 +467,28 @@ namespace TehranNoir.UI
             RefreshRail();
             Select(0);
 
+            // راهنمای پایین صفحه مال بخش‌های فهرستی است؛ در خلاصه و وسایل باید خالی شود
+            if (_section < 2) Menu.ShowHint(string.Empty);
+
             RefreshMeta();
             TickValues();
         }
 
         public override void Move(int delta)
         {
-            if (_section == 1 && _itemsSection != null) _itemsSection.Move(delta);
+            if (_section == 1 && _itemsSection != null)
+            {
+                _itemsSection.Move(delta);
+                return;
+            }
+
+            if (_section == 2 && _jobsSection != null)
+            {
+                _jobsSection.Move(delta);
+                return;
+            }
+
+            if (_section == 3 && _casesSection != null) _casesSection.Move(delta);
         }
 
         public override void Step(int delta)
@@ -470,6 +504,9 @@ namespace TehranNoir.UI
                 _itemsSection.Activate();
                 return;
             }
+
+            // در پرونده‌ها، Enter یعنی بازخوانی سند انتخاب‌شده
+            if (_section == 3 && _casesSection != null && _casesSection.Activate()) return;
 
             base.Activate();
         }
@@ -491,6 +528,8 @@ namespace TehranNoir.UI
             // ورود تازه به یک بخش یعنی انتخاب از اول؛ وگرنه نشانگر جایی می‌ماند
             // که کاربر انتظارش را ندارد.
             if (_section == 1 && _itemsSection != null) _itemsSection.FocusFirst();
+            if (_section == 2 && _jobsSection != null) _jobsSection.FocusFirst();
+            if (_section == 3 && _casesSection != null) _casesSection.FocusFirst();
 
             OnShow();
         }
@@ -514,8 +553,10 @@ namespace TehranNoir.UI
         /// <summary>کلیک روی ریل بخش، همان کاری را می‌کند که Q/E.</summary>
         public override void Pointer(Vector2 screenPoint, bool clicked)
         {
-            // شبکه‌ی وسایل اول: کارت‌ها و نوار دسته‌ها جای خودشان را دارند
+            // بخش‌های فهرستی اول: ردیف‌ها جای خودشان را دارند
             if (_section == 1 && _itemsSection != null && _itemsSection.Pointer(screenPoint, clicked)) return;
+            if (_section == 2 && _jobsSection != null && _jobsSection.Pointer(screenPoint, clicked)) return;
+            if (_section == 3 && _casesSection != null && _casesSection.Pointer(screenPoint, clicked)) return;
 
             for (int i = 0; i < _railRects.Count; i++)
             {

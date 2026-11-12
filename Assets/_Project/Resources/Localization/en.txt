@@ -41,6 +41,15 @@ char.items.sort.name = Sort: name
 char.items.sort.count = Sort: count
 char.items.page = Page
 pause.soon = This section is coming in a later step.
+pause.section = Switch section
+
+# --- Jobs and cases ---
+cases.jobs.empty = No job in progress.
+cases.docs.empty = You have not read any paper yet.
+cases.kind.letter = Letter
+cases.kind.note = Note
+cases.kind.ledger = Ledger
+cases.read = Press the confirm key to read it again.
 
 # --- Settings page ---
 settings.apply = Apply changes

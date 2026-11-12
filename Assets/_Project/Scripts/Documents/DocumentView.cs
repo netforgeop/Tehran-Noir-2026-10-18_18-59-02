@@ -32,6 +32,14 @@ namespace TehranNoir.Documents
 
         public static bool IsOpen { get { return Current != null && Current._open; } }
 
+        /// <summary>
+        /// سند باز است **یا** دارد محو می‌شود. برای گرفتن ورودی لازم است، نه برای
+        /// «آیا دیده می‌شود»: وقتی سند با Esc بسته می‌شود، همان فریم منوی توقف هم
+        /// همان Esc را می‌بیند و با هم بسته می‌شوند. با این پرچم، منو یک فریم
+        /// صبر می‌کند و Esc را یک بار مصرف می‌کند.
+        /// </summary>
+        public static bool Busy { get { return Current != null && (Current._open || Current._closing); } }
+
         /* ============================================================
            تنظیمات
            ============================================================ */
@@ -145,6 +153,11 @@ namespace TehranNoir.Documents
             _openedFrame = Time.frameCount;
 
             BuildContent(document);
+
+            // همین‌جا، در تنها گلوگاهی که هر سند از آن باز می‌شود: هر کاغذی که
+            // یک بار روی صفحه آمده، در WorldState نشانه می‌گیرد و تب پرونده‌ها
+            // بعداً همان نشانه را می‌خواند.
+            DocumentLog.Note(document, null);
 
             _root.gameObject.SetActive(true);
 

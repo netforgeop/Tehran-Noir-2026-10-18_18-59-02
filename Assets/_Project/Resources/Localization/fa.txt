@@ -41,6 +41,15 @@ char.items.sort.name = ترتیب: نام
 char.items.sort.count = ترتیب: تعداد
 char.items.page = صفحه
 pause.soon = این بخش در مرحله‌ی بعد ساخته می‌شود.
+pause.section = تعویض بخش
+
+# --- کارها و پرونده‌ها ---
+cases.jobs.empty = کاری در جریان نیست.
+cases.docs.empty = هنوز سندی نخوانده‌ای.
+cases.kind.letter = نامه
+cases.kind.note = یادداشت
+cases.kind.ledger = دفتر
+cases.read = برای بازخوانی، کلید تایید را بزن.
 
 # --- صفحه‌ی تنظیمات ---
 settings.apply = اعمال تغییرات

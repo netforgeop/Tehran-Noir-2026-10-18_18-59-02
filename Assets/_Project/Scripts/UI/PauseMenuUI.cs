@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TehranNoir.Dialogue;
+using TehranNoir.Documents;
 using TehranNoir.Inputs;
 using TehranNoir.Settings;
 using TMPro;
@@ -100,6 +101,8 @@ namespace TehranNoir.UI
         private GameObject _canvas;
         private CanvasGroup _group;
         private TMP_Text _hintText;
+        private TMP_Text _switchHint;
+        private RectTransform _switchHintBox;
         private AudioSource _music;
 
         private int _activeTab;
@@ -151,6 +154,10 @@ namespace TehranNoir.UI
         {
             // محوها با زمان واقعی کار می‌کنند، پس بعد از بسته‌شدن هم ادامه پیدا می‌کنند
             UpdateFades();
+
+            // سندی روی منو باز است: Esc و کلیدها مال سند است، نه منو.
+            // بدون این، یک Esc هم سند را می‌بست هم منو را.
+            if (DocumentView.Busy) return;
 
             if (!IsOpen)
             {
@@ -474,6 +481,7 @@ namespace TehranNoir.UI
             }
 
             UpdateTabColors();
+            SetSwitchHint(_tabs[index].UsesSections);
             ClearHint();
             _tabs[index].OnShow();
         }
@@ -492,6 +500,25 @@ namespace TehranNoir.UI
         /* ============================================================
            کارهای تب‌ها
            ============================================================ */
+
+        /// <summary>
+        /// متن کنار بج Q/E در نوار پایین. تب بخش‌دار (تنظیمات، کاراکتر) با Q/E
+        /// بخش عوض می‌کند، نه تب؛ متن باید همان را بگوید، وگرنه دروغ است.
+        /// </summary>
+        private void SetSwitchHint(bool sections)
+        {
+            if (_switchHint == null) return;
+
+            string text = Loc.Get(Loc.Channel.Menu, sections ? "pause.section" : "pause.switch");
+
+            if (_switchHint.text == text) return;
+
+            _switchHint.text = text;
+            _switchHint.ForceMeshUpdate();
+
+            if (_switchHintBox != null)
+                _switchHintBox.sizeDelta = new Vector2(Mathf.Ceil(_switchHint.preferredWidth) + 2f, BadgeSize);
+        }
 
         public void ShowHint(string message)
         {
@@ -705,7 +732,9 @@ namespace TehranNoir.UI
             x = CreateKeyBadge(bar, x, "Q", BottomBadgeTop, false);
             x = CreateKeyBadge(bar, x + BadgeGap, "E", BottomBadgeTop, false);
 
-            CreateHintText(bar, x + TextGap, Loc.Get(Loc.Channel.Menu, "pause.switch"), TextAlignmentOptions.MidlineLeft);
+            _switchHint = CreateHintText(bar, x + TextGap, Loc.Get(Loc.Channel.Menu, "pause.switch"),
+                TextAlignmentOptions.MidlineLeft);
+            _switchHintBox = _switchHint.rectTransform.parent as RectTransform;
 
             // راست: متن، بعد بج در سمت چپِ آن — فاصله با اندازه‌ی واقعی متن حساب می‌شود
             TMP_Text close = CreateHintTextRight(bar, RuleMargin,

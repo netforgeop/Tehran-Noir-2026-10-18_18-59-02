@@ -194,7 +194,7 @@
 [say] نادر | باشه. | All right.
 [say] مسعود | یه چیز دیگه. | One more thing.
 [say] مسعود | فردا شب، ساعت نه، در آشپزخونه بازه. | Tomorrow night, nine o'clock, the kitchen door's open.
-[say] مسعود | کسی که حساب نکرد، از اون در رفت. | The one who didn't pay left through that door.
+[say] مسعود | اون که قهوه خورد، از اون در رفت. | The one who drank coffee left through that door.
 [do] flag.witness.protect = true
 [do] flag.witness.truth = true
 [do] flag.quest.witness = 2

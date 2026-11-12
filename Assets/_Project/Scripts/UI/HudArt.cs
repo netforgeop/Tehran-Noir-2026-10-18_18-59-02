@@ -29,7 +29,9 @@ namespace TehranNoir.UI
             People,
             ArrowLeft,
             Document,
-            Shield
+            Shield,
+            Key,
+            Case
         }
 
         private static readonly Dictionary<string, Sprite> Cache = new Dictionary<string, Sprite>(32);
@@ -168,6 +170,12 @@ namespace TehranNoir.UI
                 case Glyph.Shield:
                     Shield(mask, size);
                     break;
+                case Glyph.Key:
+                    Key(mask, size);
+                    break;
+                case Glyph.Case:
+                    Case(mask, size);
+                    break;
                 default:
                     Document(mask, size);
                     break;
@@ -297,6 +305,27 @@ namespace TehranNoir.UI
             });
         }
 
+        /// <summary>کلید: حلقه + ساقه + دو دندانه.</summary>
+        private static void Key(float[] mask, int s)
+        {
+            Ring(mask, s, s, 0.26f * s, 0.72f * s, 0.15f * s, 0.06f * s);
+
+            Rect(mask, s, s, 0.38f * s, 0.665f * s, 0.86f * s, 0.775f * s);
+
+            Rect(mask, s, s, 0.62f * s, 0.46f * s, 0.69f * s, 0.73f * s);
+            Rect(mask, s, s, 0.76f * s, 0.52f * s, 0.83f * s, 0.73f * s);
+        }
+
+        /// <summary>کیف دستی: دسته + بدنه + خط بند.</summary>
+        private static void Case(float[] mask, int s)
+        {
+            RoundedRect(mask, s, s, 0.36f * s, 0.68f * s, 0.64f * s, 0.90f * s, 0.05f * s, 0.05f * s);
+            CutRoundedRect(mask, s, s, 0.43f * s, 0.60f * s, 0.57f * s, 0.80f * s, 0.03f * s, 0.03f * s);
+
+            RoundedRect(mask, s, s, 0.12f * s, 0.12f * s, 0.88f * s, 0.70f * s, 0.09f * s, 0.09f * s);
+            CutRect(mask, s, s, 0.12f * s, 0.44f * s, 0.88f * s, 0.50f * s);
+        }
+
         private static void Document(float[] mask, int s)
         {
             RoundedRect(mask, s, s, 0.18f * s, 0.12f * s, 0.82f * s, 0.88f * s, 0.10f * s, 0.10f * s);
@@ -339,6 +368,39 @@ namespace TehranNoir.UI
                     int index = y * w + x;
 
                     mask[index] = cut ? mask[index] * (1f - coverage) : Mathf.Max(mask[index], coverage);
+                }
+            }
+        }
+
+        /// <summary>حلقه: ناحیه‌ی بین دو شعاع.</summary>
+        private static void Ring(float[] mask, int w, int h, float cx, float cy, float radius, float thickness)
+        {
+            float outer = radius;
+            float inner = Mathf.Max(0f, radius - thickness);
+
+            if (outer <= 0f) return;
+
+            float outerSq = outer * outer;
+            float innerSq = inner * inner;
+
+            int i0 = Mathf.Max(0, Mathf.FloorToInt(cx - outer) - 1);
+            int i1 = Mathf.Min(w - 1, Mathf.CeilToInt(cx + outer) + 1);
+            int j0 = Mathf.Max(0, Mathf.FloorToInt(cy - outer) - 1);
+            int j1 = Mathf.Min(h - 1, Mathf.CeilToInt(cy + outer) + 1);
+
+            for (int y = j0; y <= j1; y++)
+            {
+                float dy = y + 0.5f - cy;
+
+                for (int x = i0; x <= i1; x++)
+                {
+                    float dx = x + 0.5f - cx;
+                    float distance = dx * dx + dy * dy;
+
+                    if (distance > outerSq || distance < innerSq) continue;
+
+                    int index = y * w + x;
+                    if (mask[index] < 1f) mask[index] = 1f;
                 }
             }
         }

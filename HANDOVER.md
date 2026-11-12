@@ -764,3 +764,13 @@ RTLTMPro با این پرچم فقط رقم ASCII را عدد می‌شناسد 
 و `IsRTLInput` با «هر حرف RTL» درست شود. عدد خالص هم `ForceFix` می‌خواهد
 (`UiKit.ForceFixNumbers`). مستند: `docs/31-number-order.md`.
 
+## ۲۹. جیب (جلسه‌ی ۲۰)
+
+بخش «وسایل» تب کاراکتر واقعی شد. آیتم‌ها در `Resources/Items/items.txt`
+تعریف می‌شوند (id | فارسی | انگلیسی | نوع | سقف) و تعدادشان فقط در
+`WorldState` با کلید `item.<id>` است؛ پس دیالوگ و پنل F10 هم همان را می‌بینند.
+`Inventory` (Count/Add/Remove/Take/Slots/Room/Signature) و `ItemCatalog`.
+`PickupInteractable` فیلدهای `Item Key`/`Item Count` گرفت؛ اگر جیب پر باشد
+شیء برداشته نمی‌شود. آیکون‌های تازه: `Glyph.Key` و `Glyph.Case`.
+مستند: `docs/32-inventory.md`.
+

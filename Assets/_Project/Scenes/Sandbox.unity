@@ -2400,6 +2400,8 @@ MonoBehaviour:
   takenVariable: flag.file.taken
   setOnTakeVariable: 
   setOnTakeValue: true
+  itemKey: file.sealed
+  itemCount: 1
 --- !u!1 &1729212501
 GameObject:
   m_ObjectHideFlags: 0

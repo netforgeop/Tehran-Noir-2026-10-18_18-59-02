@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using TehranNoir.Characters;
+using TehranNoir.Items;
 using TehranNoir.Settings;
 using TehranNoir.World;
 
@@ -58,6 +59,18 @@ namespace TehranNoir.UI
         /// <summary>زیر این مقدار، سرخِ کامل؛ بالای آن، کم‌کم به استخوانی می‌رسد.</summary>
         private const float LowMark = 25f;
 
+        /* ---------- ردیف وسیله ---------- */
+        private const float ItemRowHeight = 56f;
+        private const float ItemRowGap = 8f;
+        private const float ItemFont = 26f;
+        private const float ItemIconSize = 26f;
+
+        /// <summary>
+        /// بیشتر از این تعداد ردیف از کادر بیرون می‌زند؛ بقیه با یک شمارنده‌ی «+n»
+        /// نشان داده می‌شوند. سقف عمدی است، نه پنهان: هیچ ردیفی زیر نوار پایین نمی‌رود.
+        /// </summary>
+        private const int MaxItemRows = 10;
+
         private static readonly Color HighColor = new Color(0.96f, 0.95f, 0.92f, 1f);
         private static readonly Color LowColor = new Color(0.72f, 0.16f, 0.14f, 1f);
         private static readonly Color MidColor = new Color(0.80f, 0.77f, 0.70f, 1f);
@@ -95,6 +108,7 @@ namespace TehranNoir.UI
         private readonly List<ArcGraphic> _pipTracks = new List<ArcGraphic>(5);
         private readonly List<Image> _pipIcons = new List<Image>(5);
         private readonly List<TMP_Text> _valueTexts = new List<TMP_Text>(5);
+        private readonly List<InventorySlot> _items = new List<InventorySlot>(16);
 
         private RectTransform _content;
         private Image _crest;
@@ -103,8 +117,10 @@ namespace TehranNoir.UI
         private TMP_Text _metaText;
         private string _metaShown;
         private TMP_Text _note;
+        private RectTransform _noteBox;
 
         private int _section;
+        private int _itemSignature = int.MinValue;
 
         public override string Id => "character";
 
@@ -184,9 +200,9 @@ namespace TehranNoir.UI
             line.color = new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.55f);
             line.raycastTarget = false;
 
-            RectTransform noteBox = UiKit.Box("Note", panel, PanelX, RowTop, PanelWidth, 90f);
+            _noteBox = UiKit.Box("Note", panel, PanelX, RowTop, PanelWidth, 90f);
 
-            _note = UiKit.Text("Text", noteBox, 22f, UiKit.Dim, Menu.Font, Menu.Persian);
+            _note = UiKit.Text("Text", _noteBox, 22f, UiKit.Dim, Menu.Font, Menu.Persian);
             _note.alignment = TextAlignmentOptions.MidlineRight;
             _note.gameObject.SetActive(false);
         }
@@ -207,6 +223,7 @@ namespace TehranNoir.UI
             _pipTracks.Clear();
             _pipIcons.Clear();
             _valueTexts.Clear();
+            _items.Clear();
 
             // ردیف‌های بخش پیشین: اول خاموش، بعد نابود
             for (int i = _content.childCount - 1; i >= 0; i--)
@@ -216,15 +233,124 @@ namespace TehranNoir.UI
                 UnityEngine.Object.Destroy(child);
             }
 
-            bool empty = _section != 0;
+            switch (_section)
+            {
+                case 0:
+                    HideNote();
 
-            _note.gameObject.SetActive(empty);
-            _note.text = Loc.Get(Loc.Channel.Menu, "pause.soon");
+                    for (int i = 0; i < TraitOrder.Length; i++)
+                        AddTraitRow(TraitOrder[i], i);
 
-            if (empty) return;
+                    return;
 
-            for (int i = 0; i < TraitOrder.Length; i++)
-                AddTraitRow(TraitOrder[i], i);
+                case 1:
+                    BuildItems();
+                    return;
+
+                default:
+                    ShowNote(Loc.Get(Loc.Channel.Menu, "pause.soon"), RowTop);
+                    return;
+            }
+        }
+
+        /* ============================================================
+           وسایل
+           ============================================================ */
+
+        /// <summary>
+        /// فهرست وسایل مستقیم از Inventory خوانده می‌شود، که خودش فقط
+        /// WorldState را می‌بیند. پس تغییر دستی در F10 هم همین‌جا دیده می‌شود.
+        /// </summary>
+        private void BuildItems()
+        {
+            _itemSignature = Inventory.Signature();
+
+            int total = Inventory.Slots(_items);
+
+            if (total == 0)
+            {
+                ShowNote(Loc.Get(Loc.Channel.Menu, "char.items.empty"), RowTop);
+                return;
+            }
+
+            HideNote();
+
+            int shown = Mathf.Min(total, MaxItemRows);
+
+            for (int i = 0; i < shown; i++)
+                AddItemRow(_items[i], i);
+
+            if (total > shown)
+                ShowNote("+" + (total - shown), RowTop + shown * (ItemRowHeight + ItemRowGap));
+        }
+
+        /// <summary>یک ردیف وسیله: تعداد سمت چپ، آیکون در ستون ساعت‌ها، نام سمت راست.</summary>
+        private void AddItemRow(InventorySlot slot, int index)
+        {
+            float y = index * (ItemRowHeight + ItemRowGap);
+
+            RectTransform row = UiKit.Box("Item_" + index, _content, 0f, y, PanelWidth, ItemRowHeight);
+
+            bool rtl = Menu.Persian;
+
+            RectTransform countBox = UiKit.Box("Count", row, 0f, 0f, ValueWidth, ItemRowHeight);
+
+            TMP_Text countText = UiKit.Text("Text", countBox, ItemFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
+            countText.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
+
+            // فقط عدد است؛ بی ForceFix به رقم فارسی تبدیل نمی‌شد
+            UiKit.ForceFixNumbers(countText, Menu.Persian);
+
+            countText.text = slot.Count.ToString();
+
+            float iconX = rtl
+                ? PipX + (PipSize - ItemIconSize) * 0.5f
+                : PanelWidth - PipX - (PipSize + ItemIconSize) * 0.5f;
+
+            RectTransform iconBox = UiKit.Box("Icon", row, iconX,
+                (ItemRowHeight - ItemIconSize) * 0.5f, ItemIconSize, ItemIconSize);
+
+            Image icon = iconBox.gameObject.AddComponent<Image>();
+            icon.sprite = HudArt.Icon(IconFor(slot.Definition.Kind), 48, Color.white);
+            icon.color = new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.8f);
+            icon.raycastTarget = false;
+            icon.preserveAspect = true;
+
+            float nameX = rtl ? NameX : 0f;
+
+            RectTransform labelBox = UiKit.Box("Label", row, nameX, 0f, PanelWidth - NameX, ItemRowHeight);
+
+            TMP_Text label = UiKit.Text("Text", labelBox, ItemFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
+            label.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
+            label.text = slot.Definition.Name(Menu.Persian);
+
+            PauseRow data = new PauseRow();
+            data.Rect = row;
+            data.Label = label;
+
+            Rows.Add(data);
+        }
+
+        private static HudArt.Glyph IconFor(ItemKind kind)
+        {
+            switch (kind)
+            {
+                case ItemKind.Key: return HudArt.Glyph.Key;
+                case ItemKind.Item: return HudArt.Glyph.Case;
+                default: return HudArt.Glyph.Document;
+            }
+        }
+
+        private void ShowNote(string text, float y)
+        {
+            _note.text = text;
+            _noteBox.anchoredPosition = new Vector2(PanelX, -y);
+            _note.gameObject.SetActive(true);
+        }
+
+        private void HideNote()
+        {
+            _note.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -349,11 +475,32 @@ namespace TehranNoir.UI
             _metaText.text = text;
         }
 
-        /// <summary>هر فریم صدا زده می‌شود تا منو با مقدارهای تازه هم‌خوان بماند.</summary>
+        /// <summary>
+        /// هر فریم که منو باز است. تاریخ همیشه تازه می‌شود؛ ساعت‌ها فقط در بخش
+        /// خلاصه؛ فهرست وسایل فقط وقتی تعدادها عوض شده باشد ساخته می‌شود،
+        /// وگرنه هر فریم ردیف تازه می‌ساختیم.
+        /// </summary>
         public override void TickValues()
         {
             RefreshMeta();
 
+            if (_section == 0)
+            {
+                RefreshTraits();
+                return;
+            }
+
+            if (_section == 1 && Inventory.Signature() != _itemSignature)
+            {
+                int selected = Selected;
+
+                BuildSection();
+                Select(selected);
+            }
+        }
+
+        private void RefreshTraits()
+        {
             for (int i = 0; i < TraitOrder.Length && i < _pips.Count; i++)
             {
                 float value = CharacterStats.GetFloat(TraitOrder[i]);

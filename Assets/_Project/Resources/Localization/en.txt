@@ -28,6 +28,7 @@ pause.mainmenu = Quit to Main Menu
 pause.quit = Exit Game
 pause.close = Close
 pause.switch = Switch tab
+char.items.empty = Your pockets are empty
 pause.soon = This section is coming in a later step.
 
 # --- Settings page ---

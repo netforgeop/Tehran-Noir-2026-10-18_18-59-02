@@ -28,6 +28,7 @@ pause.mainmenu = بازگشت به منوی اصلی
 pause.quit = خروج از بازی
 pause.close = بستن
 pause.switch = تعویض تب
+char.items.empty = جیبت خالی است
 pause.soon = این بخش در مرحله‌ی بعد ساخته می‌شود.
 
 # --- صفحه‌ی تنظیمات ---

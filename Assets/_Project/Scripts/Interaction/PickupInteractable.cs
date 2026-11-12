@@ -1,5 +1,6 @@
 using UnityEngine;
 using TehranNoir.Dialogue;
+using TehranNoir.Items;
 
 namespace TehranNoir.Interaction
 {
@@ -24,6 +25,13 @@ namespace TehranNoir.Interaction
         [SerializeField] private string setOnTakeVariable = string.Empty;
 
         [SerializeField] private string setOnTakeValue = "true";
+
+        [Header("Inventory")]
+        [Tooltip("شناسه‌ی آیتم در Resources/Items/items.txt؛ خالی = چیزی به جیب نمی‌رود")]
+        [SerializeField] private string itemKey = string.Empty;
+
+        [Tooltip("چند عدد؛ سند و کلید همان ۱")]
+        [SerializeField, Min(1)] private int itemCount = 1;
 
         private Renderer[] _renderers;
         private Collider[] _colliders;
@@ -79,7 +87,12 @@ namespace TehranNoir.Interaction
         {
             if (_taken || !RequirementMet()) return;
 
+            // جیب پر است؟ پس شیء هم برداشته نمی‌شود؛ وگرنه آیتم برای همیشه گم می‌شد.
+            if (!CanStoreItem()) return;
+
             _taken = true;
+
+            if (!string.IsNullOrWhiteSpace(itemKey)) Inventory.Add(itemKey, itemCount);
 
             Write(takenVariable, "true");
             Write(setOnTakeVariable, setOnTakeValue);
@@ -87,6 +100,19 @@ namespace TehranNoir.Interaction
             SetVisible(false);
 
             Debug.Log("[Item] taken: " + Title, this);
+        }
+
+        /// <summary>اگر این شیء آیتم دارد و جیب جا ندارد، برداشتن انجام نمی‌شود.</summary>
+        private bool CanStoreItem()
+        {
+            if (string.IsNullOrWhiteSpace(itemKey)) return true;
+
+            bool room = Inventory.Room(itemKey) >= Mathf.Max(1, itemCount);
+
+            if (!room)
+                Debug.LogWarning("[Item] جیب جا ندارد برای «" + itemKey + "»؛ شیء برداشته نشد.", this);
+
+            return room;
         }
 
         /// <summary>نوشتن در WorldState با همان نحو [do] دیالوگ‌ها؛ یک قاعده، دو جا.</summary>

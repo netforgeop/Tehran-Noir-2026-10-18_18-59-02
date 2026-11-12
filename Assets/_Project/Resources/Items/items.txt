@@ -1,0 +1,7 @@
+# وسایل نادر — هر خط یک آیتم:
+#   id | فارسی | انگلیسی | نوع | بیشترین تعداد
+# نوع: document / key / item
+# شناسه با حروف کوچک و بدون فاصله. آیتم تازه = یک خط تازه؛ کد عوض نمی‌شود.
+file.sealed | پرونده‌ی مهرشده | Sealed file | document | 1
+key.archive | کلید بایگانی | Archive key | key | 1
+cigarettes | سیگار | Cigarettes | item | 20

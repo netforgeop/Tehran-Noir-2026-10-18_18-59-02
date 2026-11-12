@@ -1,4 +1,5 @@
 using UnityEngine;
+using TehranNoir.Items;
 
 namespace TehranNoir.Dialogue
 {
@@ -42,6 +43,10 @@ namespace TehranNoir.Dialogue
         public void ResetWorld()
         {
             State = new WorldState();
+
+            // هر آیتم فهرست با صفر در دنیا ساخته می‌شود تا در پنل تست دیده و ست شود.
+            // قبل از مقدارهای اولیه: اگر Inspector آیتمی را از روز اول داده باشد، همان می‌ماند.
+            Inventory.EnsureDefaults(State);
 
             for (int i = 0; i < initialVariables.Length; i++)
                 DialogueRunner.ApplyEffect(initialVariables[i], State);

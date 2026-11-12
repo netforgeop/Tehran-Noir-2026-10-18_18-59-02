@@ -59,6 +59,8 @@ namespace TehranNoir.UI
         {
             if (Rows.Count == 0) return;
 
+            _selected = Mathf.Clamp(_selected, 0, Rows.Count - 1);
+
             Action<int> step = Rows[_selected].Step;
             if (step == null) return;
 
@@ -109,6 +111,10 @@ namespace TehranNoir.UI
         public virtual void Activate()
         {
             if (Rows.Count == 0) return;
+
+            // فهرست ممکن است بعد از ساخت کوتاه‌تر شده باشد (مثلاً آیتمی از جیب رفته)؛
+            // بدون این، انتخابِ مانده از فهرست بیرون می‌زند.
+            _selected = Mathf.Clamp(_selected, 0, Rows.Count - 1);
 
             PauseRow row = Rows[_selected];
 

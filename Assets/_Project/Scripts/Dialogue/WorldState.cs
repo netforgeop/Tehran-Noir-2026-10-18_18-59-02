@@ -12,7 +12,7 @@ namespace TehranNoir.Dialogue
             "season", "year", "month", "day", "hour"
         };
 
-        public static readonly string[] Prefixes = { "rel.", "met.", "present.", "flag.", "known.", "stat." };
+        public static readonly string[] Prefixes = { "rel.", "met.", "present.", "flag.", "known.", "stat.", "item." };
 
         private readonly Dictionary<string, DialogueValue> _values = new Dictionary<string, DialogueValue>();
 

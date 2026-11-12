@@ -39,7 +39,8 @@ namespace TehranNoir.UI
 
         private const float CrestSize = 96f;
         private const float NameY = 96f;
-        private const float MetaY = 156f;
+        private const float MetaY = 150f;
+        private const float LabelY = 178f;
         private const float RuleY = 204f;
 
         /* ---------- ردیف ویژگی ---------- */
@@ -104,7 +105,9 @@ namespace TehranNoir.UI
         private Image _crestIcon;
         private TMP_Text _nameText;
         private TMP_Text _metaText;
+        private TMP_Text _labelText;
         private string _metaShown;
+        private string _labelShown;
         private TMP_Text _note;
         private RectTransform _noteBox;
 
@@ -187,10 +190,18 @@ namespace TehranNoir.UI
             _nameText.alignment = TextAlignmentOptions.MidlineRight;
             _nameText.fontStyle = FontStyles.Bold;
 
-            RectTransform metaBox = UiKit.Box("Meta", panel, nameX, MetaY, PanelWidth - CrestSize - 24f, 30f);
+            RectTransform metaBox = UiKit.Box("Meta", panel, nameX, MetaY, PanelWidth - CrestSize - 24f, 26f);
 
-            _metaText = UiKit.Text("Text", metaBox, 19f, UiKit.Dim, Menu.Font, Menu.Persian);
-            _metaText.alignment = TextAlignmentOptions.MidlineRight;
+            _metaText = UiKit.Text("Text", metaBox, 18f, UiKit.Dim, Menu.Font, Menu.Persian);
+            _metaText.alignment = Menu.Persian ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
+
+            // برچسب آبرو — همان چیزی که «از نگاه بقیه» هستی. سه نوار جدا ندارد؛
+            // از همان شرافت/صداقت/وفاداریِ ردیف‌های پایین حساب می‌شود (`docs/19`).
+            RectTransform labelBox = UiKit.Box("Reputation", panel, nameX, LabelY,
+                PanelWidth - CrestSize - 24f, 24f);
+
+            _labelText = UiKit.Text("Text", labelBox, 18f, UiKit.Dim, Menu.Font, Menu.Persian);
+            _labelText.alignment = Menu.Persian ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
 
             RectTransform rule = UiKit.Box("Rule", panel, PanelX, RuleY, PanelWidth, 2f);
 
@@ -391,10 +402,43 @@ namespace TehranNoir.UI
         {
             string text = Loc.Get(Loc.Channel.Menu, "char.role") + "   ·   " + FormatDate();
 
-            if (text == _metaShown) return;
+            if (text != _metaShown)
+            {
+                _metaShown = text;
+                _metaText.text = text;
+            }
 
-            _metaShown = text;
-            _metaText.text = text;
+            ReputationLabel label = Reputation.LabelOf(
+                CharacterStats.Get(StatId.Honor),
+                CharacterStats.Get(StatId.Honesty),
+                CharacterStats.Get(StatId.Loyalty));
+
+            string headline = Loc.Get(Loc.Channel.Menu, "rep.header") + "   " +
+                              Loc.Get(Loc.Channel.Menu, Reputation.KeyOf(label));
+
+            if (headline == _labelShown) return;
+
+            _labelShown = headline;
+            _labelText.text = headline;
+            _labelText.color = LabelColor(label);
+        }
+
+        /// <summary>برچسب خوب طلایی، برچسب بد سرخ، معمولی خاکستری.</summary>
+        private static Color LabelColor(ReputationLabel label)
+        {
+            switch (label)
+            {
+                case ReputationLabel.Loyal:
+                case ReputationLabel.Upright:
+                    return UiKit.Gold;
+
+                case ReputationLabel.Traitor:
+                case ReputationLabel.Disgraced:
+                    return LowColor;
+
+                default:
+                    return UiKit.Dim;
+            }
         }
 
         /// <summary>

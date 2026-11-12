@@ -51,6 +51,14 @@ cases.kind.note = Note
 cases.kind.ledger = Ledger
 cases.read = Press the confirm key to read it again.
 
+# --- Reputation ---
+rep.header = As others see you:
+rep.label.normal = Ordinary
+rep.label.loyal = Loyal
+rep.label.traitor = Betrayer
+rep.label.upright = Upright
+rep.label.disgraced = Disgraced
+
 # --- Settings page ---
 settings.apply = Apply changes
 settings.apply.pending = Not applied

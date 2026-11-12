@@ -51,6 +51,14 @@ cases.kind.note = یادداشت
 cases.kind.ledger = دفتر
 cases.read = برای بازخوانی، کلید تایید را بزن.
 
+# --- آبرو ---
+rep.header = از نگاه بقیه:
+rep.label.normal = معمولی
+rep.label.loyal = وفادار
+rep.label.traitor = خیانت‌کار
+rep.label.upright = درستکار
+rep.label.disgraced = بدنام
+
 # --- صفحه‌ی تنظیمات ---
 settings.apply = اعمال تغییرات
 settings.apply.pending = اعمال‌نشده

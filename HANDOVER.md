@@ -1181,3 +1181,18 @@ flag.quest.file == 3   با متغیر تعریف‌نشده  → نادرست
 
 **تست:** `DocumentSelfTest` → ۱۲ قبول؛ شبیه‌سازی داده روی پنج دنیای متفاوت
 (تازه، دست بازیکن، تحویل سالم، اقرار، انکار) هر پنج نتیجه‌ی درست را داد.
+
+## ۴۶. یادداشت هم سند شد (جلسه‌ی ۳۷)
+
+بعد از دفتر، کاربر گزارش داد یادداشت بایگانی هنوز در نوار دیالوگ می‌آید.
+درست بود: `ArchiveMissionBuilder.Readable` یادداشت را با `SimpleInteractable` و
+`DialogueStarter` می‌ساخت.
+
+| فایل | تغییر |
+| --- | --- |
+| `Editor/ArchiveMissionBuilder.cs` | تابع مشترک `Paper`؛ دفتر و یادداشت هر دو سند؛ منوی `اتصال یادداشت به سند`؛ `Readable` حذف شد |
+| `Resources/Documents/note_yazdani.txt` | `[hand] true` |
+| `Scripts/Documents/DocumentView.cs` | دست‌نویس برای بدنه‌ی یادداشت؛ شکستن خط و ارتفاع تازه‌ی ردیف جدول |
+
+**قاعده:** هر کاغذی که «خواندن» دارد، `DocumentInteractable` است، نه `DialogueStarter`.
+دیالوگ برای گفتار است؛ کاغذ برای کاغذ.

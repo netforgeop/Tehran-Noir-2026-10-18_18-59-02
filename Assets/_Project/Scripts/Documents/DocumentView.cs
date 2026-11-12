@@ -392,7 +392,11 @@ namespace TehranNoir.Documents
                 List<DocumentLine> lines = new List<DocumentLine>(document.Body.Count);
                 document.Resolve(CurrentWorld, lines, null);
 
-                _body = UiKit.MakeText(bodyRect.gameObject, 21f, InkColor, textFont, persian);
+                // دست‌نویس فقط مخصوص جدول نیست: یک یادداشت هم می‌تواند با خودکار
+                // نوشته شده باشد. رنگ و فونت عوض می‌شود، نه چیدمان.
+                _body = UiKit.MakeText(bodyRect.gameObject, 21f,
+                    document.Handwritten ? InkHand : InkColor,
+                    document.Handwritten ? HandFont(textFont) : textFont, persian);
                 _body.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
                 _body.lineSpacing = 8f;
                 _body.paragraphSpacing = 12f;
@@ -400,6 +404,9 @@ namespace TehranNoir.Documents
                 _body.text = DocumentText.BuildBody(lines, persian);
 
                 FitBody(width - padX * 2f, height - bodyTop - bodyBottom, isNote);
+
+                if (document.Handwritten)
+                    bodyRect.localRotation = Quaternion.Euler(0f, 0f, persian ? -0.7f : 0.7f);
             }
 
             if (document.ShowStamp)
@@ -456,7 +463,10 @@ namespace TehranNoir.Documents
             Rule(padX, top + 28f, width);
 
             float rowTop = top + 38f;
-            const float rowHeight = 46f;
+
+            // خانه‌ها دو خط جا دارند: «صورت‌جلسه‌ی بازجویی دوم» در یک خط جا نمی‌شود
+            // و بدون شکستن خط، ستون بعدی را می‌پوشاند.
+            const float rowHeight = 58f;
 
             for (int r = 0; r < rows.Count; r++)
             {
@@ -468,7 +478,7 @@ namespace TehranNoir.Documents
                     float rotation = document.Handwritten ? (Jitter(seed) - 0.5f) * 1.5f : 0f;
 
                     Cell("Row" + r + "_" + c, row.Cell(c, persian), persian, width, padX,
-                        columnWidth, c, rowTop, 16f,
+                        columnWidth, c, rowTop, 15f,
                         document.Handwritten ? InkHand : InkColor,
                         document.Handwritten ? HandFont(textFont) : textFont,
                         FontStyles.Normal, rotation, document.Handwritten);
@@ -506,22 +516,26 @@ namespace TehranNoir.Documents
             if (bleed)
             {
                 RectTransform ghostRect = Node(name + "_Bleed", _content);
-                Place(ghostRect, x + 0.8f, top + 0.7f, cellWidth, 34f);
+                Place(ghostRect, x + 0.8f, top + 0.7f, cellWidth, 50f);
                 ghostRect.localRotation = Quaternion.Euler(0f, 0f, rotation);
 
                 TMP_Text ghost = UiKit.MakeText(ghostRect.gameObject, size,
                     new Color(color.r, color.g, color.b, 0.22f), textFont, persian);
                 ghost.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
+                ghost.lineSpacing = -6f;
+                ghost.enableWordWrapping = true;
                 ghost.text = text;
             }
 
             RectTransform rect = Node(name, _content);
-            Place(rect, x, top, cellWidth, 34f);
+            Place(rect, x, top, cellWidth, 50f);
             rect.localRotation = Quaternion.Euler(0f, 0f, rotation);
 
             TMP_Text label = UiKit.MakeText(rect.gameObject, size, color, textFont, persian);
             label.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
             label.fontStyle = style;
+            label.lineSpacing = -6f;
+            label.enableWordWrapping = true;
             label.text = text;
         }
 

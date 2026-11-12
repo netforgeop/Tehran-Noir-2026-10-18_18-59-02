@@ -88,10 +88,10 @@ namespace TehranNoir.EditorTools
             Logbook(root.transform, new Vector3(1f, 1.10f, -10.5f),
                 new Vector3(0.36f, 0.07f, 0.26f), paper);
 
-            Readable(root.transform, "Note", new Vector3(-1f, 1.095f, -10.5f),
+            Paper(root.transform, "Note", new Vector3(-1f, 1.095f, -10.5f),
                 new Vector3(0.22f, 0.012f, 0.30f), paper,
                 "یادداشت|Note", "دست‌نویس|Handwritten",
-                "note_yazdani", "read", ui);
+                NoteDocument, "flag.clue.note");
 
             Box1352(root.transform, cardboard);
 
@@ -170,34 +170,50 @@ namespace TehranNoir.EditorTools
         [MenuItem("Tehran Noir/اتصال دفتر ثبت به سند", false, 103)]
         public static void ConnectLogbook()
         {
+            ConnectPaper("Logbook", LogbookDocument, "flag.clue.log",
+                "دفتر ثبت بایگانی|Archive logbook", "۱۳۵۲ تا ۱۳۵۳|1352 to 1353");
+        }
+
+        [MenuItem("Tehran Noir/اتصال یادداشت به سند", false, 104)]
+        public static void ConnectNote()
+        {
+            ConnectPaper("Note", NoteDocument, "flag.clue.note",
+                "یادداشت|Note", "دست‌نویس|Handwritten");
+        }
+
+        /// <summary>یک کاغذ موجود در صحنه را از دیالوگ به سند تبدیل می‌کند و صحنه را ذخیره می‌کند.</summary>
+        private static void ConnectPaper(string objectName, string documentPath, string readVariable,
+            string displayName, string subtype)
+        {
             if (EditorApplication.isPlaying)
             {
                 Debug.LogError("[Archive] در حالت Play نمی‌شود تغییر داد. اول Play را قطع کن.");
                 return;
             }
 
-            GameObject logbook = GameObject.Find("Logbook");
+            GameObject paper = GameObject.Find(objectName);
 
-            if (logbook == null)
+            if (paper == null)
             {
-                Debug.LogWarning("[Archive] آبجکتی به نام Logbook در صحنه نیست. اول «ساخت بایگانی و مأموریت» را بزن.");
+                Debug.LogWarning("[Archive] آبجکتی به نام " + objectName +
+                                 " در صحنه نیست. اول «ساخت بایگانی و مأموریت» را بزن.");
                 return;
             }
 
-            // این دو کامپوننت، دفتر را در نوار دیالوگ پخش می‌کردند.
-            DialogueStarter starter = logbook.GetComponent<DialogueStarter>();
+            // این دو کامپوننت، کاغذ را در نوار دیالوگ پخش می‌کردند.
+            DialogueStarter starter = paper.GetComponent<DialogueStarter>();
             if (starter != null) Undo.DestroyObjectImmediate(starter);
 
-            SimpleInteractable simple = logbook.GetComponent<SimpleInteractable>();
+            SimpleInteractable simple = paper.GetComponent<SimpleInteractable>();
             if (simple != null) Undo.DestroyObjectImmediate(simple);
 
-            DocumentInteractable document = logbook.GetComponent<DocumentInteractable>();
-            if (document == null) document = Undo.AddComponent<DocumentInteractable>(logbook);
+            DocumentInteractable document = paper.GetComponent<DocumentInteractable>();
+            if (document == null) document = Undo.AddComponent<DocumentInteractable>(paper);
 
-            SetString(document, "displayName", "دفتر ثبت بایگانی|Archive logbook");
-            SetString(document, "subtype", "۱۳۵۲ تا ۱۳۵۳|1352 to 1353");
-            SetString(document, "documentPath", LogbookDocument);
-            SetString(document, "onReadVariable", "flag.clue.log");
+            SetString(document, "displayName", displayName);
+            SetString(document, "subtype", subtype);
+            SetString(document, "documentPath", documentPath);
+            SetString(document, "onReadVariable", readVariable);
 
             EditorUtility.SetDirty(document);
 
@@ -209,7 +225,7 @@ namespace TehranNoir.EditorTools
                 EditorSceneManager.SaveScene(scene);
             }
 
-            Debug.Log("[Archive] دفتر ثبت حالا سند است: " + LogbookDocument + " — صحنه ذخیره شد.");
+            Debug.Log("[Archive] «" + objectName + "» حالا سند است: " + documentPath + " — صحنه ذخیره شد.");
         }
 
         [MenuItem("Tehran Noir/حذف بایگانی", false, 101)]
@@ -376,36 +392,34 @@ namespace TehranNoir.EditorTools
         /// </summary>
         private static void Logbook(Transform parent, Vector3 position, Vector3 size, Material material)
         {
-            GameObject go = Box(parent, "Logbook", position, size, material);
+            Paper(parent, "Logbook", position, size, material,
+                "دفتر ثبت بایگانی|Archive logbook", "۱۳۵۲ تا ۱۳۵۳|1352 to 1353",
+                LogbookDocument, "flag.clue.log");
+        }
+
+        /// <summary>
+        /// یک کاغذِ خواندنی که برگه باز می‌کند، نه نوار دیالوگ.
+        ///
+        /// هر کاغذ تازه: یک خط فراخوانی با مسیر سند و متغیر خواندن. هیچ کد
+        /// تازه‌ای لازم نیست؛ همان قرارداد «یک الگو، هر تعداد سند».
+        /// </summary>
+        private static void Paper(Transform parent, string name, Vector3 position, Vector3 size,
+            Material material, string displayName, string subtype, string documentPath, string readVariable)
+        {
+            GameObject go = Box(parent, name, position, size, material);
 
             DocumentInteractable read = go.AddComponent<DocumentInteractable>();
-            SetString(read, "displayName", "دفتر ثبت بایگانی|Archive logbook");
-            SetString(read, "subtype", "۱۳۵۲ تا ۱۳۵۳|1352 to 1353");
-            SetString(read, "documentPath", LogbookDocument);
-            SetString(read, "onReadVariable", "flag.clue.log");
+            SetString(read, "displayName", displayName);
+            SetString(read, "subtype", subtype);
+            SetString(read, "documentPath", documentPath);
+            SetString(read, "onReadVariable", readVariable);
         }
 
         /// <summary>خواندن دفتر، جعبه‌ی ۱۳۵۲ را از قفسه بیرون می‌آورد؛ پرچمش همین است.</summary>
         public const string LogbookDocument = "Documents/archive_log";
 
-        /// <summary>هر چیز خواندنی: مش + SimpleInteractable با کار Read + DialogueStarter.</summary>
-        private static void Readable(Transform parent, string name, Vector3 position, Vector3 size, Material material,
-            string displayName, string subtype, string dialogueFile, string nodeId, DialogueUI ui)
-        {
-            GameObject go = Box(parent, name, position, size, material);
-
-            SimpleInteractable read = go.AddComponent<SimpleInteractable>();
-            SetEnum(read, "action", (int)InteractionAction.Read);
-            SetString(read, "displayName", displayName);
-            SetString(read, "subtype", subtype);
-            SetString(read, "startNodeId", nodeId);
-
-            DialogueStarter starter = go.AddComponent<DialogueStarter>();
-            SetObject(starter, "dialogueFile", LoadDialogue(dialogueFile));
-            SetObject(starter, "dialogueUI", ui);
-
-            SetObject(read, "dialogueStarter", starter);
-        }
+        /// <summary>یادداشت یزدانی؛ خواندنش `flag.clue.note` را روشن می‌کند.</summary>
+        public const string NoteDocument = "Documents/note_yazdani";
 
         private static void Box1352(Transform parent, Material cardboard)
         {

@@ -193,3 +193,23 @@ DocumentSelfTest → Play
 ```text
 [Documents] تست: 12 قبول، 0 رد
 ```
+
+## ۶. یادداشت — همان کار، یک منو
+
+حالت اجرا را قطع کن.
+
+```text
+Stop
+```
+
+این منو را بزن.
+
+```text
+Tehran Noir → اتصال یادداشت به سند
+```
+
+در کنسول باید این خط را ببینی.
+
+```text
+[Archive] «Note» حالا سند است: Documents/note_yazdani — صحنه ذخیره شد.
+```

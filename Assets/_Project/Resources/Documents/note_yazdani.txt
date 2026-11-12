@@ -4,6 +4,7 @@
 
 [template] note
 [seal] false
+[hand] true
 
 «شریفی خودش را نکشت.» | "Sharifi did not kill himself."
 

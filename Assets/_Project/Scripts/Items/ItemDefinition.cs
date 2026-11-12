@@ -214,10 +214,14 @@ namespace TehranNoir.Items
                 case ItemVerb.Examine: return Has(ItemFlags.Examinable);
                 case ItemVerb.Drop: return Has(ItemFlags.Droppable);
                 case ItemVerb.Equip: return Has(ItemFlags.Equippable);
-                case ItemVerb.Unequip: return Has(ItemFlags.Equippable);
                 case ItemVerb.Read: return IsDocument;
-                case ItemVerb.Use:
-                case ItemVerb.Consume: return Has(ItemFlags.Usable);
+                case ItemVerb.Use: return Has(ItemFlags.Usable);
+
+                // «مصرف» و «جدا کردن» عمداً پیش‌فرض ندارند: بدون قاعده، هیچ آیتمی
+                // دکمه‌ی بی‌معنی نمی‌گیرد. اگر لازم بود، در همان خط بنویس
+                //   consume.do=...   /   unequip.do=...
+                case ItemVerb.Consume:
+                case ItemVerb.Unequip: return false;
 
                 default: return false;
             }

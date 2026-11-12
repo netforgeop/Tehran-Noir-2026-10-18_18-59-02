@@ -352,6 +352,7 @@ namespace TehranNoir.UI
                 if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) _tabs[_activeTab].Digit(2);
                 if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) _tabs[_activeTab].Digit(3);
                 if (keyboard.digit4Key.wasPressedThisFrame || keyboard.numpad4Key.wasPressedThisFrame) _tabs[_activeTab].Digit(4);
+                if (keyboard.digit5Key.wasPressedThisFrame || keyboard.numpad5Key.wasPressedThisFrame) _tabs[_activeTab].Digit(5);
             }
 
             if (gamepad != null)

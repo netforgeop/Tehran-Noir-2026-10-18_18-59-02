@@ -41,6 +41,63 @@ namespace TehranNoir.Items
 
         private MaterialPropertyBlock _tint;
 
+        /// <summary>نمونه‌ی فعال صحنه؛ اگر نبود ساخته می‌شود.</summary>
+        public static ItemDropSpawner Runtime { get; private set; }
+
+        /// <summary>تست خودکار این را خاموش می‌کند تا در صحنه مکعب نریزد.</summary>
+        public static bool Spawning = true;
+
+        /// <summary>
+        /// تضمین وجود شنونده‌ی انداختن.
+        ///
+        /// چرا خودکار؟ چون اگر این کامپوننت را یادت برود روی Player بگذاری،
+        /// انداختن بی‌صدا هیچ کاری نمی‌کند و پیدا کردن علتش سخت است. حالا
+        /// اولین انداختن، خودش میزبان را می‌سازد.
+        /// </summary>
+        public static ItemDropSpawner Ensure()
+        {
+            if (Runtime != null) return Runtime;
+
+            ItemDropSpawner found = FindAnyObjectByType<ItemDropSpawner>(FindObjectsInactive.Include);
+
+            if (found != null)
+            {
+                Runtime = found;
+                return found;
+            }
+
+            GameObject host = new GameObject("Item Drops");
+            ItemDropSpawner spawner = host.AddComponent<ItemDropSpawner>();
+
+            Runtime = spawner;
+
+            return spawner;
+        }
+
+        private void Awake()
+        {
+            if (Runtime != null && Runtime != this)
+            {
+                // دو نسخه یعنی هر انداختن دو شیء می‌سازد؛ دومی خاموش می‌شود.
+                Debug.LogWarning("[Items] بیش از یک ItemDropSpawner در صحنه است؛ دومی غیرفعال شد.", this);
+                enabled = false;
+                return;
+            }
+
+            Runtime = this;
+        }
+
+        private void OnDestroy()
+        {
+            if (Runtime == this) Runtime = null;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetOnLoad()
+        {
+            Runtime = null;
+        }
+
         private void OnEnable()
         {
             ItemEvents.Dropped += HandleDropped;
@@ -53,17 +110,43 @@ namespace TehranNoir.Items
 
         private void HandleDropped(ItemEvent itemEvent)
         {
+            if (!Spawning) return;
             if (itemEvent == null || itemEvent.Instance == null) return;
 
             // فقط انداختن روی زمین؛ انتقال بین ظرف‌ها رویداد جدا دارد.
             if (itemEvent.ContainerId != InventoryManager.WorldId) return;
 
-            Transform origin = dropOrigin != null ? dropOrigin : transform;
+            Transform origin = dropOrigin != null ? dropOrigin : ResolveOrigin();
+
+            if (origin == null)
+            {
+                Debug.LogWarning("[Items] نقطه‌ی انداختن پیدا نشد؛ بازیکن در صحنه نیست.", this);
+                return;
+            }
 
             Vector3 position = origin.position + origin.forward * forwardOffset;
-            position.y = origin.position.y + groundOffset;
+
+            // زمین را پیدا کن تا شیء نصفه داخل زمین یا معلق در هوا نماند.
+            Ray ray = new Ray(position + Vector3.up * 2f, Vector3.down);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, 6f))
+                position.y = hit.point.y + groundOffset;
+            else
+                position.y = origin.position.y + groundOffset;
 
             SpawnAt(itemEvent.Instance, position);
+        }
+
+        /// <summary>اگر Drop Origin خالی بود: خود بازیکن، وگرنه همین آبجکت.</summary>
+        private Transform ResolveOrigin()
+        {
+            TehranNoir.Player.PlayerController player =
+                FindAnyObjectByType<TehranNoir.Player.PlayerController>();
+
+            if (player != null) return player.transform;
+
+            return transform;
         }
 
         /// <summary>

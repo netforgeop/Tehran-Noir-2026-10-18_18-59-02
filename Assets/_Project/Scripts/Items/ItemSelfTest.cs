@@ -43,7 +43,10 @@ namespace TehranNoir.Items
             _failed = 0;
 
             bool previousDocumentView = ItemRuntime.ShowDocumentOnRead;
+            bool previousSpawning = ItemDropSpawner.Spawning;
+
             ItemRuntime.ShowDocumentOnRead = false;
+            ItemDropSpawner.Spawning = false;
 
             try
             {
@@ -62,6 +65,7 @@ namespace TehranNoir.Items
                 TestMissingDefinition();
                 TestDuplicates();
                 TestVerbList();
+                TestSubscriptionsSurvive();
                 TestWorldRoundTrip();
             }
             catch (Exception exception)
@@ -72,9 +76,13 @@ namespace TehranNoir.Items
             finally
             {
                 ItemRuntime.ShowDocumentOnRead = previousDocumentView;
+                ItemDropSpawner.Spawning = previousSpawning;
                 ItemWorld.ClearOverride();
                 InventoryManager.ResetAll();
-                ItemEvents.ClearAll();
+
+                // عمداً ItemEvents.ClearAll صدا زده نمی‌شود: تست فقط باید مشترکِ
+                // خودش را بردارد. قبلاً این خط همه‌ی مشترک‌ها را پاک می‌کرد
+                // (از جمله ItemDropSpawner) و انداختن تا آخر بازی بی‌اثر می‌شد.
             }
 
             string header = "[Items] تست: " + _passed + " قبول، " + _failed + " رد";
@@ -386,6 +394,33 @@ namespace TehranNoir.Items
 
             Check("کلت خالی: «استفاده» نیست، «بررسی» هست",
                 !verbs.Contains(ItemVerb.Use) && verbs.Contains(ItemVerb.Examine), Names(verbs));
+
+            Check("کلت خالی: «مصرف» و «جدا کردن» بی‌دلیل نیستند",
+                !verbs.Contains(ItemVerb.Consume) && !verbs.Contains(ItemVerb.Unequip), Names(verbs));
+        }
+
+        /// <summary>
+        /// تست نباید مشترک‌های بیرونی را پاک کند؛ همان باگی که انداختن را
+        /// در بازی بی‌اثر کرده بود.
+        /// </summary>
+        private void TestSubscriptionsSurvive()
+        {
+            Fresh();
+
+            int seen = 0;
+            Action<ItemEvent> handler = itemEvent => seen++;
+
+            ItemEvents.Dropped += handler;
+
+            InventoryManager.Take("cigarettes", 1);
+
+            ItemInstance item = FirstOf("cigarettes");
+
+            ItemRuntime.Perform(item, ItemVerb.Drop);
+
+            ItemEvents.Dropped -= handler;
+
+            Check("مشترکِ بیرونی بعد از تست زنده می‌ماند", seen == 1, "دریافت: " + seen);
         }
 
         /// <summary>
@@ -440,7 +475,6 @@ namespace TehranNoir.Items
 
             ItemWorld.Override = world;
             InventoryManager.ResetAll();
-            ItemEvents.ClearAll();
 
             return world;
         }

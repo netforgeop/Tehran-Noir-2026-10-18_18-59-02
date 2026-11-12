@@ -52,7 +52,7 @@ namespace TehranNoir.UI
         private const float VerbHeight = 38f;
         private const float VerbWidth = 214f;
         private const float VerbGap = 12f;
-        private const int MaxVerbs = 4;
+        private const int MaxVerbs = 5;
 
         private const float NameFont = 22f;
         private const float KindFont = 15f;

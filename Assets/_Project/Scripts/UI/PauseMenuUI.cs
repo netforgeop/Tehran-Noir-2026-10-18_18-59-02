@@ -158,6 +158,8 @@ namespace TehranNoir.UI
                 return;
             }
 
+            if (_tabs.Count > 0) _tabs[_activeTab].TickValues();
+
             HandleOpenInput();
         }
 

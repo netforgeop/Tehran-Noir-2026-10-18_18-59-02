@@ -10,16 +10,16 @@ using TehranNoir.World;
 namespace TehranNoir.UI
 {
     /// <summary>
-    /// تب «کاراکتر» منوی توقف — ساختار Cyberpunk: ریل بخش‌ها در یک طرف، محتوا در طرف دیگر.
+    /// تب «کاراکتر» منوی توقف.
     ///
-    ///   خلاصه — نام، تاریخ و ساعت بازی، و نُه آماری که واقعاً وجود دارند.
-    ///   وسایل / کارها / پرونده‌ها — تا وقتی منبع داده‌شان ساخته نشود، پیام صادقانه.
+    ///   خلاصه — یک نشان بزرگ (شرافت) و پنج ساعت گرد، یکی برای هر ویژگی.
+    ///           کم = سرخ، زیاد = سفید؛ همان قاعده‌ی نشان شرافت در Red Dead Redemption 2.
+    ///           درصدِ هر ساعت، خودِ مقدار ۰..۱۰۰ است.
+    ///   وسایل / کارها / پرونده‌ها — تا منبع داده‌شان ساخته نشود، پیام صادقانه.
     ///
-    /// هیچ عددی در این کلاس نگه داشته نمی‌شود: همه از CharacterStats و WorldClock خوانده
-    /// می‌شود. برای همین با تغییر پول در پنل تقلب، این صفحه هم عوض می‌شود.
-    ///
-    /// ریل بخش‌ها عمداً از چیدمان ردیف‌های منو (PauseMenuUI.RowX) استفاده نمی‌کند؛
-    /// آن ثابت‌ها برای ستون چپ فهرست تنظیمات‌اند، نه برای یک صفحه‌ی دوستونی.
+    /// عدد در این کلاس ساخته نمی‌شود: همه از CharacterStats می‌آید و به‌صورت ASCII
+    /// به TMP داده می‌شود. تبدیل به رقم فارسی و جهت‌دهی کار RTLTMPro است؛ اگر خودمان
+    /// رقم فارسی بسازیم، RTLTMPro آن را «حرف» می‌بیند و برعکس می‌چیند (۱۳۵۲ → ۲۵۳۱).
     /// </summary>
     public sealed class CharacterPauseTab : PauseTab
     {
@@ -35,15 +35,33 @@ namespace TehranNoir.UI
         private const float PanelX = 500f;
         private const float PanelWidth = 1290f;
 
-        private const float NameY = 108f;
+        private const float CrestSize = 96f;
+        private const float NameY = 96f;
         private const float MetaY = 156f;
-        private const float RuleY = 200f;
+        private const float RuleY = 204f;
 
+        /* ---------- ردیف ویژگی ---------- */
         private const float RowTop = 236f;
-        private const float RowHeight = 50f;
-        private const float RowGap = 4f;
+        private const float RowHeight = 66f;
+        private const float RowGap = 8f;
         private const float RowFont = 26f;
-        private const float ValueWidth = 360f;
+
+        private const float PipSize = 46f;
+        private const float PipRadius = 17f;
+        private const float PipThickness = 3.5f;
+        private const float IconSize = 20f;
+
+        private const float ValueWidth = 140f;
+        private const float PipX = 176f;
+        private const float NameX = 240f;
+
+        /// <summary>زیر این مقدار، سرخ؛ بالای آن، کم‌کم سفید.</summary>
+        private const float LowMark = 30f;
+
+        private static readonly Color HighColor = new Color(0.94f, 0.92f, 0.87f, 1f);
+        private static readonly Color LowColor = new Color(0.72f, 0.16f, 0.14f, 1f);
+        private static readonly Color MidColor = new Color(0.74f, 0.66f, 0.53f, 1f);
+        private static readonly Color TrackColor = new Color(0.25f, 0.24f, 0.22f, 0.75f);
 
         private static readonly string[] PersianMonths =
         {
@@ -65,16 +83,21 @@ namespace TehranNoir.UI
             "char.section.cases"
         };
 
-        private static readonly StatId[] SummaryStats =
+        private static readonly StatId[] TraitOrder =
         {
-            StatId.Money, StatId.Health, StatId.Armor, StatId.Stamina,
             StatId.Honor, StatId.Charisma, StatId.Fame, StatId.Honesty, StatId.Loyalty
         };
 
         private readonly List<RectTransform> _railRects = new List<RectTransform>(4);
         private readonly List<TMP_Text> _railLabels = new List<TMP_Text>(4);
 
+        private readonly List<ArcGraphic> _pips = new List<ArcGraphic>(5);
+        private readonly List<ArcGraphic> _pipTracks = new List<ArcGraphic>(5);
+        private readonly List<Image> _pipIcons = new List<Image>(5);
+
         private RectTransform _content;
+        private Image _crest;
+        private Image _crestIcon;
         private TMP_Text _nameText;
         private TMP_Text _metaText;
         private TMP_Text _note;
@@ -124,13 +147,31 @@ namespace TehranNoir.UI
 
         private void BuildHeader(RectTransform panel)
         {
-            RectTransform nameBox = UiKit.Box("Name", panel, PanelX, NameY, PanelWidth, 42f);
+            // نشان: المان امضای بازی، همان کمان شرافت با آیکون خودش
+            RectTransform crestBox = UiKit.Box("Crest", panel, PanelX, NameY - 6f, CrestSize, CrestSize);
+
+            _crest = crestBox.gameObject.AddComponent<Image>();
+            _crest.sprite = HudArt.Disc("char.crest", Mathf.CeilToInt(CrestSize),
+                new Color(0.06f, 0.05f, 0.045f, 0.95f), new Color(0.30f, 0.28f, 0.25f, 0.9f), 1.5f);
+            _crest.raycastTarget = false;
+
+            RectTransform crestIconBox = UiKit.Box("Icon", crestBox, (CrestSize - 46f) * 0.5f,
+                (CrestSize - 46f) * 0.5f, 46f, 46f);
+
+            _crestIcon = crestIconBox.gameObject.AddComponent<Image>();
+            _crestIcon.sprite = HudArt.Icon(HudArt.Glyph.Star, 96, Color.white);
+            _crestIcon.raycastTarget = false;
+            _crestIcon.preserveAspect = true;
+
+            float nameX = PanelX + CrestSize + 24f;
+
+            RectTransform nameBox = UiKit.Box("Name", panel, nameX, NameY, PanelWidth - CrestSize - 24f, 44f);
 
             _nameText = UiKit.Text("Text", nameBox, 34f, UiKit.Gold, Menu.Font, Menu.Persian);
             _nameText.alignment = TextAlignmentOptions.MidlineRight;
             _nameText.fontStyle = FontStyles.Bold;
 
-            RectTransform metaBox = UiKit.Box("Meta", panel, PanelX, MetaY, PanelWidth, 30f);
+            RectTransform metaBox = UiKit.Box("Meta", panel, nameX, MetaY, PanelWidth - CrestSize - 24f, 30f);
 
             _metaText = UiKit.Text("Text", metaBox, 19f, UiKit.Dim, Menu.Font, Menu.Persian);
             _metaText.alignment = TextAlignmentOptions.MidlineRight;
@@ -150,7 +191,7 @@ namespace TehranNoir.UI
 
         private void BuildContent(RectTransform panel)
         {
-            _content = UiKit.Box("Content", panel, PanelX, RowTop, PanelWidth, 500f);
+            _content = UiKit.Box("Content", panel, PanelX, RowTop, PanelWidth, 460f);
         }
 
         /* ============================================================
@@ -160,8 +201,11 @@ namespace TehranNoir.UI
         private void BuildSection()
         {
             Rows.Clear();
+            _pips.Clear();
+            _pipTracks.Clear();
+            _pipIcons.Clear();
 
-            // ردیف‌های تب پیشین: اول خاموش، بعد نابود؛ Destroy تا پایان فریم صبر می‌کند
+            // ردیف‌های بخش پیشین: اول خاموش، بعد نابود
             for (int i = _content.childCount - 1; i >= 0; i--)
             {
                 GameObject child = _content.GetChild(i).gameObject;
@@ -171,58 +215,149 @@ namespace TehranNoir.UI
 
             bool empty = _section != 0;
 
-            if (_note != null)
-            {
-                _note.gameObject.SetActive(empty);
-                _note.text = Loc.Get(Loc.Channel.Menu, "pause.soon");
-            }
+            _note.gameObject.SetActive(empty);
+            _note.text = Loc.Get(Loc.Channel.Menu, "pause.soon");
 
             if (empty) return;
 
-            for (int i = 0; i < SummaryStats.Length; i++)
-            {
-                StatId id = SummaryStats[i];
-
-                AddValueRow(CharacterStats.Definition(id).Label(Menu.Persian),
-                    () => CharacterStats.Format(id, Menu.Persian));
-            }
+            for (int i = 0; i < TraitOrder.Length; i++)
+                AddTraitRow(TraitOrder[i], i);
         }
 
-        /// <summary>ردیف فقط‌خواندنی: برچسب یک طرف، مقدار طرف دیگر.</summary>
-        private void AddValueRow(string label, Func<string> read)
+        /// <summary>
+        /// یک ردیف ویژگی: ساعت گرد با آیکون، نام، و عدد.
+        /// ساعت = یک ریل کامل + یک کمان به اندازه‌ی مقدار؛ رنگ از سرخ (کم) به سفید (زیاد).
+        /// </summary>
+        private void AddTraitRow(StatId id, int index)
         {
-            int index = Rows.Count;
-
             float y = index * (RowHeight + RowGap);
 
             RectTransform row = UiKit.Box("Row_" + index, _content, 0f, y, PanelWidth, RowHeight);
 
             bool rtl = Menu.Persian;
 
-            float labelX = rtl ? ValueWidth : 0f;
-            float labelWidth = PanelWidth - ValueWidth;
-
-            RectTransform labelBox = UiKit.Box("Label", row, labelX, 0f, labelWidth, RowHeight);
-
-            TMP_Text labelText = UiKit.Text("Text", labelBox, RowFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
-            labelText.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
-            labelText.text = label;
-
             float valueX = rtl ? 0f : PanelWidth - ValueWidth;
+            float pipX = rtl ? PipX : PanelWidth - PipX - PipSize;
+            float nameX = rtl ? NameX : 0f;
+            float nameWidth = PanelWidth - NameX;
 
             RectTransform valueBox = UiKit.Box("Value", row, valueX, 0f, ValueWidth, RowHeight);
 
             TMP_Text valueText = UiKit.Text("Text", valueBox, RowFont, UiKit.Dim, Menu.Font, Menu.Persian);
             valueText.alignment = rtl ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.MidlineRight;
-            valueText.text = read != null ? read() : string.Empty;
+
+            RectTransform pip = UiKit.Node("Pip", row);
+            pip.anchorMin = new Vector2(0f, 1f);
+            pip.anchorMax = new Vector2(0f, 1f);
+            pip.pivot = new Vector2(0f, 1f);
+            pip.anchoredPosition = new Vector2(pipX, -(RowHeight - PipSize) * 0.5f);
+            pip.sizeDelta = new Vector2(PipSize, PipSize);
+
+            ArcGraphic track = MakeArc(pip, "Track", PipRadius, PipThickness, TrackColor);
+            track.SetAngles(0f, 360f);
+
+            ArcGraphic fill = MakeArc(pip, "Fill", PipRadius, PipThickness, HighColor);
+
+            RectTransform iconBox = UiKit.Node("Icon", pip);
+            iconBox.anchorMin = new Vector2(0.5f, 0.5f);
+            iconBox.anchorMax = new Vector2(0.5f, 0.5f);
+            iconBox.pivot = new Vector2(0.5f, 0.5f);
+            iconBox.anchoredPosition = Vector2.zero;
+            iconBox.sizeDelta = new Vector2(IconSize, IconSize);
+
+            Image icon = iconBox.gameObject.AddComponent<Image>();
+            icon.sprite = HudArt.Icon(IconFor(id), 48, Color.white);
+            icon.raycastTarget = false;
+            icon.preserveAspect = true;
+
+            RectTransform labelBox = UiKit.Box("Label", row, nameX, 0f, nameWidth, RowHeight);
+
+            TMP_Text labelText = UiKit.Text("Text", labelBox, RowFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
+            labelText.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
+            labelText.text = CharacterStats.Definition(id).Label(Menu.Persian);
+
+            _pipTracks.Add(track);
+            _pips.Add(fill);
+            _pipIcons.Add(icon);
 
             PauseRow data = new PauseRow();
             data.Rect = row;
             data.Label = labelText;
             data.ValueText = valueText;
-            data.ReadValue = read;
+            data.ReadValue = () => CharacterStats.Get(id).ToString();
 
             Rows.Add(data);
+        }
+
+        private static ArcGraphic MakeArc(RectTransform parent, string name, float radius,
+            float thickness, Color color)
+        {
+            RectTransform rect = UiKit.Node(name, parent);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(2f, 2f);
+
+            ArcGraphic arc = rect.gameObject.AddComponent<ArcGraphic>();
+            arc.color = color;
+            arc.raycastTarget = false;
+            arc.SetGeometry(radius, thickness);
+
+            return arc;
+        }
+
+        private static HudArt.Glyph IconFor(StatId id)
+        {
+            switch (id)
+            {
+                case StatId.Charisma: return HudArt.Glyph.Crown;
+                case StatId.Fame: return HudArt.Glyph.People;
+                case StatId.Honesty: return HudArt.Glyph.Document;
+                case StatId.Loyalty: return HudArt.Glyph.Shield;
+                default: return HudArt.Glyph.Star;
+            }
+        }
+
+        /// <summary>
+        /// رنگ از سرخ به سفید. زیر ۳۰ سرخ می‌ماند تا «وضعیت بد» یک نگاه فهمیده شود؛
+        /// بالای آن به کرم و بعد سفید می‌رود.
+        /// </summary>
+        private static Color TraitColor(float value)
+        {
+            float t = Mathf.Clamp01(value / 100f);
+
+            if (value <= LowMark) return LowColor;
+
+            float fromMark = Mathf.InverseLerp(LowMark, 100f, value);
+
+            return fromMark < 0.5f
+                ? Color.Lerp(LowColor, MidColor, fromMark * 2f)
+                : Color.Lerp(MidColor, HighColor, (fromMark - 0.5f) * 2f);
+        }
+
+        /// <summary>هر فریم صدا زده می‌شود تا منو با مقدارهای تازه هم‌خوان بماند.</summary>
+        public override void TickValues()
+        {
+            for (int i = 0; i < TraitOrder.Length && i < _pips.Count; i++)
+            {
+                float value = CharacterStats.GetFloat(TraitOrder[i]);
+                Color color = TraitColor(value);
+
+                float sweep = Mathf.Clamp(value, 0f, 100f) * 3.6f;
+
+                // از بالای ساعت، ساعت‌گرد پر می‌شود: ۹۰ درجه شروع، پایان کمتر
+                _pips[i].SetAngles(90f, 90f - sweep);
+                _pips[i].color = color;
+
+                if (_pipIcons[i] != null) _pipIcons[i].color = color;
+            }
+
+            if (_crestIcon != null)
+            {
+                // نشان، همان شرافت است: سرخ در پایین، سفید در بالا
+                _crestIcon.color = TraitColor(CharacterStats.GetFloat(StatId.Honor));
+            }
         }
 
         private void RefreshRail()
@@ -245,6 +380,8 @@ namespace TehranNoir.UI
             BuildSection();
             RefreshRail();
             Select(0);
+
+            TickValues();
         }
 
         public override void Section(int delta)
@@ -296,6 +433,9 @@ namespace TehranNoir.UI
            تاریخ
            ============================================================ */
 
+        /// <summary>
+        /// عددها ASCII می‌مانند؛ RTLTMPro خودش هم رقم فارسی می‌کند هم ترتیب را نگه می‌دارد.
+        /// </summary>
         private string FormatDate()
         {
             WorldClock clock = WorldClock.Instance;
@@ -308,12 +448,9 @@ namespace TehranNoir.UI
 
             string monthName = Menu.Persian ? PersianMonths[month] : EnglishMonths[month];
 
-            string day = HudArt.Digits(now.Day, Menu.Persian);
-            string year = HudArt.Digits(now.Year, Menu.Persian);
+            string time = now.Hour.ToString("00") + ":" + now.Minute.ToString("00");
 
-            string time = HudArt.Digits(now.Hour.ToString("00") + ":" + now.Minute.ToString("00"), Menu.Persian);
-
-            return day + " " + monthName + " " + year + "   —   " + time;
+            return now.Day + " " + monthName + " " + now.Year + "   —   " + time;
         }
     }
 }

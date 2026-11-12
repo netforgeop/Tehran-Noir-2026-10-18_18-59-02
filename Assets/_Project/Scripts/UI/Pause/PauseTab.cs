@@ -134,6 +134,14 @@ namespace TehranNoir.UI
             Highlight();
         }
 
+        /// <summary>
+        /// هر فریم که منو باز است صدا زده می‌شود؛ فقط تب‌هایی که مقدار زنده نشان می‌دهند
+        /// (ساعت‌های ویژگی، تاریخ) این را بازنویسی می‌کنند. پیش‌فرض کاری نمی‌کند.
+        /// </summary>
+        public virtual void TickValues()
+        {
+        }
+
         /// <summary>مقادیر ردیف‌ها را از منبعشان دوباره می‌خواند.</summary>
         public void Refresh()
         {

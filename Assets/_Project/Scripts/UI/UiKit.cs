@@ -104,8 +104,10 @@ namespace TehranNoir.UI
             SetBoolMember(rtl, "Farsi", farsi);
             SetBoolMember(rtl, "FixTags", true);
 
-            // عدد را همان‌طور که نوشته‌ایم نگه دار؛ تبدیل خودکار به رقم فارسی سردرگمی می‌سازد
-            SetBoolMember(rtl, "PreserveNumbers", true);
+            // رقمی که خودمان ساخته باشیم، نزد RTLTMPro «عدد» شمرده نمی‌شود و چون
+            // RTL است، برعکس چیده می‌شد (۱۳۵۲ → ۲۵۳۱). پس عدد را همیشه ASCII بده و
+            // بگذار خودِ RTLTMPro هم تبدیل کند هم جهت را نگه دارد.
+            SetBoolMember(rtl, "PreserveNumbers", !farsi);
         }
 
         private static Type FindRtlTextType()

@@ -742,3 +742,17 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 
 مستند: `docs/29-character-tab.md`.
 
+## ۲۷. ساعت‌های ویژگی و باگ رقم (جلسه‌ی ۱۸)
+
+**باگ:** تاریخ «۲۵۳۱» می‌شد. ریشه: `UiKit.SetRtl` مقدار `PreserveNumbers = true` می‌گذاشت؛
+RTLTMPro با این پرچم فقط رقم ASCII را عدد می‌شناسد و رقم فارسی ما را حرف RTL می‌دید و
+برعکس می‌چید. **رفع:** `PreserveNumbers = !farsi`؛ عدد همیشه ASCII، تبدیل کار RTLTMPro.
+`HudArt.Digits` حذف شد.
+
+**تب کاراکتر:** فقط پنج ویژگی، هر کدام یک ساعت گرد (`ArcGraphic`) با آیکون؛
+زیر ۳۰ سرخ، بالا سفید. نشان بزرگ شرافت در سرصفحه.
+`PauseTab.TickValues()` هر فریم وقتی منو باز است صدا زده می‌شود.
+آیکون‌ها: ستاره / تاج / آدم‌ها / سند / سپر (سپر تازه به `HudArt.Glyph` اضافه شد).
+
+مستند: `docs/30-trait-gauges-and-digits.md`.
+

@@ -28,7 +28,8 @@ namespace TehranNoir.UI
             Crown,
             People,
             ArrowLeft,
-            Document
+            Document,
+            Shield
         }
 
         private static readonly Dictionary<string, Sprite> Cache = new Dictionary<string, Sprite>(32);
@@ -164,6 +165,9 @@ namespace TehranNoir.UI
                 case Glyph.ArrowLeft:
                     ArrowLeft(mask, size);
                     break;
+                case Glyph.Shield:
+                    Shield(mask, size);
+                    break;
                 default:
                     Document(mask, size);
                     break;
@@ -259,6 +263,37 @@ namespace TehranNoir.UI
                 new Vector2(0.64f, 0.16f) * s,
                 new Vector2(0.64f, 0.84f) * s,
                 new Vector2(0.24f, 0.50f) * s
+            });
+        }
+
+        private static void Shield(float[] mask, int s)
+        {
+            Polygon(mask, s, s, new[]
+            {
+                new Vector2(0.50f, 0.90f) * s,
+                new Vector2(0.86f, 0.74f) * s,
+                new Vector2(0.78f, 0.34f) * s,
+                new Vector2(0.50f, 0.10f) * s,
+                new Vector2(0.22f, 0.34f) * s,
+                new Vector2(0.14f, 0.74f) * s
+            });
+
+            CutPolygon(mask, s, s, new[]
+            {
+                new Vector2(0.50f, 0.76f) * s,
+                new Vector2(0.74f, 0.64f) * s,
+                new Vector2(0.68f, 0.36f) * s,
+                new Vector2(0.50f, 0.22f) * s,
+                new Vector2(0.32f, 0.36f) * s,
+                new Vector2(0.26f, 0.64f) * s
+            });
+
+            Polygon(mask, s, s, new[]
+            {
+                new Vector2(0.50f, 0.68f) * s,
+                new Vector2(0.62f, 0.58f) * s,
+                new Vector2(0.50f, 0.32f) * s,
+                new Vector2(0.38f, 0.58f) * s
             });
         }
 
@@ -506,33 +541,6 @@ namespace TehranNoir.UI
                 (byte)Mathf.RoundToInt(Mathf.Clamp01(color.g) * 255f),
                 (byte)Mathf.RoundToInt(Mathf.Clamp01(color.b) * 255f),
                 (byte)Mathf.RoundToInt(Mathf.Clamp01(color.a) * 255f));
-        }
-
-        /* ============================================================
-           ارقام فارسی
-           ============================================================ */
-
-        private static readonly char[] PersianDigits = { '۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹' };
-
-        /// <summary>«55» را «۵۵» می‌کند؛ بقیه‌ی کاراکترها دست‌نخورده می‌مانند.</summary>
-        public static string Digits(string text, bool persian)
-        {
-            if (!persian || string.IsNullOrEmpty(text)) return text;
-
-            char[] chars = text.ToCharArray();
-
-            for (int i = 0; i < chars.Length; i++)
-            {
-                if (chars[i] >= '0' && chars[i] <= '9')
-                    chars[i] = PersianDigits[chars[i] - '0'];
-            }
-
-            return new string(chars);
-        }
-
-        public static string Digits(int value, bool persian)
-        {
-            return Digits(value.ToString(), persian);
         }
     }
 }

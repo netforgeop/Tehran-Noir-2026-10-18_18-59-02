@@ -384,7 +384,8 @@ namespace TehranNoir.UI
 
                 if (_sheetValues[i] != null)
                 {
-                    _sheetValues[i].text = HudArt.Digits(CharacterStats.Get(id), _persian);
+                    // عدد ASCII؛ تبدیل به رقم فارسی کار RTLTMPro است (UiKit.SetRtl)
+                    _sheetValues[i].text = CharacterStats.Get(id).ToString();
                     _sheetValues[i].color = lead ? Cream : Dim;
                 }
 

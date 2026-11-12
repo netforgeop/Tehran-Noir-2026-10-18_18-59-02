@@ -120,7 +120,8 @@ namespace TehranNoir.Items
         {
             string text = (raw ?? string.Empty).Trim().ToLowerInvariant();
 
-            if (text.Length == 0 || text == "all" || text == "*") return ItemFlags.All;
+            if (text.Length == 0) return ItemFlags.Common;
+            if (text == "all" || text == "*") return ItemFlags.All;
             if (text == "none" || text == "-") return ItemFlags.None;
 
             ItemFlags flags = ItemFlags.None;
@@ -157,6 +158,7 @@ namespace TehranNoir.Items
         {
             if (flags == ItemFlags.None) return "none";
             if (flags == ItemFlags.All) return "all";
+            if (flags == ItemFlags.Common) return "default";
 
             string text = string.Empty;
 

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TehranNoir.Dialogue;
 using TehranNoir.Documents;
 using TehranNoir.Items;
 using TehranNoir.Settings;
@@ -46,6 +47,13 @@ namespace TehranNoir.UI
         private const float DetailY = 570f;
         private const float DetailHeight = 36f;
 
+        // نوار فعل‌ها زیر خط شرح، در نوار خالیِ بالای نوار پایین
+        private const float VerbY = 620f;
+        private const float VerbHeight = 38f;
+        private const float VerbWidth = 214f;
+        private const float VerbGap = 12f;
+        private const int MaxVerbs = 4;
+
         private const float NameFont = 22f;
         private const float KindFont = 15f;
         private const float CountFont = 26f;
@@ -83,6 +91,8 @@ namespace TehranNoir.UI
         private readonly List<InventorySlot> _filtered = new List<InventorySlot>(32);
         private readonly List<CardView> _cards = new List<CardView>(PerPage);
         private readonly List<ChipView> _chips = new List<ChipView>(5);
+        private readonly List<VerbView> _verbViews = new List<VerbView>(MaxVerbs);
+        private readonly List<ItemVerb> _verbs = new List<ItemVerb>(8);
 
         private RectTransform _content;
         private PauseMenuUI _menu;
@@ -90,6 +100,9 @@ namespace TehranNoir.UI
         private TMP_Text _detail;
         private TMP_Text _pageText;
         private TMP_Text _note;
+
+        /// <summary>نمونه‌ی آیتمِ کارت انتخاب‌شده؛ فعل‌ها روی همین اجرا می‌شوند.</summary>
+        private ItemInstance _active;
 
         private int _filter = FilterAll;
         private bool _sortByCount;
@@ -126,6 +139,9 @@ namespace TehranNoir.UI
 
             _cards.Clear();
             _chips.Clear();
+            _verbViews.Clear();
+            _verbs.Clear();
+            _active = null;
 
             _signature = Inventory.Signature();
 
@@ -135,6 +151,7 @@ namespace TehranNoir.UI
             BuildChips();
             BuildNote();
             BuildDetail();
+            BuildVerbs();
             BuildCards();
 
             _built = true;
@@ -288,6 +305,100 @@ namespace TehranNoir.UI
            شبکه‌
            ============================================================ */
 
+        /// <summary>
+        /// نوار فعل‌ها. چهار خانه از قبل ساخته می‌شود و بعد فقط پر/خالی می‌شود؛
+        /// هر بار جابه‌جایی انتخاب، آبجکت تازه ساخته نمی‌شود.
+        /// </summary>
+        private void BuildVerbs()
+        {
+            for (int i = 0; i < MaxVerbs; i++)
+            {
+                float x = Rtl
+                    ? _content.rect.width - VerbWidth - i * (VerbWidth + VerbGap)
+                    : i * (VerbWidth + VerbGap);
+
+                RectTransform box = UiKit.Box("Verb_" + i, _content, x, VerbY, VerbWidth, VerbHeight);
+
+                VerbView view = new VerbView();
+                view.Root = box;
+                view.Background = box.gameObject.AddComponent<Image>();
+                view.Background.raycastTarget = false;
+
+                float keyX = Rtl ? VerbWidth - 40f : 8f;
+                float labelX = Rtl ? 8f : 48f;
+                float labelWidth = VerbWidth - 56f;
+
+                RectTransform keyBox = UiKit.Box("Key", box, keyX, 0f, 32f, VerbHeight);
+
+                view.Key = UiKit.Text("Text", keyBox, 19f, UiKit.Gold, Font, Rtl);
+                view.Key.alignment = TextAlignmentOptions.Center;
+                view.Key.text = (i + 1).ToString();
+                UiKit.ForceFixNumbers(view.Key, Rtl);
+
+                RectTransform labelBox = UiKit.Box("Label", box, labelX, 0f, labelWidth, VerbHeight);
+
+                view.Label = UiKit.Text("Text", labelBox, 19f, UiKit.RowIdle, Font, Rtl);
+                view.Label.alignment = TextAlignmentOptions.Center;
+
+                box.gameObject.SetActive(false);
+
+                _verbViews.Add(view);
+            }
+        }
+
+        /// <summary>فعل‌های ممکن کارت انتخاب‌شده را از تعریف می‌گیرد.</summary>
+        private ItemInstance EnsureVerbs()
+        {
+            _verbs.Clear();
+            _active = null;
+
+            if (_filtered.Count == 0 || _index < 0 || _index >= _filtered.Count) return null;
+
+            InventoryManager.Reconcile();
+
+            ItemInstance instance = FindInstance(_filtered[_index].Definition.Id);
+
+            if (instance == null) return null;
+
+            _active = instance;
+
+            WorldState view = ItemState.View(ItemWorld.Current, instance);
+
+            instance.Definition.Verbs(view, string.Empty, _verbs);
+
+            return instance;
+        }
+
+        private void RefreshVerbs()
+        {
+            ItemInstance instance = EnsureVerbs();
+
+            for (int i = 0; i < _verbViews.Count; i++)
+            {
+                VerbView view = _verbViews[i];
+                bool used = instance != null && i < _verbs.Count;
+
+                view.Root.gameObject.SetActive(used);
+
+                if (!used) continue;
+
+                view.Verb = _verbs[i];
+                view.Label.text = Loc.Get(Loc.Channel.Menu, ItemVerbs.LocKey(_verbs[i]));
+
+                bool first = i == 0;
+
+                view.Background.sprite = HudArt.Panel(
+                    "item.verb." + (first ? "on" : "idle"),
+                    Mathf.RoundToInt(VerbWidth), Mathf.RoundToInt(VerbHeight), 5f,
+                    first ? new Color(0.135f, 0.122f, 0.098f, 1f) : ChipTop,
+                    first ? new Color(0.098f, 0.088f, 0.070f, 1f) : ChipBottom,
+                    first ? UiKit.Gold : ChipEdge,
+                    1f);
+
+                view.Label.color = first ? UiKit.Gold : UiKit.RowIdle;
+            }
+        }
+
         private void BuildCards()
         {
             if (_filtered.Count == 0)
@@ -439,6 +550,7 @@ namespace TehranNoir.UI
             if (_filtered.Count == 0 || _index < 0 || _index >= _filtered.Count)
             {
                 _detail.text = string.Empty;
+                RefreshVerbs();
                 return;
             }
 
@@ -450,6 +562,8 @@ namespace TehranNoir.UI
             // عددها ASCII؛ تبدیل و جهت‌دهی کار RTLTMPro است
             _detail.text = slot.Definition.Name(Rtl) + "   ·   " + kind + "   ·   "
                 + slot.Count + " / " + slot.Definition.MaxStack;
+
+            RefreshVerbs();
         }
 
         /* ============================================================
@@ -581,16 +695,29 @@ namespace TehranNoir.UI
         /// </summary>
         private bool PerformSelected()
         {
-            if (_filtered.Count == 0 || _index < 0 || _index >= _filtered.Count) return false;
-
-            // اگر عدد از بیرون عوض شده (F10 یا دیالوگ) نمونه هم بساز تا Enter کار کند.
-            InventoryManager.Reconcile();
-
-            ItemInstance instance = FindInstance(_filtered[_index].Definition.Id);
+            ItemInstance instance = EnsureVerbs();
 
             if (instance == null) return false;
 
-            ItemVerb verb = PrimaryVerb(instance.Definition);
+            return PerformVerb(instance, PrimaryVerb(_verbs));
+        }
+
+        /// <summary>۱ تا ۴: فعل همان شماره روی کارت انتخاب‌شده.</summary>
+        public bool Digit(int number)
+        {
+            if (number <= 0 || number > MaxVerbs) return false;
+
+            ItemInstance instance = EnsureVerbs();
+
+            if (instance == null || number > _verbs.Count) return false;
+
+            return PerformVerb(instance, _verbs[number - 1]);
+        }
+
+        private bool PerformVerb(ItemInstance instance, ItemVerb verb)
+        {
+            if (instance == null || verb == ItemVerb.None) return false;
+
             bool showDocument = verb == ItemVerb.Read && instance.Definition.IsDocument;
 
             // برگه را خودمان بعد از بستن منو باز می‌کنیم، وگرنه دو لایه روی هم می‌افتند.
@@ -613,27 +740,39 @@ namespace TehranNoir.UI
 
             RefreshDetail();
 
-            if (result.Ok)
-            {
-                _detail.text = instance.Definition.Name(Rtl) + "   ·   " +
-                               Loc.Get(Loc.Channel.Menu, ItemVerbs.LocKey(verb));
-            }
-            else
-            {
-                _detail.text = Loc.Get(Loc.Channel.Menu, result.ReasonKey);
-            }
+            _detail.text = result.Ok
+                ? instance.Definition.Name(Rtl) + "   ·   " + Loc.Get(Loc.Channel.Menu, ItemVerbs.LocKey(verb))
+                : Loc.Get(Loc.Channel.Menu, result.ReasonKey);
 
+            // RefreshDetail خودش نوار فعل‌ها را هم تازه می‌کند.
             return true;
         }
 
-        private static ItemVerb PrimaryVerb(ItemDefinition definition)
+        /// <summary>
+        /// فعل «اصلی» برای Enter: از میان فعل‌های ممکن، مهم‌ترین.
+        /// پرونده‌ی مهرشده: تا مهر بسته است «باز کردن»، بعد «خواندن».
+        /// </summary>
+        private static ItemVerb PrimaryVerb(List<ItemVerb> verbs)
         {
-            if (definition.IsDocument) return ItemVerb.Read;
-            if (definition.HasRule(ItemVerb.Use)) return ItemVerb.Use;
-            if (definition.Has(ItemFlags.Usable)) return ItemVerb.Use;
+            if (verbs == null || verbs.Count == 0) return ItemVerb.None;
 
-            return ItemVerb.Examine;
+            for (int i = 0; i < PrimaryPriority.Length; i++)
+                if (verbs.Contains(PrimaryPriority[i])) return PrimaryPriority[i];
+
+            return verbs[0];
         }
+
+        private static readonly ItemVerb[] PrimaryPriority =
+        {
+            ItemVerb.Read,
+            ItemVerb.Use,
+            ItemVerb.Open,
+            ItemVerb.Reload,
+            ItemVerb.Unlock,
+            ItemVerb.Equip,
+            ItemVerb.Examine,
+            ItemVerb.Drop
+        };
 
         private static ItemInstance FindInstance(string definitionId)
         {
@@ -670,6 +809,23 @@ namespace TehranNoir.UI
         public bool Pointer(Vector2 screenPoint, bool clicked)
         {
             if (_content == null) return false;
+
+            if (clicked)
+            {
+                for (int i = 0; i < _verbViews.Count; i++)
+                {
+                    VerbView view = _verbViews[i];
+
+                    if (view.Root == null || !view.Root.gameObject.activeSelf) continue;
+                    if (!RectTransformUtility.RectangleContainsScreenPoint(view.Root, screenPoint, null)) continue;
+
+                    ItemInstance instance = EnsureVerbs();
+
+                    if (instance != null && i < _verbs.Count) PerformVerb(instance, _verbs[i]);
+
+                    return true;
+                }
+            }
 
             for (int i = 0; i < _chips.Count; i++)
             {
@@ -809,6 +965,15 @@ namespace TehranNoir.UI
             public TMP_Text Name;
             public TMP_Text Count;
             public GameObject Border;
+        }
+
+        private sealed class VerbView
+        {
+            public RectTransform Root;
+            public Image Background;
+            public TMP_Text Key;
+            public TMP_Text Label;
+            public ItemVerb Verb;
         }
 
         private sealed class ChipView

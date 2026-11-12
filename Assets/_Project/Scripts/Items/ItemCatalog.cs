@@ -203,7 +203,7 @@ namespace TehranNoir.Items
             string iconPath = string.Empty;
             string prefabPath = string.Empty;
             string documentPath = string.Empty;
-            ItemFlags flags = ItemFlags.All;
+            ItemFlags flags = ItemFlags.Common;
             float weight = 0f;
             int value = 0;
 

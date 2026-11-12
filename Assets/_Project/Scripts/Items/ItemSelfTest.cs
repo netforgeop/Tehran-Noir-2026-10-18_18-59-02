@@ -61,6 +61,8 @@ namespace TehranNoir.Items
                 TestSave();
                 TestMissingDefinition();
                 TestDuplicates();
+                TestVerbList();
+                TestWorldRoundTrip();
             }
             catch (Exception exception)
             {
@@ -352,6 +354,80 @@ namespace TehranNoir.Items
 
             Check("شناسه‌ی تکراری در یک ظرف رد می‌شود",
                 first && !second && container.StackCount == 1);
+        }
+
+        /// <summary>فهرست فعل‌ها همان چیزی است که نوار ۱..۴ نشان می‌دهد.</summary>
+        private void TestVerbList()
+        {
+            Fresh();
+
+            InventoryManager.Take("file.sealed", 1);
+
+            ItemInstance document = FirstOf("file.sealed");
+
+            List<ItemVerb> verbs = new List<ItemVerb>(8);
+
+            document.Definition.Verbs(ItemState.View(ItemWorld.Current, document), string.Empty, verbs);
+
+            Check("سند مهرشده: «باز کردن» هست", verbs.Contains(ItemVerb.Open), Names(verbs));
+            Check("سند مهرشده: «خواندن» نیست", !verbs.Contains(ItemVerb.Read), Names(verbs));
+
+            ItemRuntime.Perform(document, ItemVerb.Open);
+
+            document.Definition.Verbs(ItemState.View(ItemWorld.Current, document), string.Empty, verbs);
+
+            Check("بعد از بازکردن: «خواندن» اضافه شد", verbs.Contains(ItemVerb.Read), Names(verbs));
+
+            InventoryManager.Take("weapon.pistol_01", 1);
+
+            ItemInstance pistol = FirstOf("weapon.pistol_01");
+
+            pistol.Definition.Verbs(ItemState.View(ItemWorld.Current, pistol), string.Empty, verbs);
+
+            Check("کلت خالی: «استفاده» نیست، «بررسی» هست",
+                !verbs.Contains(ItemVerb.Use) && verbs.Contains(ItemVerb.Examine), Names(verbs));
+        }
+
+        /// <summary>
+        /// انداختن و برداشتن باید همان نمونه را برگرداند، با همان حالت.
+        /// این همان کاری است که WorldItemPickup روی زمین انجام می‌دهد.
+        /// </summary>
+        private void TestWorldRoundTrip()
+        {
+            Fresh();
+
+            InventoryManager.Take("file.sealed", 1);
+
+            ItemInstance document = FirstOf("file.sealed");
+
+            ItemRuntime.Perform(document, ItemVerb.Open);
+
+            string instanceId = document.InstanceId;
+
+            ItemRuntime.Perform(document, ItemVerb.Drop);
+
+            bool onGround = document.ContainerId == InventoryManager.WorldId;
+
+            ItemResult back = InventoryManager.Move(document, InventoryManager.PlayerId);
+
+            ItemInstance returned = FirstOf("file.sealed");
+
+            Check("افتادن در ظرف زمین", onGround);
+            Check("برداشتن دوباره", back.Ok && returned != null);
+            Check("همان نمونه برگشت، نه نسخه‌ی تازه",
+                returned != null && returned.InstanceId == instanceId);
+            Check("حالت سند بعد از رفت‌وبرگشت",
+                returned != null && returned.GetState("sealed") == "0");
+        }
+
+        private static string Names(List<ItemVerb> verbs)
+        {
+            string text = string.Empty;
+
+            for (int i = 0; i < verbs.Count; i++)
+                text += (i > 0 ? ", " : string.Empty) + ItemVerbs.Name(verbs[i]);
+
+            return text;
         }
 
         /* ============================================================

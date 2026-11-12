@@ -924,3 +924,25 @@ python3 tools/cscheck.py Assets/_Project/Scripts
 انتخاب فعل غیراصلی در رابط، ساخت آبجکت سه‌بعدی هنگام انداختن، و وصل‌نشدن
 رویدادها به یک کار واقعی.
 
+## ۳۷. فعل‌های آیتم در منو و انداختن روی زمین (جلسه‌ی ۲۸)
+
+| چه چیزی | فایل |
+| --- | --- |
+| فهرست فعل‌های ممکن با شرط | `Items/ItemDefinition.cs` → `Verbs(...)` |
+| نوار ۱..۴ زیر خط شرح | `UI/Pause/CharacterItemsSection.cs` |
+| مسیر کلید عددی | `UI/PauseMenuUI.cs` → `PauseTab.Digit` → `CharacterPauseTab.Digit` |
+| انداختن روی زمین | `Items/ItemDropSpawner.cs`، `Items/WorldItemPickup.cs` |
+| پرچم‌های پیش‌فرض | `ItemFlags.Common` جای `All` |
+
+**قواعد ثابت:**
+
+| قاعده | چرا |
+| --- | --- |
+| برداشتن از زمین همان `ItemInstance` را برمی‌گرداند | مهر و حالت سند نباید با یک رفت‌وبرگشت عوض شود |
+| فهرست فعل از `CanDo` می‌آید، نه از یک لیست ثابت | فعل غیرممکن نباید دیده شود |
+| `use` و `equip` صریح در `flags` | پوکه نباید دکمه‌ی استفاده داشته باشد |
+
+`ItemSelfTest`: **۴۴ تست** (۳۶ قبلی + ۸ تازه).
+
+سند: `docs/36-item-verbs-and-drops.md`
+

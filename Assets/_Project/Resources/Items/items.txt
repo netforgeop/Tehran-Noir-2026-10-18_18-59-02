@@ -3,6 +3,7 @@
 #
 # --- گزینه‌های ساده ---
 #   weight=0.1 | value=2 | flags=use,drop,trade,store,examine,destroy,equip
+#   بدون flags: پیش‌فرض drop,trade,store,examine,destroy (بدون use و equip)
 #   icon=Icons/Keys/archive | prefab=Prefabs/Items/key | sub=police
 #   desc.fa=متن | desc.en=text | doc=Documents/file_sealed
 #
@@ -25,5 +26,5 @@ file.sealed | پرونده‌ی مهرشده | Sealed file | document | 1 | weig
 key.archive | کلید بایگانی | Archive key | key | 1 | weight=0.02 | sub=office | unlock.target=door.archive | unlock.do=flag.door.archive = true
 cigarettes | سیگار | Cigarettes | item | 20 | weight=0.01 | value=2 | flags=use,drop,trade,store,examine,destroy | sub=smoking | use.consume=1 | use.do=stat.energy + 5; flag.smoked = true
 ammo.9mm | فشنگ ۹ میلی‌متری | 9mm rounds | ammo | 50 | weight=0.01 | value=1 | sub=police
-weapon.pistol_01 | کلت | Pistol | weapon | 1 | weight=0.9 | sub=police | state.ammo=0 | use.if=state.ammo >= 1 | use.do=state.ammo - 1; flag.pistol.fired = true | reload.if=item.ammo.9mm >= 1 | reload.do=state.ammo = 8
+weapon.pistol_01 | کلت | Pistol | weapon | 1 | weight=0.9 | flags=use,drop,examine,equip | sub=police | state.ammo=0 | use.if=state.ammo >= 1 | use.do=state.ammo - 1; flag.pistol.fired = true | reload.if=item.ammo.9mm >= 1 | reload.do=state.ammo = 8
 evidence.casing_01 | پوکه | Bullet casing | evidence | 10 | weight=0.01 | sub=crime_scene | examine.do=flag.evidence.casing.seen = true

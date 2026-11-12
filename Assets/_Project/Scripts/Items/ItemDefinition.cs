@@ -22,7 +22,15 @@ namespace TehranNoir.Items
         Examinable = 16,
         Destroyable = 32,
         Equippable = 64,
-        All = Usable | Droppable | Tradable | Storable | Examinable | Destroyable | Equippable
+
+        /// <summary>
+        /// پیش‌فرض آیتمی که در فایل `flags` ندارد. «استفاده» و «تجهیز» عمداً
+        /// نیستند: پوکه و فشنگ نباید دکمه‌ی «استفاده» بگیرند. اگر آیتمی
+        /// واقعاً مصرف‌شدنی یا تجهیزشدنی است، در همان خط بنویس.
+        /// </summary>
+        Common = Droppable | Tradable | Storable | Examinable | Destroyable,
+
+        All = Common | Usable | Equippable
     }
 
     /// <summary>
@@ -82,7 +90,7 @@ namespace TehranNoir.Items
             int maxStack,
             float weight = 0f,
             int value = 0,
-            ItemFlags flags = ItemFlags.All,
+            ItemFlags flags = ItemFlags.Common,
             string iconPath = "",
             string prefabPath = "",
             string subcategory = "",
@@ -168,6 +176,34 @@ namespace TehranNoir.Items
             if (HasRule(verb)) return FindRule(verb, view, targetId) != null;
 
             return HasDefault(verb);
+        }
+
+        /// <summary>
+        /// فعل‌هایی که همین حالا روی این آیتم ممکن‌اند، به ترتیب نمایش.
+        /// رابط کاربری همین را می‌خواند، پس هیچ فعل غیرممکنی نشان داده نمی‌شود
+        /// و فهرست با عوض شدن وضعیت (مهر باز شد) خودش عوض می‌شود.
+        /// </summary>
+        public int Verbs(WorldState view, string targetId, List<ItemVerb> results)
+        {
+            if (results == null) return 0;
+
+            results.Clear();
+
+            for (int i = 0; i < ItemVerbs.Ordered.Length; i++)
+            {
+                ItemVerb verb = ItemVerbs.Ordered[i];
+
+                // «استفاده» روی سند معنا ندارد، مگر طراحی خودش قاعده نوشته باشد.
+                if (IsDocument && !HasRule(ItemVerb.Use) &&
+                    (verb == ItemVerb.Use || verb == ItemVerb.Consume))
+                    continue;
+
+                if (!CanDo(verb, view, targetId)) continue;
+
+                results.Add(verb);
+            }
+
+            return results.Count;
         }
 
         /// <summary>رفتار پیش‌فرض وقتی طراحی برای فعل، قاعده‌ای ننوشته است.</summary>

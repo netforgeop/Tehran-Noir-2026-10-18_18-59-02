@@ -474,6 +474,14 @@ namespace TehranNoir.UI
             base.Activate();
         }
 
+        /// <summary>۱ تا ۴ در بخش وسایل: فعل آیتم انتخاب‌شده.</summary>
+        public override void Digit(int number)
+        {
+            if (_section == 1 && _itemsSection != null && _itemsSection.Digit(number)) return;
+
+            base.Digit(number);
+        }
+
         public override void Section(int delta)
         {
             if (delta == 0) return;

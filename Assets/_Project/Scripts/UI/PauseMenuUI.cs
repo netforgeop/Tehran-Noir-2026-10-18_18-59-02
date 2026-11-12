@@ -346,6 +346,12 @@ namespace TehranNoir.UI
 
                 if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
                     keyboard.spaceKey.wasPressedThisFrame) _tabs[_activeTab].Activate();
+
+                // ۱ تا ۴: فعل‌های آیتم در بخش وسایل
+                if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) _tabs[_activeTab].Digit(1);
+                if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) _tabs[_activeTab].Digit(2);
+                if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) _tabs[_activeTab].Digit(3);
+                if (keyboard.digit4Key.wasPressedThisFrame || keyboard.numpad4Key.wasPressedThisFrame) _tabs[_activeTab].Digit(4);
             }
 
             if (gamepad != null)

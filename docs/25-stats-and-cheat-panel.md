@@ -82,3 +82,12 @@
 | تغییر نام متغیر در پنل | نیست؛ فقط مقدار |
 | فیلتر/جست‌وجوی متغیرها | نیست؛ فهرست با `W/S` پیمایش می‌شود |
 | نمایش آمار در بازی (حلقه) | مرحله‌ی بعد |
+
+## ۵. دو تله‌ی Unity 6.6 که همین‌جا خوردیم
+
+| نشانه | علت | درست |
+| --- | --- | --- |
+| `CS0117: 'TextAlignmentOptions' does not contain a definition for 'MidlineCenter'` | `TMP` فقط `MidlineLeft` / `Midline` / `MidlineRight` دارد؛ نسخه‌ی «مرکز» اسمش `Center` است | `TextAlignmentOptions.Center` |
+| `warning UAC0009: DEVELOPMENT_BUILD preprocessor directive has been deprecated` | در Unity 6.6 نماد `DEVELOPMENT_BUILD` منسوخ شد؛ در 6.8 حذف می‌شود | `#if UNITY_EDITOR \|\| DEBUG` یا بررسی زمان اجرا با `Debug.isDebugBuild` |
+
+قاعده‌ی کلی: `Midline*` یعنی «وسط عمودی»؛ برای مرکز افقی از `Center` استفاده کن.

@@ -837,7 +837,7 @@ namespace TehranNoir.Debugging
                 button.onClick.AddListener(() => SetTab(slot));
 
                 TMP_Text label = UiKit.Text("Label", rect, 24f, DimColor, _font, _persian);
-                label.alignment = TextAlignmentOptions.MidlineCenter;
+                label.alignment = TextAlignmentOptions.Center;
 
                 RectTransform barRect = UiKit.Box("Bar", rect, 0f, TabHeight - 2f, TabWidth, 2f);
                 Image bar = barRect.gameObject.AddComponent<Image>();

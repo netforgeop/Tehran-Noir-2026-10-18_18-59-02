@@ -14,7 +14,7 @@ namespace TehranNoir.Debugging
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
             if (Object.FindAnyObjectByType<CheatPanel>(FindObjectsInactive.Include) != null) return;
             if (Object.FindAnyObjectByType<WorldStateProvider>(FindObjectsInactive.Include) == null) return;
 

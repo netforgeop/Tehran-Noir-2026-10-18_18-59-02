@@ -28,7 +28,7 @@
 # دسته‌ها: document / key / weapon / ammo / evidence / consumable / tool / quest / item
 # شناسه با حروف کوچک و بدون فاصله. آیتم تازه = یک خط تازه؛ کد عوض نمی‌شود.
 
-file.sealed | پرونده‌ی مهرشده | Sealed file | document | 1 | weight=0.1 | sub=police | doc=Documents/file_sealed | state.sealed=1 | state.read=0 | title.if=state.sealed = 0 | title.fa=پرونده‌ی بازشده | title.en=Opened file | title.if.2=state.read = 1 | title.fa.2=پرونده‌ی خوانده‌شده | title.en.2=Read file | open.if=state.sealed = 1 | open.do=state.sealed = 0; flag.letter.opened = true | read.if=state.sealed = 0 | read.do=state.read = 1; flag.letter.read = true
+file.sealed | پرونده‌ی مهرشده | Sealed file | document | 1 | weight=0.1 | sub=police | doc=Documents/file_sealed | state.sealed=1 | state.read=0 | ontake.do=flag.file.taken = true | ondrop.do=flag.file.taken = false | title.if=state.sealed = 0 | title.fa=پرونده‌ی بازشده | title.en=Opened file | title.if.2=state.read = 1 | title.fa.2=پرونده‌ی خوانده‌شده | title.en.2=Read file | open.if=state.sealed = 1 | open.do=state.sealed = 0; flag.file.opened = true | read.if=state.sealed = 0 | read.do=state.read = 1; flag.file.read = true
 key.archive | کلید بایگانی | Archive key | key | 1 | weight=0.02 | sub=office | unlock.target=door.archive | unlock.do=flag.door.archive = true
 cigarettes | سیگار | Cigarettes | item | 20 | weight=0.01 | value=2 | flags=use,drop,trade,store,examine,destroy | sub=smoking | use.consume=1 | use.do=stat.energy + 5; flag.smoked = true
 ammo.9mm | فشنگ ۹ میلی‌متری | 9mm rounds | ammo | 50 | weight=0.01 | value=1 | sub=police

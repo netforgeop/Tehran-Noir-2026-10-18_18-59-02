@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TehranNoir.Dialogue;
 using TehranNoir.Documents;
+using TehranNoir.Items;
 
 namespace TehranNoir.Interaction
 {
@@ -60,7 +61,13 @@ namespace TehranNoir.Interaction
             {
                 _verbs.Clear();
 
-                _verbs.Add(_opened ? InteractionAction.Read : InteractionAction.Open);
+                // اگر آیتم این آبجکت شناخته شده باشد، وضعیتش (مهر باز/بسته) از
+                // خودِ نمونه می‌آید، نه از یک بولی جدا در Inspector.
+                bool opened = BoundInstance != null
+                    ? ItemState.GetBool(BoundInstance, "sealed") == false
+                    : _opened;
+
+                _verbs.Add(opened ? InteractionAction.Read : InteractionAction.Open);
                 _verbs.Add(InteractionAction.Take);
 
                 return _verbs;
@@ -77,6 +84,7 @@ namespace TehranNoir.Interaction
 
             if (verb == InteractionAction.Read)
             {
+                MarkRead();
                 ShowContent();
                 return;
             }
@@ -87,6 +95,24 @@ namespace TehranNoir.Interaction
         /// <summary>باز کردن: نوشتن پرچم + نشان دادن محتوا. مهر فقط همین یک بار می‌شکند.</summary>
         private void Open(GameObject interactor)
         {
+            if (BoundInstance != null)
+            {
+                ItemResult result = ItemRuntime.Perform(BoundInstance, ItemVerb.Open);
+
+                if (!result.Ok)
+                {
+                    Debug.LogWarning("[File] باز کردن ممکن نشد: " + result.ReasonKey, this);
+                    return;
+                }
+
+                _opened = true;
+
+                Debug.Log("[File] seal broken: " + Title, this);
+
+                ShowContent();
+                return;
+            }
+
             if (_opened)
             {
                 ShowContent();
@@ -104,16 +130,34 @@ namespace TehranNoir.Interaction
         }
 
         /// <summary>
+        /// «خوانده شد» را روی نمونه می‌نویسد. اگر آیتم شناخته نشود، فقط نمایش
+        /// انجام می‌شود تا رفتار قبلی صحنه عوض نشود.
+        /// </summary>
+        private void MarkRead()
+        {
+            if (BoundInstance == null) return;
+
+            if (ItemRuntime.CanPerform(BoundInstance, ItemVerb.Read))
+                ItemRuntime.Perform(BoundInstance, ItemVerb.Read);
+        }
+
+        /// <summary>
         /// یک جا برای هر دو کار: سند کاغذی اول، وگرنه دیالوگ.
         /// «خواندن» هیچ چیزی در دنیا عوض نمی‌کند؛ فقط دوباره نشان می‌دهد.
         /// </summary>
         private void ShowContent()
         {
-            if (!string.IsNullOrWhiteSpace(documentPath))
-            {
-                if (DocumentLayer.ShowResource(documentPath, null)) return;
+            // اگر مسیر سند اینجا خالی بود، از تعریف آیتم (doc=) بخوان.
+            string path = documentPath;
 
-                Debug.LogWarning("[File] سند «" + documentPath + "» پیدا نشد؛ برگشت به دیالوگ.", this);
+            if (string.IsNullOrWhiteSpace(path) && BoundInstance != null)
+                path = BoundInstance.Definition.DocumentPath;
+
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                if (DocumentLayer.ShowResource(path, null)) return;
+
+                Debug.LogWarning("[File] سند «" + path + "» پیدا نشد؛ برگشت به دیالوگ.", this);
             }
 
             if (contentReader != null && contentReader.HasDialogue)

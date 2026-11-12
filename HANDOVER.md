@@ -992,3 +992,27 @@ Play هیچ شنونده‌ای نداشت.
 **قاعده:** هیچ متنی در رابط نباید مستقیماً از تعریف ثابت خوانده شود اگر آن
 آیتم وضعیت دارد؛ از `ItemRuntime.Title` بخوان.
 
+## ۴۰. پرونده‌ی داستان، یک واقعیت (جلسه‌ی ۳۱)
+
+دو جدایی رفع شد:
+
+| جدایی | اصلاح |
+| --- | --- |
+| آبجکت روی میز یک `_opened` جدا داشت و آیتم جیب از `state.sealed` بی‌خبر بود | `SceneItemBinding`: هر آبجکت یک نمونه می‌گیرد؛ برداشتن = `Move` همان نمونه |
+| آیتم `flag.letter.opened` می‌نوشت، داستان `flag.file.opened` می‌خواند | `items.txt` با `ontake.do` / `ondrop.do` / `open.do` همان نام‌های داستان را می‌نویسد |
+
+| فایل | تغییر |
+| --- | --- |
+| `Items/SceneItemBinding.cs` | تازه: پیوند آبجکت صحنه به نمونه |
+| `Interaction/PickupInteractable.cs` | `BoundInstance`، برداشتن با `Move`، نام کارت از `ItemRuntime.Title` |
+| `Interaction/FileInteractable.cs` | باز کردن/خواندن از طریق `ItemRuntime`؛ مسیر سند از تعریف |
+| `Resources/Items/items.txt` | `ontake.do`، `ondrop.do`، `flag.file.*` |
+| `tools/itemcheck.py` | `ontake.do` / `ondrop.do` بررسی می‌شوند |
+
+`ItemSelfTest`: **۵۳ تست**.
+
+**قاعده‌ی ثابت:** هیچ آبجکت صحنه نباید وضعیت آیتم را در فیلد خودش نگه دارد؛
+وضعیت در `ItemInstance` است و آبجکت فقط به آن وصل می‌شود.
+
+سند: `docs/37-story-item-link.md`
+

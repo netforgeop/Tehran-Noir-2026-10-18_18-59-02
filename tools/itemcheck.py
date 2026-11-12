@@ -396,6 +396,10 @@ def main():
 
                 continue
 
+            if key in ("ontake.do", "ondrop.do"):
+                check_effects(value, problems, index, key)
+                continue
+
             title = TITLE_RE.match(key)
 
             if title:

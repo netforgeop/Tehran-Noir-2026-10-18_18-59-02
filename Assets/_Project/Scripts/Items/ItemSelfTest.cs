@@ -65,6 +65,7 @@ namespace TehranNoir.Items
                 TestMissingDefinition();
                 TestDuplicates();
                 TestTitles();
+                TestStoryFlags();
                 TestVerbList();
                 TestSubscriptionsSurvive();
                 TestWorldRoundTrip();
@@ -392,6 +393,37 @@ namespace TehranNoir.Items
             string readName = ItemRuntime.Title(document, true);
 
             Check("نام بعد از خواندن", readName == "پرونده‌ی خوانده‌شده", readName);
+        }
+
+        /// <summary>
+        /// قرارداد با داستان: نام پرچم‌هایی که دیالوگ‌ها و کارها می‌خوانند
+        /// باید همان باشد که آیتم می‌نویسد. اگر جدا شوند، مأموریت بی‌صدا می‌شکند.
+        /// </summary>
+        private void TestStoryFlags()
+        {
+            WorldState world = Fresh();
+
+            InventoryManager.Take("file.sealed", 1);
+
+            ItemInstance document = FirstOf("file.sealed");
+
+            Check("برداشتن پرونده: flag.file.taken",
+                world.Get("flag.file.taken").Truthy());
+
+            ItemRuntime.Perform(document, ItemVerb.Open);
+
+            Check("باز کردن: flag.file.opened",
+                world.Get("flag.file.opened").Truthy());
+
+            ItemRuntime.Perform(document, ItemVerb.Read);
+
+            Check("خواندن: flag.file.read",
+                world.Get("flag.file.read").Truthy());
+
+            // همان شرطی که در reza_office.txt و case_file.txt نوشته شده
+            Condition storyCondition = ConditionParser.Parse("flag.file.taken == true");
+
+            Check("شرط داستان با پرچم آیتم جواب می‌دهد", storyCondition.IsTrue(world));
         }
 
         /// <summary>فهرست فعل‌ها همان چیزی است که نوار ۱..۴ نشان می‌دهد.</summary>

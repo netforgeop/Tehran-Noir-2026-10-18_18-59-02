@@ -38,13 +38,36 @@ namespace TehranNoir.Interaction
         private bool _taken;
         private bool _visible = true;
 
+        /// <summary>
+        /// نمونه‌ی واقعیِ همین آبجکت. اگر `Item Key` خالی باشد null است.
+        /// برداشتن، همین نمونه را به جیب می‌برد؛ پس مهر/خوانده‌شدنش گم نمی‌شود.
+        /// </summary>
+        protected ItemInstance BoundInstance { get; private set; }
+
         // همیشه Take است؛ فیلد Action در Inspector برای این کلاس نادیده گرفته می‌شود
         public override InteractionAction Action => InteractionAction.Take;
+
+        /// <summary>
+        /// نام کارت تعامل از خودِ آیتم می‌آید، پس با باز شدن مهر عوض می‌شود.
+        /// اگر آیتمی وصل نباشد، همان Display Name دستی Inspector استفاده می‌شود.
+        /// </summary>
+        public override string Title
+        {
+            get
+            {
+                if (BoundInstance == null) return base.Title;
+
+                return ItemRuntime.Title(BoundInstance, Localization.Persian);
+            }
+        }
 
         protected virtual void Awake()
         {
             _renderers = GetComponentsInChildren<Renderer>(true);
             _colliders = GetComponentsInChildren<Collider>(true);
+
+            // آبجکت روی میز و آیتم در جیب باید یک واقعیت باشند، نه دو نسخه.
+            BoundInstance = SceneItemBinding.Ensure(this, itemKey);
         }
 
         private void Update()
@@ -93,13 +116,23 @@ namespace TehranNoir.Interaction
             // از مدیر جیب رد می‌شویم تا نمونه، رویداد و پروجکشن با هم ساخته شوند.
             if (!string.IsNullOrWhiteSpace(itemKey))
             {
-                ItemResult added = InventoryManager.Take(itemKey, itemCount);
+                ItemResult added = BoundInstance != null
+                    ? InventoryManager.Move(BoundInstance, InventoryManager.PlayerId)
+                    : InventoryManager.Take(itemKey, itemCount);
 
                 if (!added.Ok)
                 {
                     Debug.LogWarning("[Item] برداشتن انجام نشد: " + added.Outcome, this);
                     return;
                 }
+
+                // اثرهای «با برداشتن» از تعریف آیتم (ontake.do) در همین مسیر اجرا می‌شوند.
+                ItemDefinition definition = ItemCatalog.Get(itemKey);
+
+                if (BoundInstance != null)
+                    ItemRuntime.ApplyEffects(BoundInstance, definition.TakeEffects, ItemWorld.Current);
+                else
+                    ItemRuntime.ApplyEffects(null, definition.TakeEffects, ItemWorld.Current);
             }
 
             _taken = true;

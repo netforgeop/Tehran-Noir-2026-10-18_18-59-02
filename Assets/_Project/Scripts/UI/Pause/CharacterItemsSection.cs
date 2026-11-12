@@ -74,7 +74,7 @@ namespace TehranNoir.UI
         private static readonly Color ChipTop = new Color(0.100f, 0.095f, 0.088f, 1f);
         private static readonly Color ChipBottom = new Color(0.070f, 0.066f, 0.061f, 1f);
         private static readonly Color ChipEdge = new Color(0.250f, 0.240f, 0.222f, 0.9f);
-        private static readonly Color Clear = new Color(0f, 0f, 0f, 0f);
+        private static readonly Color Transparent = new Color(0f, 0f, 0f, 0f);
 
         /* ---------- وضعیت ---------- */
 
@@ -251,8 +251,8 @@ namespace TehranNoir.UI
 
             ChipView chip = new ChipView();
             chip.Rect = box;
-            chip.Image = box.gameObject.AddComponent<Image>();
-            chip.Image.raycastTarget = false;
+            chip.Background = box.gameObject.AddComponent<Image>();
+            chip.Background.raycastTarget = false;
             chip.Label = UiKit.Text("Text", box, ChipFont, UiKit.RowIdle, Font, Rtl);
             chip.Label.alignment = TextAlignmentOptions.Center;
             chip.Label.text = label;
@@ -271,7 +271,7 @@ namespace TehranNoir.UI
                 bool active = chip.Index == SortChip ? false : _filter == chip.Index;
                 bool focused = _focusFilter && _filterFocus == chip.Index;
 
-                chip.Image.sprite = HudArt.Panel(
+                chip.Background.sprite = HudArt.Panel(
                     "item.chip." + chip.Width + "." + (active ? "on" : focused ? "focus" : "idle"),
                     chip.Width, Mathf.RoundToInt(ChipHeight), 5f,
                     active || focused ? new Color(0.135f, 0.122f, 0.098f, 1f) : ChipTop,
@@ -382,7 +382,7 @@ namespace TehranNoir.UI
 
             Image borderImage = border.gameObject.AddComponent<Image>();
             borderImage.sprite = HudArt.Panel("item.card.select", Mathf.RoundToInt(CardWidth), Mathf.RoundToInt(CardHeight),
-                6f, Clear, Clear, UiKit.Gold, 2f);
+                6f, Transparent, Transparent, UiKit.Gold, 2f);
             borderImage.raycastTarget = false;
             border.gameObject.SetActive(false);
 
@@ -734,7 +734,7 @@ namespace TehranNoir.UI
         private sealed class ChipView
         {
             public RectTransform Rect;
-            public Image Image;
+            public Image Background;
             public TMP_Text Label;
             public int Index;
             public int Width;

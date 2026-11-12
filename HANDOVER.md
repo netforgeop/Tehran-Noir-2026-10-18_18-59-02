@@ -783,3 +783,16 @@ RTLTMPro با این پرچم فقط رقم ASCII را عدد می‌شناسد 
 تب فقط صدا می‌زند: `Move/Step/Activate/Pointer/Tick`.
 مستند: `docs/33-items-grid.md`.
 
+## ۳۱. خطای CS0102 در شبکه‌ی وسایل (جلسه‌ی ۲۲)
+
+`CharacterItemsSection` یک ثابت رنگ به نام `Clear` داشت و یک متد `Clear(RectTransform)`؛
+C# اجازه نمی‌دهد در یک نوع، فیلد و متد هم‌نام باشند. ثابت به `Transparent` تغییر کرد.
+فیلد `ChipView.Image` هم به `Background` تغییر کرد تا نامش با نوعش یکی نباشد.
+
+**ابزار تازه:** `tools/cscheck.py` — هر فیلد و متدِ هم‌نام در یک نوع را پیدا می‌کند
+(با اسکن آکولادی، پس اعضای نوع تودرتو و متغیرهای محلی خطا نمی‌سازند):
+
+```
+python3 tools/cscheck.py Assets/_Project/Scripts
+```
+

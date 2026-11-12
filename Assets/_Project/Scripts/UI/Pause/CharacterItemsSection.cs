@@ -583,6 +583,9 @@ namespace TehranNoir.UI
         {
             if (_filtered.Count == 0 || _index < 0 || _index >= _filtered.Count) return false;
 
+            // اگر عدد از بیرون عوض شده (F10 یا دیالوگ) نمونه هم بساز تا Enter کار کند.
+            InventoryManager.Reconcile();
+
             ItemInstance instance = FindInstance(_filtered[_index].Definition.Id);
 
             if (instance == null) return false;

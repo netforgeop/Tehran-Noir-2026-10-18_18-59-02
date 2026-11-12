@@ -47,8 +47,30 @@ RULE_RE = re.compile(r"^(?P<verb>[a-z]+)\.(?P<field>if|do|consume|target)(?:\.(?
 EXTENSIONS = ("", ".png", ".jpg", ".jpeg")
 
 
+INVISIBLE = "\u200e\u200f\ufeff\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+
+
+def clean(text):
+    """کاراکترهای نامرئی را برمی‌دارد و «=» تمام‌عرض را عادی می‌کند."""
+    if not text:
+        return ""
+
+    out = []
+
+    for char in text:
+        if char in INVISIBLE:
+            continue
+
+        if char == "\uff1d":
+            char = "="
+
+        out.append(char)
+
+    return "".join(out).strip()
+
+
 def normalize(text):
-    return (text or "").strip().lower()
+    return clean(text).lower()
 
 
 def resource_exists(path, extension=".prefab"):
@@ -156,7 +178,7 @@ def main():
                 problems.append((index, "بیشترین تعداد نامعتبر: " + parts[4].strip()))
 
         for token in parts[5:]:
-            token = token.strip()
+            token = clean(token)
 
             if not token:
                 continue

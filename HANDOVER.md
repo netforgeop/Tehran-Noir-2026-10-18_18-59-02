@@ -886,3 +886,16 @@ python3 tools/cscheck.py Assets/_Project/Scripts
 
 سند کامل: `docs/35-item-rules.md`
 
+## ۳۵. حذف آیتم، هم‌ترازی و پیام خطای گویا (جلسه‌ی ۲۶)
+
+| تغییر | فایل | چرا |
+| --- | --- | --- |
+| دکمه‌ی «حذف این آیتم» با تأیید | `Editor/ItemBrowserWindow.cs` | ساختن بود، حذف نبود |
+| `InventoryManager.Reconcile()` | `Items/InventoryManager.cs` | عدد از F10/دیالوگ عوض می‌شد ولی نمونه نبود؛ Enter روی کارت کاری نمی‌کرد |
+| پاک‌کردن کاراکتر نامرئی در توکن‌ها | `Items/ItemCatalog.cs` | کپی از صفحه‌ی وب `‏` و `＝` می‌آورد و «گزینه‌ی بی‌شکل» می‌داد |
+| پیام دقیق‌تر خطا | `Items/ItemCatalog.cs` | حالا خود توکن داخل «» چاپ می‌شود و علت حدس زده می‌شود |
+| مرتب‌کردن فایل بعد از افزودن/حذف | `Editor/ItemBrowserWindow.cs` | خط خالی اضافه تلنبار نشود |
+
+`item.<id>` و نمونه‌ها حالا با `Reconcile` هم‌تراز می‌شوند؛ **پروجکشن** همچنان
+فقط دست `InventoryManager` است.
+

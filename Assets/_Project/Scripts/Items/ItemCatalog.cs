@@ -216,7 +216,7 @@ namespace TehranNoir.Items
 
             for (int i = MinFields + 1; i < parts.Length; i++)
             {
-                string token = parts[i].Trim();
+                string token = CleanToken(parts[i]);
 
                 if (token.Length == 0) continue;
 
@@ -224,7 +224,10 @@ namespace TehranNoir.Items
 
                 if (split <= 0)
                 {
-                    Debug.LogWarning("[Items] خط " + number + " گزینه‌ی بی‌شکل (باید key=value باشد): " + token);
+                    Debug.LogWarning("[Items] خط " + number + " گزینه‌ی بی‌شکل: «" + token + "»" +
+                                     (split == 0
+                                         ? " (با = شروع شده؛ شاید یک | اضافه گذاشته‌ای)"
+                                         : " (بین نام و مقدار = را جا انداخته‌ای)"));
                     continue;
                 }
 
@@ -436,6 +439,35 @@ namespace TehranNoir.Items
             if (text == "0" || text == "false" || text == "no" || text == "off") return false;
 
             return fallback;
+        }
+
+        /// <summary>
+        /// پاک‌کردن کاراکترهای نامرئی و شکل‌های دیگر «=»؛ یک نسخه‌ی کپی‌شده از
+        /// صفحه‌ی وب یا ویرایشگر فارسی نباید بازی را با «گزینه‌ی بی‌شکل» بترساند.
+        /// نیم‌فاصله (U+200C) دست نمی‌خورد چون بخشی از واژه‌ی فارسی است.
+        /// </summary>
+        private static string CleanToken(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return string.Empty;
+
+            System.Text.StringBuilder builder = new System.Text.StringBuilder(raw.Length);
+
+            for (int i = 0; i < raw.Length; i++)
+            {
+                char c = raw[i];
+
+                if (c == '\u200e' || c == '\u200f' || c == '\ufeff' ||
+                    (c >= '\u202a' && c <= '\u202e') ||
+                    (c >= '\u2066' && c <= '\u2069'))
+                    continue;
+
+                if (c == '\uff1d') c = '=';
+                if (c == '\u066d') c = '*';
+
+                builder.Append(c);
+            }
+
+            return builder.ToString().Trim();
         }
 
         private static bool HasSpace(string id)

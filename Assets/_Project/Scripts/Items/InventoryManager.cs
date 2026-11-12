@@ -431,6 +431,74 @@ namespace TehranNoir.Items
            پروجکشن و بارگذاری
            ============================================================ */
 
+        /// <summary>
+        /// هم‌ترازکردن نمونه‌ها با پروجکشن.
+        ///
+        /// چرا لازم است؟ چون `item.&lt;id&gt;` از جاهای دیگر هم عوض می‌شود:
+        /// پنل تست (F10)، دیالوگ `[do] item.x + 1`، و فهرست مقدارهای اولیه‌ی
+        /// صحنه. اگر نمونه‌ای وجود نداشته باشد، کارت در منو دیده می‌شود ولی
+        /// Enter روی آن کاری نمی‌کند. این متد موقع نیاز نمونه می‌سازد یا کم می‌کند.
+        /// </summary>
+        public static void Reconcile()
+        {
+            WorldState world = ItemWorld.Current;
+
+            if (world == null) return;
+
+            IReadOnlyList<ItemDefinition> all = ItemCatalog.All;
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                string id = all[i].Id;
+
+                int projection = Mathf.RoundToInt((float)world.Get(Inventory.Key(id)).AsNumber());
+                int actual = CarriedTotal(id);
+
+                if (projection > actual) Take(id, projection - actual);
+                else if (projection < actual) Trim(id, actual - projection);
+            }
+        }
+
+        private static int CarriedTotal(string definitionId)
+        {
+            int total = 0;
+
+            for (int c = 0; c < CarriedIds.Length; c++)
+            {
+                ItemContainer container = Get(CarriedIds[c]);
+
+                if (container != null) total += container.CountOf(definitionId);
+            }
+
+            return total;
+        }
+
+        private static void Trim(string definitionId, int quantity)
+        {
+            int left = quantity;
+
+            for (int c = 0; c < CarriedIds.Length && left > 0; c++)
+            {
+                ItemContainer container = Get(CarriedIds[c]);
+
+                if (container == null) continue;
+
+                for (int i = container.Items.Count - 1; i >= 0 && left > 0; i--)
+                {
+                    ItemInstance instance = container.Items[i];
+
+                    if (instance.DefinitionId != definitionId) continue;
+
+                    int cut = Mathf.Min(left, instance.Quantity);
+
+                    if (cut >= instance.Quantity) container.Remove(instance);
+                    else instance.SetQuantity(instance.Quantity - cut);
+
+                    left -= cut;
+                }
+            }
+        }
+
         /// <summary>نوشتن تعداد همراه‌ها در `item.&lt;id&gt;`؛ تنها نویسنده همین‌جاست.</summary>
         public static void SyncProjection()
         {

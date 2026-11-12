@@ -178,6 +178,16 @@ namespace TehranNoir.EditorTools
             else
             {
                 DrawDefinition(_selected);
+
+                GUILayout.Space(10f);
+
+                Color previous = GUI.backgroundColor;
+                GUI.backgroundColor = new Color(0.85f, 0.35f, 0.32f, 1f);
+
+                if (GUILayout.Button("حذف این آیتم", GUILayout.Height(26f)))
+                    ConfirmDelete(_selected);
+
+                GUI.backgroundColor = previous;
             }
 
             GUILayout.Space(12f);
@@ -322,6 +332,78 @@ namespace TehranNoir.EditorTools
             Repaint();
         }
 
+        /// <summary>
+        /// حذف یک آیتم از فایل. خطی که همان شناسه را دارد برداشته می‌شود؛
+        /// بقیه‌ی خط‌ها، ترتیب و توضیح‌ها دست نمی‌خورند.
+        /// </summary>
+        private void ConfirmDelete(ItemDefinition definition)
+        {
+            if (definition == null) return;
+
+            bool confirmed = EditorUtility.DisplayDialog(
+                "حذف آیتم",
+                "«" + definition.Persian + "» (" + definition.Id + ") از items.txt حذف شود؟\n" +
+                "اگر جایی در دیالوگ یا کار از این آیتم استفاده شده، آن شرط دیگر برقرار نمی‌شود.",
+                "حذف",
+                "انصراف");
+
+            if (!confirmed) return;
+
+            string full = Path.GetFullPath(ItemsPath);
+
+            if (!File.Exists(full))
+            {
+                _issues.Add("فایل پیدا نشد: " + ItemsPath);
+                return;
+            }
+
+            string[] lines = File.ReadAllLines(full);
+            List<string> kept = new List<string>(lines.Length);
+            bool removed = false;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string text = lines[i].Trim();
+
+                if (text.Length == 0 || text.StartsWith("#"))
+                {
+                    kept.Add(lines[i]);
+                    continue;
+                }
+
+                string[] parts = text.Split('|');
+                string id = parts.Length > 0 ? parts[0].Trim().ToLowerInvariant() : string.Empty;
+
+                if (!removed && id == definition.Id)
+                {
+                    removed = true;
+                    continue;
+                }
+
+                kept.Add(lines[i]);
+            }
+
+            if (!removed)
+            {
+                _issues.Add("خطی برای «" + definition.Id + "» پیدا نشد.");
+                return;
+            }
+
+            while (kept.Count > 0 && kept[kept.Count - 1].Trim().Length == 0)
+                kept.RemoveAt(kept.Count - 1);
+
+            File.WriteAllText(full, string.Join("\n", kept.ToArray()) + "\n");
+
+            AssetDatabase.Refresh();
+            ItemCatalog.Reload();
+
+            _selected = null;
+            _issues.Clear();
+            Refresh();
+
+            Debug.Log("[Items] حذف شد: " + definition.Id);
+        }
+
         /// <summary>بررسی سبک داده: تکرار شناسه، دسته و فعل ناشناس، مسیرهای گم‌شده.</summary>
         private void Validate()
         {
@@ -450,7 +532,10 @@ namespace TehranNoir.EditorTools
             string line = id + " | " + persian + " | " + english +
                           " | item | 1 | weight=0.1 | state.new=1 | use.if=state.new = 1 | use.do=state.new = 0";
 
-            File.AppendAllText(Path.GetFullPath(ItemsPath), "\n" + line + "\n");
+            string full = Path.GetFullPath(ItemsPath);
+            string body = File.Exists(full) ? File.ReadAllText(full).TrimEnd() : string.Empty;
+
+            File.WriteAllText(full, body + "\n\n" + line + "\n");
 
             AssetDatabase.Refresh();
             ItemCatalog.Reload();

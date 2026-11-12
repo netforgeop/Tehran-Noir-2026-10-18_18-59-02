@@ -1,4 +1,5 @@
-﻿using TehranNoir.Inputs;
+using TehranNoir.Inputs;
+using TehranNoir.World;
 using UnityEngine;
 
 namespace TehranNoir.Player
@@ -23,6 +24,13 @@ namespace TehranNoir.Player
         [Tooltip("زیر این سرعت، بازیکن ایستاده حساب می‌شود و دویدن خاموش می‌شود")]
         [SerializeField] private float stopSpeed = 0.05f;
 
+        [Header("Stamina")]
+        [Tooltip("وقتی استقامت منفی است، سرعت و پرش کم می‌شوند. خالی = بدون اثر")]
+        [SerializeField] private PlayerEnergy stamina;
+
+        [Tooltip("ضریب سرعت هنگام سنگینی (استقامت روی کف)")]
+        [SerializeField, Range(0f, 1f)] private float staggerSpeedScale = 0.15f;
+
         private CharacterController characterController;
         private PlayerInputReader input;
         private Transform cameraTransform;
@@ -38,6 +46,8 @@ namespace TehranNoir.Player
             characterController = GetComponent<CharacterController>();
             input = GetComponent<PlayerInputReader>();
             cameraTransform = Camera.main.transform;
+
+            if (stamina == null) stamina = GetComponent<PlayerEnergy>();
         }
 
         private void Update()
@@ -76,7 +86,7 @@ namespace TehranNoir.Player
                 if (hasInput)
                     moveDirection = inputDirection.normalized;
 
-                float targetSpeed = hasInput ? (running ? runSpeed : walkSpeed) : 0f;
+                float targetSpeed = hasInput ? (running ? runSpeed : walkSpeed) * SpeedScale : 0f;
                 float rate = targetSpeed > currentSpeed ? acceleration : deceleration;
                 currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, rate * Time.deltaTime);
 
@@ -90,6 +100,21 @@ namespace TehranNoir.Player
             // در هوا moveDirection و currentSpeed دست‌نخورده می‌مانند (اینرسی)
 
             characterController.Move(moveDirection * currentSpeed * Time.deltaTime);
+        }
+
+        /// <summary>خستگی سرعت را کم می‌کند؛ سنگینی سرعت را تقریباً صفر.</summary>
+        private float SpeedScale
+        {
+            get
+            {
+                if (stamina == null) return 1f;
+
+                float scale = stamina.MoveMultiplier;
+
+                if (stamina.Staggering) scale *= staggerSpeedScale;
+
+                return scale;
+            }
         }
 
         // قاعده‌ی دویدن: تپ روشن می‌کند، ایستادن کامل خاموش
@@ -122,7 +147,12 @@ namespace TehranNoir.Player
             if (!grounded) return false;
             if (!input.JumpPressedThisFrame) return false;
 
-            velocity.y = Mathf.Sqrt(2f * jumpHeight * -gravity);
+            float scale = stamina != null ? stamina.JumpMultiplier : 1f;
+
+            velocity.y = Mathf.Sqrt(2f * jumpHeight * scale * -gravity);
+
+            if (stamina != null) stamina.SpendJump();
+
             return true;
         }
 

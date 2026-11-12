@@ -5,11 +5,13 @@ using TehranNoir.Dialogue;
 
 namespace TehranNoir.Characters
 {
-    /// <summary>هفت عددی که شخصیت نادر را می‌سازند.</summary>
+    /// <summary>عددی که شخصیت نادر را می‌سازد.</summary>
     public enum StatId
     {
         Money = 0,
         Health,
+        Armor,
+        Stamina,
         Honor,
         Charisma,
         Fame,
@@ -60,27 +62,44 @@ namespace TehranNoir.Characters
     ///   [do] stat.money + 500
     /// پس آمار از روز اول بخشی از دنیاست، نه یک HUD تزئینی.
     ///
-    /// مقیاس: پول تومان است (بی‌سقف)، بقیه ۰ تا ۱۰۰.
+    /// مقیاس‌ها:
+    ///   پول: تومان، بی‌سقف
+    ///   جان و زره: ۰ تا ۱۰۰
+    ///   استقامت: -۱۵۰ تا ۱۰۰ (منفی یعنی مصرف بیش از حد)
+    ///   پنج ویژگی: ۰ تا ۱۰۰
     /// </summary>
     public static class CharacterStats
     {
         public const string MoneyKey = "stat.money";
         public const string HealthKey = "stat.health";
+        public const string ArmorKey = "stat.armor";
+        public const string StaminaKey = "stat.stamina";
         public const string HonorKey = "stat.honor";
         public const string CharismaKey = "stat.charisma";
         public const string FameKey = "stat.fame";
         public const string HonestyKey = "stat.honesty";
         public const string LoyaltyKey = "stat.loyalty";
 
+        /// <summary>جمع جان و زره؛ کمانِ چپ همین ۲۰۰ را نشان می‌دهد.</summary>
+        public const int VitalMax = 200;
+
         private static readonly StatDefinition[] Definitions =
         {
             new StatDefinition(StatId.Money, MoneyKey, "پول", "Money", 0, 99999999, 4500, 500, 5000),
             new StatDefinition(StatId.Health, HealthKey, "جان", "Health", 0, 100, 100, 5, 25),
+            new StatDefinition(StatId.Armor, ArmorKey, "زره", "Armor", 0, 100, 0, 5, 25),
+            new StatDefinition(StatId.Stamina, StaminaKey, "استقامت", "Stamina", -150, 100, 100, 10, 25),
             new StatDefinition(StatId.Honor, HonorKey, "شرافت", "Honor", 0, 100, 50, 5, 25),
             new StatDefinition(StatId.Charisma, CharismaKey, "جذبه", "Charisma", 0, 100, 50, 5, 25),
             new StatDefinition(StatId.Fame, FameKey, "شهرت", "Fame", 0, 100, 50, 5, 25),
             new StatDefinition(StatId.Honesty, HonestyKey, "صداقت", "Honesty", 0, 100, 50, 5, 25),
             new StatDefinition(StatId.Loyalty, LoyaltyKey, "وفاداری", "Loyalty", 0, 100, 50, 5, 25)
+        };
+
+        /// <summary>پنج ویژگی‌ای که کمان سمت راست یکی‌یکی نشانشان می‌دهد.</summary>
+        public static readonly StatId[] Traits =
+        {
+            StatId.Honor, StatId.Charisma, StatId.Fame, StatId.Honesty, StatId.Loyalty
         };
 
         public static IReadOnlyList<StatDefinition> All
@@ -124,7 +143,38 @@ namespace TehranNoir.Characters
             return Mathf.Clamp(Mathf.RoundToInt((float)value), definition.Min, definition.Max);
         }
 
+        /// <summary>خواندن اعشاری — استقامت بین دو عدد صحیح هم معنی دارد.</summary>
+        public static float GetFloat(StatId id)
+        {
+            StatDefinition definition = Definitions[(int)id];
+            WorldState world = World;
+
+            if (world == null) return definition.Default;
+
+            if (!world.Has(definition.Key))
+            {
+                world.Set(definition.Key, (double)definition.Default);
+                return definition.Default;
+            }
+
+            double value = world.Get(definition.Key).AsNumber();
+
+            if (double.IsNaN(value)) return definition.Default;
+
+            return Mathf.Clamp((float)value, definition.Min, definition.Max);
+        }
+
         public static void Set(StatId id, int value)
+        {
+            StatDefinition definition = Definitions[(int)id];
+            WorldState world = World;
+
+            if (world == null) return;
+
+            world.Set(definition.Key, (double)Mathf.Clamp(value, definition.Min, definition.Max));
+        }
+
+        public static void SetFloat(StatId id, float value)
         {
             StatDefinition definition = Definitions[(int)id];
             WorldState world = World;
@@ -139,6 +189,42 @@ namespace TehranNoir.Characters
             Set(id, Get(id) + delta);
         }
 
+        /* ============================================================
+           آسیب و درمان — زره اول می‌گیرد، بعد جان
+           ============================================================ */
+
+        /// <summary>
+        /// مقدار واقعی آسیب پس از کسر زره را برمی‌گرداند.
+        /// زره هر چه دارد جذب می‌کند؛ باقی‌مانده از جان کم می‌شود.
+        /// </summary>
+        public static int Damage(int amount)
+        {
+            if (amount <= 0) return 0;
+
+            int armor = Get(StatId.Armor);
+            int absorbed = Mathf.Min(armor, amount);
+
+            if (absorbed > 0) Set(StatId.Armor, armor - absorbed);
+
+            int rest = amount - absorbed;
+            if (rest <= 0) return 0;
+
+            Set(StatId.Health, Get(StatId.Health) - rest);
+            return rest;
+        }
+
+        public static void Heal(int amount)
+        {
+            if (amount <= 0) return;
+
+            Set(StatId.Health, Get(StatId.Health) + amount);
+        }
+
+        public static bool IsDead
+        {
+            get { return Get(StatId.Health) <= 0; }
+        }
+
         /// <summary>پول واحد دارد، بقیه عدد خالی‌اند.</summary>
         public static string Format(StatId id, bool persian)
         {
@@ -149,7 +235,7 @@ namespace TehranNoir.Characters
             return persian ? number + " تومان" : number + " toman";
         }
 
-        /// <summary>هر هفت کلید را در دنیا بساز تا از همان اول در فهرست متغیرها دیده شوند.</summary>
+        /// <summary>هر کلید را در دنیا بساز تا از همان اول در فهرست متغیرها دیده شوند.</summary>
         public static void EnsureDefaults()
         {
             for (int i = 0; i < Definitions.Length; i++)

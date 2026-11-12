@@ -28,6 +28,9 @@ namespace TehranNoir.Documents
         [Tooltip("مسیر سند در Resources، بدون پسوند")]
         [SerializeField] private string documentPath = "Documents/archive_log";
 
+        [Tooltip("مسیر یادداشت دست‌نویس، بدون پسوند")]
+        [SerializeField] private string notePath = "Documents/note_yazdani";
+
         private readonly List<string> _report = new List<string>(16);
 
         private int _passed;
@@ -131,6 +134,27 @@ namespace TehranNoir.Documents
 
             Check("شرط بدخط، ردیف را پنهان می‌کند",
                 brokenRows.Count == 0 && broken.Issues.Count > 0);
+
+            // یادداشت هم کاغذ است، نه دیالوگ: همین فایل باید قالب note بدهد.
+            TextAsset noteAsset = Resources.Load<TextAsset>(NotePath);
+
+            Check("یادداشت بار شد", noteAsset != null, NotePath);
+
+            if (noteAsset != null)
+            {
+                DocumentText note = DocumentText.Parse(noteAsset.text, noteAsset.name);
+
+                Check("یادداشت قالب note دارد", note.Template == DocumentTemplate.Note,
+                    note.Template.ToString());
+
+                int noteLines = 0;
+
+                for (int i = 0; i < note.Body.Count; i++)
+                    if (!note.Body[i].IsBlank) noteLines++;
+
+                Check("یادداشت سه خط دارد", noteLines == 3, "خط: " + noteLines);
+                Check("یادداشت دست‌نویس است", note.Handwritten);
+            }
 
             Report();
         }

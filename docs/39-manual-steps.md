@@ -191,7 +191,7 @@ DocumentSelfTest → Play
 انتظار:
 
 ```text
-[Documents] تست: 12 قبول، 0 رد
+[Documents] تست: 16 قبول، 0 رد
 ```
 
 ## ۶. یادداشت — همان کار، یک منو

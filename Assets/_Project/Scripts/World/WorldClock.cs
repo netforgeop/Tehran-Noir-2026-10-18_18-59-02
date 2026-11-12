@@ -140,6 +140,118 @@ namespace TehranNoir.World
             SkipMonths(12);
         }
 
+        /* ============================================================
+           فیلدهای تاریخ — تنها راه درست برای عوض کردنشان
+           ============================================================ */
+
+        /// <summary>
+        /// این شش کلید در WorldState «نتیجه»‌اند، نه منبع: هر دقیقه‌ی بازی از روی
+        /// _now دوباره نوشته می‌شوند. اگر کسی مستقیم در WorldState بنویسد،
+        /// تا تیک بعدی دوام می‌آورد و بعد برمی‌گردد. تغییر باید از همین‌جا رد شود.
+        /// </summary>
+        public static bool IsClockField(string name)
+        {
+            switch (name)
+            {
+                case "year":
+                case "month":
+                case "day":
+                case "hour":
+                case "time":
+                case "season":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>سال/ماه/روز/ساعت قابل تغییرند؛ فصل و بخش روز از تاریخ حساب می‌شوند.</summary>
+        public static bool IsEditable(string name)
+        {
+            switch (name)
+            {
+                case "year":
+                case "month":
+                case "day":
+                case "hour":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>مقدار فعلی برای نمایش. برای فیلد ناشناس false.</summary>
+        public bool TryRead(string name, out string text)
+        {
+            switch (name)
+            {
+                case "year": text = _now.Year.ToString(); return true;
+                case "month": text = _now.Month.ToString(); return true;
+                case "day": text = _now.Day.ToString(); return true;
+                case "hour": text = _now.Hour.ToString("00") + ":" + _now.Minute.ToString("00"); return true;
+                case "season": text = _now.Season; return true;
+                case "time": text = Phase; return true;
+                default: text = string.Empty; return false;
+            }
+        }
+
+        /// <summary>
+        /// نوشتن یک فیلد. مقدار بیرون از بازه، پیچیده می‌شود (۲۵ ساعت = ۱ بامداد روز بعد)،
+        /// نه رد. روز و ماه هم به آخرین روز معتبر همان ماه محدود می‌شوند.
+        /// </summary>
+        public bool SetField(string name, int value)
+        {
+            GameDate next;
+
+            switch (name)
+            {
+                case "hour":
+                    value = ((value % 24) + 24) % 24;
+                    next = new GameDate(_now.Year, _now.Month, _now.Day, value, 0);
+                    break;
+
+                case "day":
+                    value = Mathf.Clamp(value, 1, GameDate.DaysInMonth(_now.Year, _now.Month));
+                    next = new GameDate(_now.Year, _now.Month, value, _now.Hour, _now.Minute);
+                    break;
+
+                case "month":
+                    value = Mathf.Clamp(value, 1, 12);
+                    next = new GameDate(_now.Year, value,
+                        Mathf.Min(_now.Day, GameDate.DaysInMonth(_now.Year, value)), _now.Hour, _now.Minute);
+                    break;
+
+                case "year":
+                    value = Mathf.Clamp(value, 1200, 1600);
+                    next = new GameDate(value, _now.Month,
+                        Mathf.Min(_now.Day, GameDate.DaysInMonth(value, _now.Month)), _now.Hour, _now.Minute);
+                    break;
+
+                default:
+                    return false;
+            }
+
+            SetDate(next);
+            return true;
+        }
+
+        /// <summary>کم و زیاد کردن یک فیلد؛ حول مرزها می‌پیچد (ساعت ۲۳ + ۲ = ۱).</summary>
+        public bool AddField(string name, int delta)
+        {
+            int current;
+
+            switch (name)
+            {
+                case "hour": current = _now.Hour; break;
+                case "day": current = _now.Day; break;
+                case "month": current = _now.Month; break;
+                case "year": current = _now.Year; break;
+                default: return false;
+            }
+
+            return SetField(name, current + delta);
+        }
+
         /// <summary>تاریخ و ساعت را در WorldState می‌نویسد.</summary>
         private void Push(bool force)
         {

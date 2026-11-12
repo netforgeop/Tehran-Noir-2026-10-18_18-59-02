@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,6 +15,7 @@ using TehranNoir.Interaction;
 using TehranNoir.Player;
 using TehranNoir.Settings;
 using TehranNoir.UI;
+using TehranNoir.World;
 
 namespace TehranNoir.Debugging
 {
@@ -74,6 +76,7 @@ namespace TehranNoir.Debugging
         private static readonly Color RuleColor = new Color(0.227f, 0.227f, 0.227f, 1f);
         private static readonly Color AccentColor = new Color(0.541f, 0.604f, 0.357f, 1f);
         private static readonly Color EditorColor = new Color(0.17f, 0.19f, 0.21f, 0.95f);
+        private static readonly Color LockedColor = new Color(0.36f, 0.38f, 0.35f, 1f);
 
         /* ---------- وضعیت ---------- */
         public static bool IsOpen { get; private set; }
@@ -87,6 +90,9 @@ namespace TehranNoir.Debugging
             public Func<string> Read;
             public Action<int, bool> Adjust;
             public Action Activate;
+
+            /// <summary>فیلدی که فقط خواندنی است (فصل، بخش روز): آرrow فقط نشان می‌دهد.</summary>
+            public bool Locked;
         }
 
         private sealed class RowView
@@ -370,6 +376,9 @@ namespace TehranNoir.Debugging
             AddFreeze(FindAnyObjectByType<CameraOrbitController>());
             AddFreeze(FindAnyObjectByType<PlayerInputReader>());
             AddFreeze(FindAnyObjectByType<InteractionSensor>());
+
+            // ساعت هم می‌ایستد؛ وگرنه عددی که همین حالا گذاشتی، جلوی چشمت جلو می‌رود
+            AddFreeze(FindAnyObjectByType<WorldClock>());
         }
 
         private void AddFreeze(Behaviour behaviour)
@@ -516,15 +525,24 @@ namespace TehranNoir.Debugging
             List<string> names = new List<string>(world.Names);
             names.Sort(StringComparer.Ordinal);
 
+            WorldClock clock = WorldClock.Instance;
+
             for (int i = 0; i < names.Count; i++)
             {
                 string name = names[i];
+                bool clockField = clock != null && WorldClock.IsClockField(name);
+                bool editable = !clockField ? true : WorldClock.IsEditable(name);
 
                 Row row = new Row();
                 row.Label = name;
                 row.Read = () => ValueText(name);
-                row.Adjust = (direction, big) => Nudge(name, direction, big);
-                row.Activate = () => BeginEdit(name);
+                row.Locked = !editable;
+
+                if (editable)
+                {
+                    row.Adjust = (direction, big) => Nudge(name, direction, big);
+                    row.Activate = () => BeginEdit(name);
+                }
 
                 _rows.Add(row);
             }
@@ -558,6 +576,14 @@ namespace TehranNoir.Debugging
 
         private string ValueText(string name)
         {
+            WorldClock clock = WorldClock.Instance;
+
+            if (clock != null && WorldClock.IsClockField(name))
+            {
+                string text;
+                if (clock.TryRead(name, out text)) return text;
+            }
+
             WorldState world = World;
             if (world == null) return "—";
 
@@ -569,6 +595,16 @@ namespace TehranNoir.Debugging
 
         private void Nudge(string name, int direction, bool big)
         {
+            WorldClock clock = WorldClock.Instance;
+
+            if (clock != null && WorldClock.IsClockField(name))
+            {
+                if (WorldClock.IsEditable(name))
+                    clock.AddField(name, direction);
+
+                return;
+            }
+
             WorldState world = World;
             if (world == null) return;
 
@@ -608,7 +644,21 @@ namespace TehranNoir.Debugging
 
             EndEdit();
 
-            if (string.IsNullOrEmpty(text) || world == null) return;
+            if (string.IsNullOrEmpty(text)) return;
+
+            WorldClock clock = WorldClock.Instance;
+
+            if (clock != null && WorldClock.IsClockField(name))
+            {
+                int value;
+                if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+                    clock.SetField(name, value);
+
+                Rebuild();
+                return;
+            }
+
+            if (world == null) return;
 
             // همان قاعده‌ی [do] دیالوگ؛ یک مفسر، دو جا
             DialogueRunner.ApplyEffect(name + " = " + text, world);
@@ -691,8 +741,11 @@ namespace TehranNoir.Debugging
 
                 view.Background.color = selected ? RowSelectedColor : RowColor;
                 view.Bar.gameObject.SetActive(selected);
-                view.Label.color = selected ? TitleColor : DimColor;
-                view.Value.color = selected ? ValueColor : DimColor;
+
+                Color idle = row.Locked ? LockedColor : DimColor;
+
+                view.Label.color = selected ? TitleColor : idle;
+                view.Value.color = selected ? ValueColor : idle;
             }
         }
 
@@ -716,8 +769,8 @@ namespace TehranNoir.Debugging
                 : "Rows: " + _rows.Count;
 
             _hint.text = _persian
-                ? "هر تغییری همین‌جا در WorldState نوشته می‌شود؛ بازی همان لحظه واکنش می‌دهد.  " + rows
-                : "Every change is written to WorldState; the game reacts immediately.  " + rows;
+                ? "تاریخ و ساعت با WorldClock عوض می‌شوند؛ بقیه در WorldState. ردیف کم‌رنگ فقط خواندنی است.  " + rows
+                : "Date and time go through WorldClock; the rest through WorldState. Dim rows are read-only.  " + rows;
         }
 
         /* ============================================================

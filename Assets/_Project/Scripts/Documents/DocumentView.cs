@@ -509,10 +509,10 @@ namespace TehranNoir.Documents
                 Place(ghostRect, x + 0.8f, top + 0.7f, cellWidth, 34f);
                 ghostRect.localRotation = Quaternion.Euler(0f, 0f, rotation);
 
-                TMP_Text ghost = UiKit.MakeText(ghostRect.gameObject, size, color, textFont, persian);
+                TMP_Text ghost = UiKit.MakeText(ghostRect.gameObject, size,
+                    new Color(color.r, color.g, color.b, 0.22f), textFont, persian);
                 ghost.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
                 ghost.text = text;
-                ghost.alpha = 0.22f;
             }
 
             RectTransform rect = Node(name, _content);

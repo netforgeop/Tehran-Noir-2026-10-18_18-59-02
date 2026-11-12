@@ -103,6 +103,63 @@ namespace TehranNoir.EditorTools
                       "دفتر ثبت، یادداشت و جعبه‌ی ۱۳۵۲. صحنه ذخیره شد.");
         }
 
+        /// <summary>
+        /// ست‌کردن شرط «دادن» روی رضا و خانم فرهادی، بدون دست‌زدن به متن.
+        ///
+        /// چرا منو و نه تایپ در Inspector؟ یک فاصله یا یک حرف اشتباه در این شرط
+        /// هیچ خطایی نمی‌دهد؛ فقط کار «دادن» هرگز ظاهر نمی‌شود. با این منو مقدار
+        /// از یک ثابت می‌آید، پس غلط تایپ‌شدن ممکن نیست.
+        /// </summary>
+        [MenuItem("Tehran Noir/اتصال شرط تحویل به رضا و فرهادی", false, 102)]
+        public static void ConnectHandover()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogError("[Archive] در حالت Play نمی‌شود تغییر داد. اول Play را قطع کن.");
+                return;
+            }
+
+            TalkInteractable[] talks = Object.FindObjectsByType<TalkInteractable>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            int done = 0;
+
+            for (int i = 0; i < talks.Length; i++)
+            {
+                TalkInteractable talk = talks[i];
+
+                if (talk == null) continue;
+
+                string name = talk.gameObject.name;
+
+                if (name != "Reza" && name != "Farhadi") continue;
+
+                SetString(talk, "handoverVariable", HandoverCondition);
+                SetString(talk, "handoverNode", "handover");
+
+                EditorUtility.SetDirty(talk);
+                done++;
+
+                Debug.Log("[Archive] شرط تحویل روی «" + name + "» ست شد: " + HandoverCondition);
+            }
+
+            if (done == 0)
+            {
+                Debug.LogWarning("[Archive] نه رضا در صحنه بود، نه فرهادی. صحنه‌ی Sandbox را باز کن.");
+                return;
+            }
+
+            Scene scene = SceneManager.GetActiveScene();
+
+            if (scene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+
+            Debug.Log("[Archive] " + done + " نفر آماده‌ی تحویل شدند و صحنه ذخیره شد.");
+        }
+
         [MenuItem("Tehran Noir/حذف بایگانی", false, 101)]
         public static void RemoveArchive()
         {

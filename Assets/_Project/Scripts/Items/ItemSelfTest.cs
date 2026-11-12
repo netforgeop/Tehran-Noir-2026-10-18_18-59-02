@@ -27,6 +27,9 @@ namespace TehranNoir.Items
 
         private readonly List<string> _report = new List<string>(24);
 
+        /// <summary>عکسِ ظرف‌ها پیش از تست؛ پایین توضیح داده شده.</summary>
+        private readonly List<ContainerSnapshot> _snapshot = new List<ContainerSnapshot>(8);
+
         private int _passed;
         private int _failed;
 
@@ -47,6 +50,10 @@ namespace TehranNoir.Items
 
             ItemRuntime.ShowDocumentOnRead = false;
             ItemDropSpawner.Spawning = false;
+
+            // اگر این تست در صحنه‌ی واقعی اجرا شود، ظرف‌ها پیش از شروع عکس گرفته
+            // می‌شوند تا در پایان همان چیزها برگردند.
+            CaptureSnapshot();
 
             // قلاب `[do] item.give.*` در بازی خودکار نصب می‌شود؛ تست هم صریح
             // نصبش می‌کند تا در اجرای دستی از منوی کامپوننت هم همان مسیر واقعی آزموده شود.
@@ -85,7 +92,11 @@ namespace TehranNoir.Items
                 ItemRuntime.ShowDocumentOnRead = previousDocumentView;
                 ItemDropSpawner.Spawning = previousSpawning;
                 ItemWorld.ClearOverride();
-                InventoryManager.ResetAll();
+
+                // قبلاً اینجا `ResetAll` بود: ظرف‌ها خالی می‌ماندند. اگر تست در
+                // صحنه‌ی واقعی اجرا می‌شد، پرونده‌ی روی میز از ظرف زمین پاک می‌شد
+                // و دیگر برداشتنی نبود. حالا همان نمونه‌ها برمی‌گردند.
+                RestoreSnapshot();
 
                 // عمداً ItemEvents.ClearAll صدا زده نمی‌شود: تست فقط باید مشترکِ
                 // خودش را بردارد. قبلاً این خط همه‌ی مشترک‌ها را پاک می‌کرد
@@ -95,6 +106,71 @@ namespace TehranNoir.Items
             string header = "[Items] تست: " + _passed + " قبول، " + _failed + " رد";
 
             if (logReport) Debug.Log(header + "\n" + string.Join("\n", _report));
+        }
+
+        /* ============================================================
+           عکس و برگشت وضعیت
+           ============================================================ */
+
+        /// <summary>
+        /// یک ظرف و همان شیءهای آیتمش.
+        ///
+        /// چرا شیء، نه JSON؟ چون `SceneItemBinding` به **همان شیء** وصل است. اگر
+        /// از JSON نمونه‌ی تازه ساخته شود، پیوند میز به پرونده‌ای اشاره می‌کند که
+        /// دیگر در هیچ ظرفی نیست و برداشتن با `NotFound` رد می‌شود.
+        /// </summary>
+        private sealed class ContainerSnapshot
+        {
+            public string Id;
+            public string LabelKey;
+            public int SlotLimit;
+            public float WeightLimit;
+            public List<ItemInstance> Items;
+        }
+
+        private void CaptureSnapshot()
+        {
+            _snapshot.Clear();
+
+            foreach (ItemContainer container in InventoryManager.All)
+            {
+                if (container == null) continue;
+
+                ContainerSnapshot record = new ContainerSnapshot();
+                record.Id = container.Id;
+                record.LabelKey = container.LabelKey;
+                record.SlotLimit = container.SlotLimit;
+                record.WeightLimit = container.WeightLimit;
+                record.Items = new List<ItemInstance>(container.Items.Count);
+
+                for (int i = 0; i < container.Items.Count; i++)
+                {
+                    ItemInstance instance = container.Items[i];
+
+                    if (instance != null) record.Items.Add(instance);
+                }
+
+                _snapshot.Add(record);
+            }
+        }
+
+        private void RestoreSnapshot()
+        {
+            InventoryManager.ResetAll();
+
+            for (int c = 0; c < _snapshot.Count; c++)
+            {
+                ContainerSnapshot record = _snapshot[c];
+
+                if (InventoryManager.Get(record.Id) == null)
+                    InventoryManager.Ensure(record.Id, record.LabelKey, record.SlotLimit, record.WeightLimit);
+
+                for (int i = 0; i < record.Items.Count; i++)
+                    InventoryManager.AddRestored(record.Items[i], record.Id);
+            }
+
+            _snapshot.Clear();
+            InventoryManager.SyncProjection();
         }
 
         /* ============================================================

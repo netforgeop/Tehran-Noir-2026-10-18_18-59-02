@@ -727,3 +727,18 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 
 سرصفحه‌ی کارت تیره شد: عنوان `#211C17`، نقش `#544537`.
 
+## ۲۶. تب «کاراکتر» (جلسه‌ی ۱۷)
+
+تب آخر منوی توقف = `CharacterPauseTab` (جایش `PlaceholderPauseTab("cases")` را گرفت).
+
+| بخش | داده |
+| --- | --- |
+| خلاصه | نُه آمار از `CharacterStats` + تاریخ از `WorldClock.Now` |
+| وسایل / کارها / پرونده‌ها | پیام «مرحله‌ی بعد» |
+
+`UsesSections => true`؛ Q/E بخش را عوض می‌کند، `Tab` بخش بعدی، Esc اول → خلاصه.
+ریل با کلیک هم کار می‌کند. کلیدهای زبان: `pause.tab.character`, `char.name`, `char.role`,
+`char.section.*`, `char.date.unknown`.
+
+مستند: `docs/29-character-tab.md`.
+

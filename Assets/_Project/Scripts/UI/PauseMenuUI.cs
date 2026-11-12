@@ -73,6 +73,21 @@ namespace TehranNoir.UI
 
         public TMP_FontAsset Font => !Persian && latinFont != null ? latinFont : font;
 
+        /// <summary>
+        /// یک باند تمام‌عرض صفحه (۱۹۲۰ واحد) با مبدأ بالا-چپ.
+        /// تب‌های دیگر از همین استفاده می‌کنند تا چیدمان‌شان به لبه‌ی راست قفل نشود.
+        /// </summary>
+        public static RectTransform Band(RectTransform parent, string name, float y, float height)
+        {
+            RectTransform rect = UiKit.Node(name, parent);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(0f, -(y + height));
+            rect.offsetMax = new Vector2(0f, -y);
+            return rect;
+        }
+
         /// <summary>زبان رابط از کانال «منو» می‌آید.</summary>
         public bool Persian => Loc.IsRtl(Loc.Channel.Menu);
 
@@ -535,7 +550,7 @@ namespace TehranNoir.UI
             _tabs.Add(new SystemPauseTab());
             _tabs.Add(new PlaceholderPauseTab("map", "pause.tab.map"));
             _tabs.Add(new PlaceholderPauseTab("codex", "pause.tab.codex"));
-            _tabs.Add(new PlaceholderPauseTab("cases", "pause.tab.cases"));
+            _tabs.Add(new CharacterPauseTab());
         }
 
         private void Build()

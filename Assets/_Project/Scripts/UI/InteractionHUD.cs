@@ -316,7 +316,7 @@ namespace TehranNoir.UI
                 RectTransform arrowBox = UiKit.Box("Arrow", row.Rect, arrowX, (RowHeight - 16f) * 0.5f, 16f, 16f);
 
                 row.Arrow = arrowBox.gameObject.AddComponent<Image>();
-                row.Arrow.sprite = HudArt.Icon(HudArt.Icon.ArrowLeft, 48, RowActiveText);
+                row.Arrow.sprite = HudArt.Icon(HudArt.Glyph.ArrowLeft, 48, RowActiveText);
                 row.Arrow.raycastTarget = false;
                 row.Arrow.gameObject.SetActive(false);
 
@@ -621,7 +621,7 @@ namespace TehranNoir.UI
             RectTransform iconBox = UiKit.Box("HeaderIcon", _card, iconX, 14f, 34f, 34f);
 
             Image icon = iconBox.gameObject.AddComponent<Image>();
-            icon.sprite = HudArt.Icon(HudArt.Icon.Chat, 64, TitleColor);
+            icon.sprite = HudArt.Icon(HudArt.Glyph.Chat, 64, TitleColor);
             icon.raycastTarget = false;
             icon.color = new Color(1f, 1f, 1f, 0.85f);
 

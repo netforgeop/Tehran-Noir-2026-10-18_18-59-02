@@ -330,15 +330,15 @@ namespace TehranNoir.UI
             }
         }
 
-        private static HudArt.Icon IconFor(StatId id)
+        private static HudArt.Glyph IconFor(StatId id)
         {
             switch (id)
             {
-                case StatId.Charisma: return HudArt.Icon.Crown;
-                case StatId.Fame: return HudArt.Icon.People;
-                case StatId.Honesty: return HudArt.Icon.Document;
-                case StatId.Loyalty: return HudArt.Icon.People;
-                default: return HudArt.Icon.Star;
+                case StatId.Charisma: return HudArt.Glyph.Crown;
+                case StatId.Fame: return HudArt.Glyph.People;
+                case StatId.Honesty: return HudArt.Glyph.Document;
+                case StatId.Loyalty: return HudArt.Glyph.People;
+                default: return HudArt.Glyph.Star;
             }
         }
 
@@ -534,7 +534,7 @@ namespace TehranNoir.UI
 
 
                 _sheetIcons[i] = iconBox.gameObject.AddComponent<Image>();
-                _sheetIcons[i].sprite = HudArt.Icon(HudArt.Icon.Star, 48, Cream);
+                _sheetIcons[i].sprite = HudArt.Icon(HudArt.Glyph.Star, 48, Cream);
                 _sheetIcons[i].raycastTarget = false;
                 _sheetIcons[i].preserveAspect = true;
 

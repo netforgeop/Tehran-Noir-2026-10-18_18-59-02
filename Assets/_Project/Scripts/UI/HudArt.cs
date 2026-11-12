@@ -17,7 +17,8 @@ namespace TehranNoir.UI
     /// </summary>
     public static class HudArt
     {
-        public enum Icon
+        /// <summary>شکل آیکون. «Glyph» نام دارد چون متدِ ساختش «Icon» است و هم‌نامی، خطای CS0102 می‌داد.</summary>
+        public enum Glyph
         {
             Chat,
             Star,
@@ -124,7 +125,7 @@ namespace TehranNoir.UI
            ============================================================ */
 
         /// <summary>آیکون خطی ساده. اندازه بر حسب پیکسل بافت؛ در رابط هر اندازه‌ای بخواهی می‌شود.</summary>
-        public static Sprite Icon(Icon icon, int size, Color color)
+        public static Sprite Icon(Glyph icon, int size, Color color)
         {
             string key = "icon." + icon + "." + size + "." + Mathf.RoundToInt(color.r * 255f) + "."
                 + Mathf.RoundToInt(color.g * 255f) + "." + Mathf.RoundToInt(color.b * 255f);
@@ -138,19 +139,19 @@ namespace TehranNoir.UI
 
             switch (icon)
             {
-                case Icon.Chat:
+                case Glyph.Chat:
                     Chat(mask, size);
                     break;
-                case Icon.Star:
+                case Glyph.Star:
                     Star(mask, size);
                     break;
-                case Icon.Crown:
+                case Glyph.Crown:
                     Crown(mask, size);
                     break;
-                case Icon.People:
+                case Glyph.People:
                     People(mask, size);
                     break;
-                case Icon.ArrowLeft:
+                case Glyph.ArrowLeft:
                     ArrowLeft(mask, size);
                     break;
                 default:

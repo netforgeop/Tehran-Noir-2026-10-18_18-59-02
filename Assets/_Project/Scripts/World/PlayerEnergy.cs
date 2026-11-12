@@ -198,7 +198,7 @@ namespace TehranNoir.World
             float delta = Time.deltaTime;
             float value = Current;
 
-            // دویدن: از سرعت واقعی کاراکتر فهمیده می‌شود، نه از دکمه
+            // دویدن: از قصد بازیکن فهمیده می‌شود (تپ دویدن + ورودی حرکت)
             if (IsSprinting())
             {
                 value -= sprintDrainPerSecond * delta;

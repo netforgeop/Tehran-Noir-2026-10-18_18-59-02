@@ -243,6 +243,21 @@ namespace TehranNoir.UI
             }
         }
 
+        /// <summary>پیام مرکز ستون: «بعداً» برای بخش‌های ساخته‌نشده.</summary>
+        private void ShowNote(string text, float y)
+        {
+            if (_note == null || _noteBox == null) return;
+
+            _note.text = text;
+            _noteBox.anchoredPosition = new Vector2(PanelX, -y);
+            _note.gameObject.SetActive(true);
+        }
+
+        private void HideNote()
+        {
+            if (_note != null) _note.gameObject.SetActive(false);
+        }
+
         /// <summary>
         /// یک ردیف ویژگی: ساعت گرد با آیکون، نام، و عدد.
         /// ساعت = یک ریل کامل + یک کمان به اندازه‌ی مقدار؛ رنگ از سرخ (کم) به سفید (زیاد).

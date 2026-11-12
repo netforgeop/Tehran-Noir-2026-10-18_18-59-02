@@ -523,7 +523,7 @@ namespace TehranNoir.Documents
                     new Color(color.r, color.g, color.b, 0.22f), textFont, persian);
                 ghost.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
                 ghost.lineSpacing = -6f;
-                ghost.enableWordWrapping = true;
+                ghost.textWrappingMode = TextWrappingModes.Normal;
                 ghost.text = text;
             }
 
@@ -535,7 +535,7 @@ namespace TehranNoir.Documents
             label.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
             label.fontStyle = style;
             label.lineSpacing = -6f;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
             label.text = text;
         }
 

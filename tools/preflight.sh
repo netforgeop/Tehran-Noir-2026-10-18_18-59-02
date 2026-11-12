@@ -21,7 +21,11 @@ echo "۴) using جاافتاده (CS0103 روی نام نوع)"
 python3 tools/usingcheck.py "$root" || status=1
 
 echo
-echo "۵) ارجاع داستان به آیتم‌ها (شناسه‌ی ناشناس / پروجکشن دستی)"
+echo "۵) APIهای منسوخ یا حذف‌شده‌ی یونیتی (CS0619/CS0618)"
+python3 tools/apicheck.py "$root" || status=1
+
+echo
+echo "۶) ارجاع داستان به آیتم‌ها (شناسه‌ی ناشناس / پروجکشن دستی)"
 python3 tools/storycheck.py || status=1
 
 exit $status

@@ -13,6 +13,13 @@ It is deliberately repository-wide rather than per-class: no false positives
 from inheritance, and it still catches the real mistake (a name that exists
 nowhere any more).
 
+A second pass catches the sibling failure: a name that exists only with the
+other capitalisation (`NotePath` where the field is `notePath`). It is kept
+narrow on purpose — only a PascalCase use, with no such member anywhere, whose
+lowercase form is a field declared in the same file, is reported. A wide
+version of this check produced a thousand false hits (`Image`/`image`,
+`Bool`/`bool`), so do not loosen it.
+
     python3 tools/symcheck.py Assets/_Project/Scripts
 """
 import glob
@@ -75,6 +82,22 @@ DECL_TYPE = re.compile(r'\b(?:class|struct|interface|enum)\s+([A-Za-z_]\w*)')
 
 CALL_RE = re.compile(r'(?<![\w.])([A-Za-z_]\w*)\s*\(')
 FIELD_USE_RE = re.compile(r'(?<![\w.])(_[A-Za-z]\w*)\b')
+
+# Every bare identifier, for the case-mismatch check.
+IDENT_RE = re.compile(r'(?<![\w.])([A-Za-z_]\w*)')
+
+# Fields declared with an access level, i.e. real members, not locals or
+# parameters. Only these can be the "other half" of a case-mismatch typo.
+FIELDS_WITH_MODIFIER = re.compile(
+    r'(?:public|private|protected|internal)\s+'
+    r'(?:(?:static|readonly|const|volatile|new)\s+)*'
+    r'[A-Za-z_][\w<>\[\],\.\?]*\s+([A-Za-z_]\w*)\s*(?:=[^;]*)?;')
+
+# Same, for a property whose opening brace sits on the next line.
+PROPERTIES_WITH_MODIFIER = re.compile(
+    r'(?:public|private|protected|internal)\s+'
+    r'(?:(?:static|readonly|virtual|override|sealed|new)\s+)*'
+    r'[A-Za-z_][\w<>\[\],\.\?]*\s+([A-Za-z_]\w*)\s*\r?\n\s*\{')
 
 
 def blank(text):
@@ -176,6 +199,45 @@ def declared_names(code):
     return names
 
 
+def member_names(code):
+    """اعلام‌های واقعیِ سطح کلاس: نوع، متد، خاصیت، فیلد با سطح دسترسی.
+
+    چرا جدا از `declared_names`؟ چون آن تابع از پارامترها و آرگومان‌ها هم نام
+    برمی‌دارد (`Check(..., NotePath)` را «اعلام» می‌شمرد) و بررسی تفاوت
+    بزرگ/کوچک را بی‌اثر می‌کرد.
+    """
+    names = set()
+
+    for m in DECL_TYPE.finditer(code):
+        names.add(m.group(1))
+
+    for m in DECL_SIGNATURE.finditer(code):
+        names.add(m.group(1))
+
+    for line in code.split('\n'):
+        text = line.strip()
+        if not text or text.startswith('//'):
+            continue
+
+        m = DECL_METHOD.search(text)
+        if m:
+            names.add(m.group(2))
+
+        for m in DECL_PROPERTY.finditer(text):
+            names.add(m.group(2))
+
+    for m in DECL_DELEGATE.finditer(code):
+        names.add(m.group(1))
+
+    for m in FIELDS_WITH_MODIFIER.finditer(code):
+        names.add(m.group(1))
+
+    for m in PROPERTIES_WITH_MODIFIER.finditer(code):
+        names.add(m.group(1))
+
+    return names
+
+
 def used_calls(code):
     for m in CALL_RE.finditer(code):
         name = m.group(1)
@@ -187,6 +249,72 @@ def used_calls(code):
         yield name, code[:m.start()].count('\n') + 1
 
 
+def case_mismatches(code, members):
+    """CS0103 از تفاوت بزرگ/کوچک: `NotePath` استفاده شد، `notePath` اعلام شده بود.
+
+    چرا این‌قدر باریک؟ چون یک بررسی عمومی روی همه‌ی نام‌ها هزار هشدار بی‌ربط
+    می‌دهد: `Image` نوع است و `image` متغیر محلی، `bool` کلیدواژه است و `Bool`
+    پارامتر. پس فقط این حالت گزارش می‌شود:
+
+      * فیلدی با سطح دسترسی در همین فایل اعلام شده (`private string notePath`)،
+      * نامی با حرف بزرگ شروع می‌شود و **هیچ‌جا** اعلام نشده،
+      * و شکل کوچکِ همان نام، همان فیلد است.
+    """
+    fields = {}
+
+    for m in FIELDS_WITH_MODIFIER.finditer(code):
+        fields[m.group(1).lower()] = m.group(1)
+
+    if not fields:
+        return []
+
+    found = []
+
+    for m in IDENT_RE.finditer(code):
+        name = m.group(1)
+
+        if not name[0].isupper():
+            continue
+
+        if name in members or name in EXTERNAL or name in KEYWORDS:
+            continue
+
+        if looks_like_type(code, m):
+            continue
+
+        twin = fields.get(name.lower())
+
+        if twin is None or twin == name:
+            continue
+
+        found.append((name, twin, code[:m.start()].count('\n') + 1))
+
+    return found
+
+
+def looks_like_type(code, match):
+    """آیا این کلمه در جایگاه «نوع» نشسته، نه در جایگاه «مقدار»؟
+
+    مثال دردسرساز: `CharacterController characterController;` — فیلد کوچک‌شروع
+    `characterController` هست و کلمه‌ی `CharacterController` نوعِ یونیتی؛
+    بدون این نگهبان، هر اعلام فیلد یک خطای بی‌ربط می‌شد.
+    """
+    before = code[:match.start()].rstrip()
+    after = code[match.end():].lstrip()
+
+    if before.endswith('<') or before.endswith('new '):
+        return True
+
+    if after.startswith('>'):
+        return True
+
+    # نام بعدی: یعنی همین کلمه نوعِ یک اعلام یا یک تبدیل (cast) است
+    if after and (after[0].isalpha() or after[0] == '_'):
+        return True
+
+    return False
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else 'Assets/_Project/Scripts'
     paths = [p for p in sorted(glob.glob(os.path.join(root, '**', '*.cs'), recursive=True))
@@ -195,10 +323,13 @@ def main():
     codes = {}
     declared = set()
 
+    members = set()
+
     for path in paths:
         code = blank(open(path, encoding='utf-8').read())
         codes[path] = code
         declared |= declared_names(code)
+        members |= member_names(code)
 
     problems = 0
 
@@ -223,6 +354,17 @@ def main():
                 continue
             seen.add((name, line))
             print(f'  {os.path.basename(path)} | line {line} | unknown field "{name}"')
+            problems += 1
+
+        mismatches = case_mismatches(code, members)
+
+        for name, twin, line in mismatches:
+            if (name, line) in seen:
+                continue
+
+            seen.add((name, line))
+            print(f'  {os.path.basename(path)} | line {line} | '
+                  f'case mismatch "{name}" (declared "{twin}")')
             problems += 1
 
     print('files:', len(paths), 'problems:', problems)

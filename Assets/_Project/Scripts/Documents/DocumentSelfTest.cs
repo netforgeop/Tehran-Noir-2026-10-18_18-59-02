@@ -31,6 +31,12 @@ namespace TehranNoir.Documents
         [Tooltip("مسیر یادداشت دست‌نویس، بدون پسوند")]
         [SerializeField] private string notePath = "Documents/note_yazdani";
 
+        /// <summary>مسیر یادداشت در Resources؛ خالی = پیش‌فرض همین فایل.</summary>
+        private string NotePath
+        {
+            get { return string.IsNullOrWhiteSpace(notePath) ? "Documents/note_yazdani" : notePath.Trim(); }
+        }
+
         private readonly List<string> _report = new List<string>(16);
 
         private int _passed;

@@ -249,8 +249,13 @@ namespace TehranNoir.Items
         /// </summary>
         public string Title(WorldState view, bool persian)
         {
+            // «آخرین» نامی که شرطش برقرار است برنده می‌شود، نه اولین.
+            // چرا؟ چون نام‌ها به ترتیب شماره نوشته می‌شوند و نام دقیق‌تر
+            // (خوانده‌شده) باید بر نام کلی‌تر (بازشده) مقدم باشد.
             if (Titles != null && Titles.Count > 0)
             {
+                ItemTitleVariant chosen = null;
+
                 for (int i = 0; i < Titles.Count; i++)
                 {
                     ItemTitleVariant variant = Titles[i];
@@ -258,8 +263,10 @@ namespace TehranNoir.Items
                     if (!variant.HasText) continue;
                     if (!variant.Matches(view)) continue;
 
-                    return variant.Text(persian);
+                    chosen = variant;
                 }
+
+                if (chosen != null) return chosen.Text(persian);
             }
 
             return Name(persian);

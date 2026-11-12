@@ -131,7 +131,7 @@ ItemEvents.ClearAll();
 | جزء | کار |
 | --- | --- |
 | `title.if` / `title.fa` / `title.en` (+ شماره) | نام جایگزین با شرط |
-| `ItemDefinition.Title(view, persian)` | اولین نامی که شرطش برقرار است |
+| `ItemDefinition.Title(view, persian)` | آخرین نامی که شرطش برقرار است (دقیق‌تر مقدم) |
 | `ItemRuntime.Title(instance, persian)` | همان، با دنیای «شده»ی همین نمونه |
 | `CharacterItemsSection` | کارت، خط شرح و نوار فعل از همین می‌خوانند |
 | `WorldItemPickup.Title` | کارت تعامل روی زمین هم همین را می‌گوید |

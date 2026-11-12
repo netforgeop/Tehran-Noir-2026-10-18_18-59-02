@@ -238,7 +238,7 @@ namespace TehranNoir.Items
             ItemResult open = ItemRuntime.Perform(document, ItemVerb.Open);
 
             Check("بازکردن مهر", open.Ok && document.GetState("sealed") == "0");
-            Check("اثر مهر در دنیا", world.Get("flag.letter.opened").Truthy());
+            Check("اثر مهر در دنیا", world.Get("flag.file.opened").Truthy());
 
             ItemResult read = ItemRuntime.Perform(document, ItemVerb.Read);
 

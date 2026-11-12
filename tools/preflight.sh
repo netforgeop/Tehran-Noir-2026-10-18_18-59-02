@@ -28,4 +28,14 @@ echo
 echo "۶) ارجاع داستان به آیتم‌ها (شناسه‌ی ناشناس / پروجکشن دستی)"
 python3 tools/storycheck.py || status=1
 
+echo
+echo "۷) ساختار دیالوگ‌ها (تگ ناشناخته / گره‌ی تکراری / پرش به گره‌ی نبوده)"
+python3 tools/dialoguecheck.py || status=1
+
+echo
+echo "۸) سلامت صحنه‌ها (شناسه، ارجاع، سلسله‌مراتب، SceneRoots)"
+for scene in Assets/_Project/Scenes/*.unity; do
+    python3 tools/scenecheck.py "$scene" || status=1
+done
+
 exit $status

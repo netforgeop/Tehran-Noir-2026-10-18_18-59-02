@@ -78,7 +78,13 @@ namespace TehranNoir.Characters
             new ReputationRule("confess", 10, 12, 0),
 
             // رضا فهمید دروغ گفتی: هم دروغ، هم خیانت به همکار.
-            new ReputationRule("caught", -6, -18, -14)
+            new ReputationRule("caught", -6, -18, -14),
+
+            // به شاهدِ ترسیده پناه دادی، وقتی راحت‌تر بود رد شوی.
+            new ReputationRule("witness_protect", 8, 0, 4),
+
+            // از یک پادوی ترسیده با تهدید حرف بیرون کشیدی.
+            new ReputationRule("witness_threat", -8, -5, 0)
         };
 
         /* ============================================================
@@ -126,6 +132,12 @@ namespace TehranNoir.Characters
 
                 case "caught":
                     return world.Get("known.reza.lie").Truthy();
+
+                case "witness_protect":
+                    return world.Get("flag.witness.protect").Truthy();
+
+                case "witness_threat":
+                    return world.Get("flag.witness.threat").Truthy();
 
                 default:
                     return false;

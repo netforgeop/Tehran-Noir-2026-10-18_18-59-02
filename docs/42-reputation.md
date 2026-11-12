@@ -43,6 +43,12 @@
 | `delivered` | `flag.quest.file >= 2` | ۰ | ۰ | +۸ |
 | `confess` | `flag.claim.seal == opened` | +۱۰ | +۱۲ | ۰ |
 | `caught` | `known.reza.lie == true` | −۶ | −۱۸ | −۱۴ |
+| `witness_protect` | `flag.witness.protect == true` | +۸ | ۰ | +۴ |
+| `witness_threat` | `flag.witness.threat == true` | −۸ | −۵ | ۰ |
+
+دو قاعده‌ی آخر از مأموریت `docs/43` آمدند: پناه دادن به یک شاهد شرافت است،
+از یک پادوی ترسیده حرف کشیدن با تهدید نیست. مسیر سوم آن مأموریت (خریدن بلیت
+خروج) عمداً هیچ قاعده‌ای ندارد — یک معامله است، نه فضیلت و نه گناه.
 
 **چرا «یک بار» مهم است:** آبرو یک رویداد است، نه یک وضعیت. اگر هر نیم‌ثانیه
 دوباره حساب شود، عدد تا ۱۰۰ بالا می‌رود و هیچ خطایی هم نمی‌دهد. برای همین
@@ -89,7 +95,7 @@
 | --- | --- |
 | `Scripts/Characters/Reputation.cs` | قاعده‌ها، اعمال، برچسب — همه روی `WorldState` |
 | `Scripts/Characters/ReputationBootstrap.cs` | ساخت خودکار در صحنه + بررسی هر نیم‌ثانیه |
-| `Scripts/Characters/ReputationSelfTest.cs` | ۱۵ بررسی، بدون صحنه |
+| `Scripts/Characters/ReputationSelfTest.cs` | ۲۰ بررسی، بدون صحنه |
 | `Scripts/UI/Pause/CharacterPauseTab.cs` | خط برچسب زیر نام |
 
 `ReputationBootstrap` خودش را فقط در صحنه‌ای می‌سازد که `WorldStateProvider`
@@ -106,7 +112,7 @@
 ## ۶. تست
 
 کامپوننت تازه: `ReputationSelfTest`. روی یک آبجکت خالی بگذار و Play بزن.
-انتظار: **۱۵ قبول، ۰ رد**.
+انتظار: **۲۰ قبول، ۰ رد**.
 
 | بررسی | چه چیزی را ثابت می‌کند |
 | --- | --- |

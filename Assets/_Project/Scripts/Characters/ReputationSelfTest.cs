@@ -108,7 +108,33 @@ namespace TehranNoir.Characters
             Check("صداقت زیر صفر نمی‌رود", Read(floor, Reputation.HonestyKey) == 0,
                 Read(floor, Reputation.HonestyKey).ToString());
 
-            // ۹) برچسب‌ها.
+            // ۹) شاهد چای‌خانه: تهدید سه عدد را پایین می‌آورد، حمایت شرافت را بالا.
+            WorldState threat = new WorldState();
+            threat.Set("flag.witness.threat", true);
+            Reputation.Tick(threat);
+
+            Check("تهدید شاهد شرافت را پایین می‌آورد", Read(threat, Reputation.HonorKey) == 42,
+                Read(threat, Reputation.HonorKey).ToString());
+
+            Check("تهدید شاهد صداقت را پایین می‌آورد", Read(threat, Reputation.HonestyKey) == 45,
+                Read(threat, Reputation.HonestyKey).ToString());
+
+            Reputation.Tick(threat);
+
+            Check("تهدید شاهد دوباره حساب نمی‌شود", Read(threat, Reputation.HonorKey) == 42,
+                Read(threat, Reputation.HonorKey).ToString());
+
+            WorldState protect = new WorldState();
+            protect.Set("flag.witness.protect", true);
+            Reputation.Tick(protect);
+
+            Check("حمایت شاهد شرافت را بالا می‌برد", Read(protect, Reputation.HonorKey) == 58,
+                Read(protect, Reputation.HonorKey).ToString());
+
+            Check("حمایت شاهد وفاداری را بالا می‌برد", Read(protect, Reputation.LoyaltyKey) == 54,
+                Read(protect, Reputation.LoyaltyKey).ToString());
+
+            // ۱۰) برچسب‌ها.
             Check("برچسب درستکار", Reputation.LabelOf(72, 55, 55) == ReputationLabel.Upright);
             Check("برچسب وفادار", Reputation.LabelOf(55, 60, 72) == ReputationLabel.Loyal);
             Check("برچسب خیانت‌کار", Reputation.LabelOf(90, 55, 25) == ReputationLabel.Traitor,

@@ -47,7 +47,7 @@ https://github.com/netforgeop/Tehran-Noir-2026-10-18_18-59-02
 | مسیر پروژه روی کامپیوتر کاربر | `D:\PYWP\Game\Unity Games\Tehran Noir\` |
 | ریپو | https://github.com/netforgeop/Tehran-Noir-2026-10-18_18-59-02 |
 | شاخه | `arena/4796527a-tehran-noir-2026-10-18-18-59-0` |
-| آخرین کامیت این نوشته | `b3ffebc` — fix(items): last matching title wins; align the seal test with flag.file.opened |
+| آخرین کامیت این نوشته | `840d188` — fix(items): last matching title wins; align the seal test with flag.file.opened |
 
 بازی اول کاربر است؛ سطح مهارت برنامه‌نویسی: مبتدی. کد باید ساده، مدولار و قابل توضیح بماند.
 
@@ -1326,3 +1326,40 @@ flag.quest.file == 3   با متغیر تعریف‌نشده  → نادرست
 **تست:** شبیه‌سازی بیرون از یونیتی روی همان جدول: دنیای خالی ۵۰/۵۰؛ تحویل ۵۸؛
 دور دوم همان ۵۸؛ اعتراف ۶۰/۶۲؛ لو رفتن ۵۴/۴۴/۴۴؛ کف صفر. `ReputationSelfTest`
 همین عددها را در بازی هم بررسی می‌کند.
+
+## ۵۰. مأموریت «شاهد آخر» — یک صحنه‌ی کامل (جلسه‌ی ۴۲)
+
+یک صحنه‌ی جدا ساخته شد: `Assets/_Project/Scenes/Teahouse.unity`. شب سیزدهم
+مرداد ۱۳۵۲، ساعت ۲۱:۱۰، چای‌خانه‌ی سعادت در خیابان ری. بازیکن می‌تواند قبضِ
+شب سیزدهم را روی پیشخوان بخواند و بعد مسعود را به حرف بکشاند.
+
+**سه راه، سه حقیقت ناقص:** بلیت کویت (اسم سرگرد یزدانی)، تهدید (جسد، بدون
+اسم، آبرو پایین)، اداره و شهادت (نصف حقیقت، آبرو بالا، قرار فردا شب). هیچ
+مسیری حقیقت کامل نمی‌دهد؛ مسیر پول نزدیک‌ترین است.
+
+| فایل | تغییر |
+| --- | --- |
+| `Scenes/Teahouse.unity` | تازه: ۴۸ آبجکت، از `Sandbox` مشتق شده |
+| `Dialogue/masoud_teahouse.txt` | تازه: ۱۸ گره، ۱۱ پایان |
+| `Resources/Documents/teahouse_chit.txt` | تازه: قبض، قالب `note` |
+| `Resources/Quests/witness.txt` | تازه: کار دو قدمی |
+| `Characters/Reputation.cs` | دو قاعده‌ی `witness_protect` (+۸ شرافت) و `witness_threat` (−۸ شرافت، −۵ صداقت) |
+| `Characters/ReputationSelfTest.cs` | ۱۵ → ۲۰ بررسی |
+| `Scripts/Documents/DocumentInteractable.cs.meta` | تازه: صحنه با GUID به این اسکریپت ارجاع می‌دهد |
+| `tools/make_teahouse_scene.py` | تازه: ساخت تکرارپذیر صحنه از `Sandbox` |
+| `tools/scenecheck.py` | تازه: گام ۸ `preflight` — شناسه، ارجاع، پدر/فرزند، `SceneRoots` |
+| `tools/dialoguecheck.py` | تازه: گام ۷ `preflight` — تگ، گره، پرش، گره‌ی بی‌راه |
+
+**نکته‌ی صحنه:** `WorldStateProvider.persistBetweenScenes` صفر است، پس این
+صحنه با دنیای تازه شروع می‌شود و پرچم‌های دفتر به آن نمی‌رسند. عمدی است:
+مأموریت باید مستقل قابل بازی باشد.
+
+**تله‌ی تازه:** `DocumentInteractable` هیچ متایی در گیت نداشت (مثل بیشتر
+اسکریپت‌های پوشه‌ی `Documents`). تا وقتی کسی در صحنه به آن ارجاع نمی‌داد
+مشکلی نبود؛ حالا هست. متا با GUID ثابت اضافه شد. اگر یونیتی صحنه را با
+`Missing (Mono Script)` باز کرد، اول `DocumentInteractable.cs` را دوباره
+ایمپورت کن.
+
+**تست:** `preflight` هشت گام؛ صحنه ۵۹۷ ارجاع صفر مشکل؛ دیالوگ ۸ فایل و ۱۰۹
+گره صفر مشکل؛ مسیرهای مأموریت با شبیه‌ساز بیرونی تا هر چهار پایان دور زده شد.
+در Unity هنوز Play نشده — اولین کاری که باید بکنی همین است.

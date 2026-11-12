@@ -1,4 +1,5 @@
 using UnityEngine;
+using TehranNoir.Core;
 using TehranNoir.Dialogue;
 using TehranNoir.Items;
 

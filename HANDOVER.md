@@ -1016,3 +1016,20 @@ Play هیچ شنونده‌ای نداشت.
 
 سند: `docs/37-story-item-link.md`
 
+## ۴۱. CS0103 «Localization» — using جاافتاده (جلسه‌ی ۳۲)
+
+`PickupInteractable` برای نام کارت از `Localization.Persian` استفاده می‌کرد
+ولی `using TehranNoir.Core;` نداشت. کامپایلر: `error CS0103: The name
+'Localization' does not exist in the current context`.
+
+**چرا ابزارهای قبلی نگرفتند:** `symcheck` نام را در کل پروژه می‌گشت و
+`Localization` واقعاً وجود داشت؛ چیزی که نبود، **فضای نامش** بود.
+
+**ابزار تازه:** `tools/usingcheck.py` — فضای نام هر نوع پروژه را جمع می‌کند و
+هر استفاده‌ای را که `using` لازم ندارد گزارش می‌دهد. کامنت و رشته پاک می‌شوند
+و عضوهای هم‌نامِ همان فایل (مثل `private const float Corner`) نوع حساب نمی‌شوند.
+
+اعتبارسنجی با تخریب: برداشتن همان یک خط `using` از یک کپی → «line 60».
+
+`tools/preflight.sh` حالا چهار بررسی دارد: cscheck، symcheck، argcheck، usingcheck.
+

@@ -16,4 +16,8 @@ echo
 echo "۳) تعداد آرگومان (CS1501/CS7036)"
 python3 tools/argcheck.py "$root" || status=1
 
+echo
+echo "۴) using جاافتاده (CS0103 روی نام نوع)"
+python3 tools/usingcheck.py "$root" || status=1
+
 exit $status

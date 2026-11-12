@@ -146,6 +146,7 @@ namespace TehranNoir.Items
                 case "store": return ItemFlags.Storable;
                 case "examine": return ItemFlags.Examinable;
                 case "destroy": return ItemFlags.Destroyable;
+                case "equip": return ItemFlags.Equippable;
 
                 default: return ItemFlags.None;
             }
@@ -165,6 +166,7 @@ namespace TehranNoir.Items
             if ((flags & ItemFlags.Storable) != 0) text += "store,";
             if ((flags & ItemFlags.Examinable) != 0) text += "examine,";
             if ((flags & ItemFlags.Destroyable) != 0) text += "destroy,";
+            if ((flags & ItemFlags.Equippable) != 0) text += "equip,";
 
             return text.TrimEnd(',');
         }

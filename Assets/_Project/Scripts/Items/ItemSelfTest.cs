@@ -1,0 +1,385 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using TehranNoir.Dialogue;
+
+namespace TehranNoir.Items
+{
+    /// <summary>
+    /// تست خودکار سیستم آیتم، بدون وابستگی به پکیج Test Framework.
+    ///
+    /// چرا این‌طور؟ چون مخزن پروژه `Packages/` را ندارد و نمی‌دانیم
+    /// `com.unity.test-framework` نصب است یا نه. این کامپوننت خودش اجرا
+    /// می‌شود، جدول PASS/FAIL در Console می‌گذارد و هیچ چیزی در صحنه لازم ندارد.
+    ///
+    /// استفاده: یک GameObject خالی بساز، همین کامپوننت را اضافه کن، Play.
+    /// یا از منوی سه‌نقطه‌ی کامپوننت «اجرای تست آیتم» را بزن.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class ItemSelfTest : MonoBehaviour
+    {
+        [Header("اجرا")]
+        [Tooltip("با شروع بازی خودکار اجرا شود")]
+        [SerializeField] private bool runOnStart = true;
+
+        [Tooltip("جدول نتیجه در Console چاپ شود")]
+        [SerializeField] private bool logReport = true;
+
+        private readonly List<string> _report = new List<string>(24);
+
+        private int _passed;
+        private int _failed;
+
+        private void Start()
+        {
+            if (runOnStart) Run();
+        }
+
+        [ContextMenu("اجرای تست آیتم")]
+        public void Run()
+        {
+            _report.Clear();
+            _passed = 0;
+            _failed = 0;
+
+            bool previousDocumentView = ItemRuntime.ShowDocumentOnRead;
+            ItemRuntime.ShowDocumentOnRead = false;
+
+            try
+            {
+                TestDefinitions();
+                TestCreate();
+                TestAddRemove();
+                TestStacking();
+                TestCapacity();
+                TestDrop();
+                TestTransfer();
+                TestDocument();
+                TestKey();
+                TestWeapon();
+                TestEvents();
+                TestSave();
+                TestMissingDefinition();
+                TestDuplicates();
+            }
+            catch (Exception exception)
+            {
+                _failed++;
+                _report.Add("FAIL  استثنا: " + exception.GetType().Name + " — " + exception.Message);
+            }
+            finally
+            {
+                ItemRuntime.ShowDocumentOnRead = previousDocumentView;
+                ItemWorld.ClearOverride();
+                InventoryManager.ResetAll();
+                ItemEvents.ClearAll();
+            }
+
+            string header = "[Items] تست: " + _passed + " قبول، " + _failed + " رد";
+
+            if (logReport) Debug.Log(header + "\n" + string.Join("\n", _report));
+        }
+
+        /* ============================================================
+           گروه‌های تست
+           ============================================================ */
+
+        private void TestDefinitions()
+        {
+            Fresh();
+
+            IReadOnlyList<ItemDefinition> all = ItemCatalog.All;
+            bool sane = all.Count > 0;
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                if (string.IsNullOrEmpty(all[i].Id)) sane = false;
+                if (all[i].Rules == null) sane = false;
+            }
+
+            Check("تعریف‌ها بار شدند", sane, "تعداد: " + all.Count);
+
+            ItemDefinition document = ItemCatalog.Get("file.sealed");
+
+            Check("سند بودن از doc می‌آید", document.IsDocument);
+            Check("قاعده‌ها پارس شدند", document.Rules.Count >= 2, "قاعده‌ها: " + document.Rules.Count);
+        }
+
+        private void TestCreate()
+        {
+            Fresh();
+
+            ItemInstance first = ItemInstance.Create("file.sealed");
+            ItemInstance second = ItemInstance.Create("file.sealed");
+
+            Check("ساخت نمونه", first != null && first.InstanceId.Length > 0);
+            Check("شناسه‌ی یکتا", first != null && second != null && first.InstanceId != second.InstanceId);
+            Check("وضعیت اولیه اعمال شد", first != null && first.GetState("sealed") == "1");
+        }
+
+        private void TestAddRemove()
+        {
+            WorldState world = Fresh();
+
+            ItemResult take = InventoryManager.Take("cigarettes", 5);
+
+            Check("اضافه‌کردن", take.Ok && InventoryManager.CountOf("cigarettes") == 5);
+            Check("پروجکشن در WorldState",
+                Math.Abs(world.Get(Inventory.Key("cigarettes")).AsNumber() - 5d) < 0.001d);
+
+            ItemInstance instance = FirstOf("cigarettes");
+            ItemResult remove = InventoryManager.Remove(instance, 2);
+
+            Check("کم‌کردن", remove.Ok && InventoryManager.CountOf("cigarettes") == 3);
+        }
+
+        private void TestStacking()
+        {
+            Fresh();
+
+            InventoryManager.Take("cigarettes", 5);
+
+            ItemInstance stack = FirstOf("cigarettes");
+            ItemResult split = InventoryManager.Split(stack, 2);
+
+            Check("تقسیم پشته",
+                split.Ok && InventoryManager.Player.StackCount == 2 && InventoryManager.CountOf("cigarettes") == 5);
+
+            ItemInstance part = FirstOf("cigarettes", 2);
+            ItemInstance main = FirstOf("cigarettes", 3);
+
+            ItemResult merge = InventoryManager.Merge(part, main);
+
+            Check("ادغام پشته",
+                merge.Ok && InventoryManager.Player.StackCount == 1 && InventoryManager.CountOf("cigarettes") == 5);
+        }
+
+        private void TestCapacity()
+        {
+            Fresh();
+
+            ItemContainer box = InventoryManager.Ensure("test.box", "", 1);
+
+            InventoryManager.Take("file.sealed", 1, "test.box");
+            ItemResult second = InventoryManager.Take("weapon.pistol_01", 1, "test.box");
+
+            Check("سقف جا رعایت شد", !second.Ok && second.Outcome == ItemOutcome.ContainerFull);
+            Check("ظرف همان یک آیتم را دارد", box != null && box.StackCount == 1);
+        }
+
+        private void TestDrop()
+        {
+            Fresh();
+
+            InventoryManager.Take("cigarettes", 1);
+
+            ItemInstance item = FirstOf("cigarettes");
+            ItemResult drop = ItemRuntime.Perform(item, ItemVerb.Drop);
+
+            Check("انداختن", drop.Ok && InventoryManager.CountOf("cigarettes") == 0);
+            Check("انداختن تکرار نمی‌کند",
+                InventoryManager.CountOf("cigarettes", InventoryManager.WorldId) == 1);
+
+            ItemResult again = ItemRuntime.Perform(item, ItemVerb.Drop);
+
+            Check("انداختن دوباره رد می‌شود",
+                !again.Ok && InventoryManager.CountOf("cigarettes", InventoryManager.WorldId) == 1);
+        }
+
+        private void TestTransfer()
+        {
+            Fresh();
+
+            InventoryManager.Take("ammo.9mm", 10);
+
+            ItemInstance ammo = FirstOf("ammo.9mm");
+            ItemResult move = InventoryManager.Move(ammo, InventoryManager.MissionId, 4);
+
+            Check("انتقال بین ظرف‌ها",
+                move.Ok &&
+                InventoryManager.CountOf("ammo.9mm") == 6 &&
+                InventoryManager.CountOf("ammo.9mm", InventoryManager.MissionId) == 4);
+        }
+
+        private void TestDocument()
+        {
+            WorldState world = Fresh();
+
+            InventoryManager.Take("file.sealed", 1);
+
+            ItemInstance document = FirstOf("file.sealed");
+
+            ItemResult before = ItemRuntime.Perform(document, ItemVerb.Read);
+
+            Check("مهر بسته: خواندن رد می‌شود",
+                !before.Ok && before.Outcome == ItemOutcome.ConditionFailed);
+
+            ItemResult open = ItemRuntime.Perform(document, ItemVerb.Open);
+
+            Check("بازکردن مهر", open.Ok && document.GetState("sealed") == "0");
+            Check("اثر مهر در دنیا", world.Get("flag.letter.opened").Truthy());
+
+            ItemResult read = ItemRuntime.Perform(document, ItemVerb.Read);
+
+            Check("خواندن بعد از بازکردن", read.Ok && document.GetState("read") == "1");
+            Check("نشانه‌ی داستانی خواندن",
+                world.Get(ItemRuntime.StoryFlag("file.sealed", ItemVerb.Read)).Truthy());
+        }
+
+        private void TestKey()
+        {
+            WorldState world = Fresh();
+
+            InventoryManager.Take("key.archive", 1);
+
+            ItemInstance key = FirstOf("key.archive");
+
+            ItemResult wrong = ItemRuntime.Perform(key, ItemVerb.Unlock, "door.other");
+            ItemResult right = ItemRuntime.Perform(key, ItemVerb.Unlock, "door.archive");
+
+            Check("کلید به قفل دیگر نمی‌خورد", !wrong.Ok);
+            Check("کلید به قفل خودش می‌خورد", right.Ok && world.Get("flag.door.archive").Truthy());
+        }
+
+        private void TestWeapon()
+        {
+            Fresh();
+
+            InventoryManager.Take("weapon.pistol_01", 1);
+
+            ItemInstance pistol = FirstOf("weapon.pistol_01");
+
+            ItemResult empty = ItemRuntime.Perform(pistol, ItemVerb.Use);
+            ItemResult reloadEmpty = ItemRuntime.Perform(pistol, ItemVerb.Reload);
+
+            Check("بدون فشنگ شلیک نمی‌شود", !empty.Ok);
+            Check("بدون فشنگ پر نمی‌شود", !reloadEmpty.Ok);
+
+            InventoryManager.Take("ammo.9mm", 10);
+
+            ItemResult reload = ItemRuntime.Perform(pistol, ItemVerb.Reload);
+            ItemResult fire = ItemRuntime.Perform(pistol, ItemVerb.Use);
+
+            Check("پرکردن", reload.Ok && pistol.GetState("ammo") == "8");
+            Check("شلیک یکی کم می‌کند", fire.Ok && pistol.GetState("ammo") == "7");
+        }
+
+        private void TestEvents()
+        {
+            Fresh();
+
+            int performed = 0;
+            Action<ItemEvent> handler = itemEvent => performed++;
+
+            ItemEvents.Performed += handler;
+
+            InventoryManager.Take("evidence.casing_01", 1);
+
+            ItemInstance casing = FirstOf("evidence.casing_01");
+
+            ItemRuntime.Perform(casing, ItemVerb.Examine);
+            ItemEvents.Performed -= handler;
+            ItemRuntime.Perform(casing, ItemVerb.Examine);
+
+            Check("رویداد یک بار می‌رسد و لغو می‌شود", performed == 1, "دریافت: " + performed);
+        }
+
+        private void TestSave()
+        {
+            Fresh();
+
+            InventoryManager.Take("file.sealed", 1);
+
+            ItemInstance document = FirstOf("file.sealed");
+
+            ItemRuntime.Perform(document, ItemVerb.Open);
+            InventoryManager.Take("cigarettes", 3);
+
+            string json = ItemSave.Capture();
+
+            InventoryManager.ResetAll();
+
+            bool cleared = InventoryManager.CountOf("cigarettes") == 0 &&
+                           InventoryManager.CountOf("file.sealed") == 0;
+
+            bool restored = ItemSave.Restore(json);
+
+            bool counts = InventoryManager.CountOf("cigarettes") == 3 &&
+                          InventoryManager.CountOf("file.sealed") == 1;
+
+            ItemInstance loaded = FirstOf("file.sealed");
+
+            Check("ذخیره", !string.IsNullOrEmpty(json) && cleared);
+            Check("بارگذاری", restored && counts);
+            Check("وضعیت سند در ذخیره", loaded != null && loaded.GetState("sealed") == "0");
+        }
+
+        private void TestMissingDefinition()
+        {
+            Fresh();
+
+            ItemDefinition missing = ItemCatalog.Get("no.such.item");
+            ItemInstance ghost = ItemInstance.Create("no.such.item");
+
+            Check("تعریف ناشناس امن است", missing != null && !ItemCatalog.Exists("no.such.item"));
+            Check("نمونه‌ی ناشناس ساخته می‌شود", ghost != null && !ghost.IsKnown);
+        }
+
+        private void TestDuplicates()
+        {
+            Fresh();
+
+            ItemContainer container = new ItemContainer("dup.test");
+            ItemInstance instance = ItemInstance.Create("cigarettes");
+
+            bool first = container.Add(instance);
+            bool second = container.Add(instance);
+
+            Check("شناسه‌ی تکراری در یک ظرف رد می‌شود",
+                first && !second && container.StackCount == 1);
+        }
+
+        /* ============================================================
+           ابزار
+           ============================================================ */
+
+        private static WorldState Fresh()
+        {
+            WorldState world = new WorldState();
+
+            ItemWorld.Override = world;
+            InventoryManager.ResetAll();
+            ItemEvents.ClearAll();
+
+            return world;
+        }
+
+        private static ItemInstance FirstOf(string definitionId, int quantity = 0)
+        {
+            ItemContainer player = InventoryManager.Player;
+
+            if (player == null) return null;
+
+            for (int i = 0; i < player.Items.Count; i++)
+            {
+                ItemInstance instance = player.Items[i];
+
+                if (instance.DefinitionId != definitionId) continue;
+                if (quantity > 0 && instance.Quantity != quantity) continue;
+
+                return instance;
+            }
+
+            return null;
+        }
+
+        private void Check(string name, bool ok, string detail = "")
+        {
+            if (ok) _passed++;
+            else _failed++;
+
+            _report.Add((ok ? "PASS  " : "FAIL  ") + name +
+                        (string.IsNullOrEmpty(detail) ? string.Empty : "  → " + detail));
+        }
+    }
+}

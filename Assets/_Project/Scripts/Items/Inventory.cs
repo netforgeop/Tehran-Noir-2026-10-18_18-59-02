@@ -27,14 +27,13 @@ namespace TehranNoir.Items
         /// <summary>پیشوند کلید در WorldState؛ در WorldState.Prefixes هم ثبت شده.</summary>
         public const string Prefix = "item.";
 
+        /// <summary>
+        /// دنیای بازی از یک راه. در بازی همان provider صحنه است و در تست
+        /// `ItemWorld.Override`؛ پس هر دو یک عدد می‌بینند.
+        /// </summary>
         private static WorldState World
         {
-            get
-            {
-                return WorldStateProvider.Instance != null
-                    ? WorldStateProvider.Instance.State
-                    : null;
-            }
+            get { return ItemWorld.Current; }
         }
 
         public static string Key(string id)
@@ -54,7 +53,11 @@ namespace TehranNoir.Items
 
             if (double.IsNaN(number) || number <= 0d) return 0;
 
-            return Mathf.Clamp(Mathf.RoundToInt((float)number), 0, ItemCatalog.Get(id).MaxStack);
+            // سقف پشته اینجا اعمال نمی‌شود: چند نمونه از یک آیتم تک‌عددی (دو پرونده)
+            // مجاز است و پروجکشن باید جمع همه را نشان دهد. سقف فقط هنگام ساختن نمونه.
+            int rounded = Mathf.RoundToInt((float)number);
+
+            return rounded < 0 ? 0 : rounded;
         }
 
         public static bool Has(string id, int amount = 1)

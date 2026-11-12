@@ -90,9 +90,19 @@ namespace TehranNoir.Interaction
             // جیب پر است؟ پس شیء هم برداشته نمی‌شود؛ وگرنه آیتم برای همیشه گم می‌شد.
             if (!CanStoreItem()) return;
 
-            _taken = true;
+            // از مدیر جیب رد می‌شویم تا نمونه، رویداد و پروجکشن با هم ساخته شوند.
+            if (!string.IsNullOrWhiteSpace(itemKey))
+            {
+                ItemResult added = InventoryManager.Take(itemKey, itemCount);
 
-            if (!string.IsNullOrWhiteSpace(itemKey)) Inventory.Add(itemKey, itemCount);
+                if (!added.Ok)
+                {
+                    Debug.LogWarning("[Item] برداشتن انجام نشد: " + added.Outcome, this);
+                    return;
+                }
+            }
+
+            _taken = true;
 
             Write(takenVariable, "true");
             Write(setOnTakeVariable, setOnTakeValue);
@@ -107,7 +117,8 @@ namespace TehranNoir.Interaction
         {
             if (string.IsNullOrWhiteSpace(itemKey)) return true;
 
-            bool room = Inventory.Room(itemKey) >= Mathf.Max(1, itemCount);
+            bool room = InventoryManager.CanAccept(
+                ItemCatalog.Normalize(itemKey), Mathf.Max(1, itemCount));
 
             if (!room)
                 Debug.LogWarning("[Item] جیب جا ندارد برای «" + itemKey + "»؛ شیء برداشته نشد.", this);

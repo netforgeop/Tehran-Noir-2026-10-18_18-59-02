@@ -833,3 +833,56 @@ python3 tools/cscheck.py Assets/_Project/Scripts
 
 سند کامل: `docs/34-item-framework.md`
 
+## ۳۴. آیتم داده‌محور: قاعده به‌جای کامپوننت (جلسه‌ی ۲۵)
+
+سند ۳۴ برای هر دسته کامپوننت جدا پیش‌بینی کرده بود. طبق خواسته‌ی صریح
+(«برای هر آیتم کامپوننت نمی‌خوام»)، رفتار آیتم به داده منتقل شد:
+
+| قبل | بعد |
+| --- | --- |
+| `DocumentComponent`، `WeaponComponent`، `KeyComponent` | یک گرامر قاعده برای همه |
+| دسته‌ی تازه = کلاس تازه | دسته‌ی تازه = یک مقدار در `enum ItemCategory` |
+| شرط داخل کد | `read.if=state.sealed = 0` |
+| اثر داخل کد | `read.do=state.read = 1; flag.letter.read = true` |
+
+**قاعده = فعل + شرط + اثر.** شرط و اثر همان گرامر `[if]`/`[do]` دیالوگ‌اند،
+پس `item.x >= 1`، `rel.reza`، `known.reza.*` و `state.*` همه کار می‌کنند.
+
+### فایل‌های تازه
+
+| فایل | کار |
+| --- | --- |
+| `Items/ItemVerb.cs` | نام فعل‌ها |
+| `Items/ItemRule.cs` | قاعده، مجموعه‌ی قاعده، جفت وضعیت |
+| `Items/ItemState.cs` | `state.*` + دنیای «شده» |
+| `Items/ItemResult.cs` | نتیجه و دلیل شکست (`item.reason.*`) |
+| `Items/ItemEvents.cs` | شش رویداد + پاک‌کردن در شروع بازی |
+| `Items/ItemContainer.cs` | ظرف |
+| `Items/InventoryManager.cs` | تراکنش‌ها + پروجکشن `item.*` |
+| `Items/ItemRuntime.cs` | اجرای فعل |
+| `Items/ItemSave.cs` | ذخیره‌ی نسخه‌دار |
+| `Items/ItemSelfTest.cs` | ۱۴ گروه تست داخل بازی |
+| `Editor/ItemBrowserWindow.cs` | پنجره‌ی `Tehran Noir/آیتم‌ها` |
+
+### قواعد ثابت
+
+| قاعده | چرا |
+| --- | --- |
+| `item.<id>` فقط با `InventoryManager` نوشته می‌شود | یک منبع شمارش؛ دیالوگ و F10 همان را می‌خوانند |
+| اثر `item.x - 1` در قاعده نوشته نشود | پروجکشن با نمونه‌ها ناهماهنگ می‌شود |
+| وضعیت فقط روی `ItemInstance` | دو سند با یک تعریف باید دو حالت داشته باشند |
+| شماره‌ی شناسه‌ی نمونه یکتاست؛ ظرف تکراری را رد می‌کند | بارگذاری نباید آیتم را دو بار بسازد |
+
+### ابزارها
+
+`python3 tools/itemcheck.py` حالا فعل، `state.*`، `target`، `consume` و
+`doc` را هم بررسی می‌کند. `bash tools/preflight.sh` بدون تغییر.
+
+### تست
+
+`ItemSelfTest` را روی یک GameObject بگذار و Play بزن؛ جدول PASS/FAIL در Console.
+گروه‌ها: تعریف، ساخت، اضافه/کم، پشته، جا، انداختن، انتقال، سند، کلید،
+سلاح، رویداد، ذخیره، تعریف ناشناس، شناسه‌ی تکراری.
+
+سند کامل: `docs/35-item-rules.md`
+

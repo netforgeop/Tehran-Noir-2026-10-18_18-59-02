@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
+using TehranNoir.Dialogue;
 
 namespace TehranNoir.Items
 {
@@ -62,6 +63,16 @@ namespace TehranNoir.Items
 
             _loaded = true;
             Load();
+        }
+
+        /// <summary>خواندن دوباره‌ی فایل؛ برای پنجره‌ی ادیتور و تست.</summary>
+        public static void Reload()
+        {
+            Ordered.Clear();
+            Map.Clear();
+            Fallbacks.Clear();
+            _loaded = false;
+            EnsureLoaded();
         }
 
         public static bool Exists(string id)
@@ -138,6 +149,23 @@ namespace TehranNoir.Items
             }
         }
 
+        private sealed class RuleDraft
+        {
+            public ItemVerb Verb;
+            public string WhenSource = string.Empty;
+            public Condition When;
+            public readonly List<string> Effects = new List<string>(2);
+            public bool Consume;
+            public string TargetId = string.Empty;
+            public int Order;
+            public bool Broken;
+
+            public ItemRule Build()
+            {
+                return new ItemRule(Verb, WhenSource, When, Effects.ToArray(), Consume, TargetId, Order);
+            }
+        }
+
         private static ItemDefinition Parse(string line, int number)
         {
             string text = (line ?? string.Empty).Trim();
@@ -162,7 +190,7 @@ namespace TehranNoir.Items
 
             int maxStack = 1;
 
-            if (parts.Length >= MinFields + 1)
+            if (parts.Length >= MinFields + 1 && parts[MinFields].Trim().Length > 0)
             {
                 string raw = parts[MinFields].Trim();
 
@@ -174,9 +202,17 @@ namespace TehranNoir.Items
             string descriptionEnglish = string.Empty;
             string iconPath = string.Empty;
             string prefabPath = string.Empty;
+            string documentPath = string.Empty;
             ItemFlags flags = ItemFlags.All;
             float weight = 0f;
             int value = 0;
+
+            List<ItemStatePair> initialState = new List<ItemStatePair>(2);
+            List<string> takeEffects = new List<string>(2);
+            List<string> dropEffects = new List<string>(2);
+
+            Dictionary<string, RuleDraft> drafts =
+                new Dictionary<string, RuleDraft>(4, StringComparer.Ordinal);
 
             for (int i = MinFields + 1; i < parts.Length; i++)
             {
@@ -194,6 +230,91 @@ namespace TehranNoir.Items
 
                 string key = token.Substring(0, split).Trim().ToLowerInvariant();
                 string val = token.Substring(split + 1).Trim();
+
+                if (key == "doc")
+                {
+                    documentPath = val;
+                    continue;
+                }
+
+                if (key == "ontake.do")
+                {
+                    AddEffects(takeEffects, val);
+                    continue;
+                }
+
+                if (key == "ondrop.do")
+                {
+                    AddEffects(dropEffects, val);
+                    continue;
+                }
+
+                if (key.StartsWith(ItemState.Prefix, StringComparison.Ordinal))
+                {
+                    string stateKey = key.Substring(ItemState.Prefix.Length);
+
+                    if (stateKey.Length == 0)
+                    {
+                        Debug.LogWarning("[Items] خط " + number + " کلید وضعیت خالی است: " + token);
+                        continue;
+                    }
+
+                    initialState.Add(new ItemStatePair(stateKey, val));
+                    continue;
+                }
+
+                ItemVerb verb;
+                string field;
+                int order;
+
+                if (TrySplitRuleKey(key, out verb, out field, out order))
+                {
+                    string draftKey = ItemVerbs.Name(verb) + "#" + order.ToString(CultureInfo.InvariantCulture);
+
+                    RuleDraft draft;
+
+                    if (!drafts.TryGetValue(draftKey, out draft))
+                    {
+                        draft = new RuleDraft();
+                        draft.Verb = verb;
+                        draft.Order = order;
+                        drafts[draftKey] = draft;
+                    }
+
+                    switch (field)
+                    {
+                        case "if":
+                            draft.WhenSource = val;
+
+                            Condition condition;
+                            string error;
+
+                            if (ConditionParser.TryParse(val, out condition, out error))
+                            {
+                                draft.When = condition;
+                            }
+                            else
+                            {
+                                draft.Broken = true;
+                                Debug.LogWarning("[Items] خط " + number + " شرط خراب در «" + key + "»: " + error);
+                            }
+                            break;
+
+                        case "do":
+                            AddEffects(draft.Effects, val);
+                            break;
+
+                        case "consume":
+                            draft.Consume = ParseBool(val, true);
+                            break;
+
+                        case "target":
+                            draft.TargetId = val;
+                            break;
+                    }
+
+                    continue;
+                }
 
                 switch (key)
                 {
@@ -243,6 +364,11 @@ namespace TehranNoir.Items
                 }
             }
 
+            List<ItemRule> rules = new List<ItemRule>(drafts.Count);
+
+            foreach (KeyValuePair<string, RuleDraft> pair in drafts)
+                if (!pair.Value.Broken) rules.Add(pair.Value.Build());
+
             return new ItemDefinition(
                 id,
                 parts[1].Trim(),
@@ -256,7 +382,60 @@ namespace TehranNoir.Items
                 prefabPath,
                 subcategory,
                 descriptionPersian,
-                descriptionEnglish);
+                descriptionEnglish,
+                documentPath,
+                initialState,
+                new ItemRuleSet(rules),
+                takeEffects.ToArray(),
+                dropEffects.ToArray());
+        }
+
+        /// <summary>«read.if» یا «read.do.2» را به فعل، فیلد و شماره می‌شکند.</summary>
+        private static bool TrySplitRuleKey(string key, out ItemVerb verb, out string field, out int order)
+        {
+            verb = ItemVerb.None;
+            field = string.Empty;
+            order = 0;
+
+            string[] pieces = (key ?? string.Empty).Split('.');
+
+            if (pieces.Length < 2 || pieces.Length > 3) return false;
+            if (!ItemVerbs.TryParse(pieces[0], out verb)) return false;
+
+            field = pieces[1];
+
+            if (field != "if" && field != "do" && field != "consume" && field != "target") return false;
+
+            if (pieces.Length == 3 &&
+                !int.TryParse(pieces[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out order))
+                return false;
+
+            return true;
+        }
+
+        /// <summary>اثرها با «؛» جدا می‌شوند: «flag.x = true; rel.reza - 1»</summary>
+        private static void AddEffects(List<string> target, string raw)
+        {
+            if (target == null || string.IsNullOrEmpty(raw)) return;
+
+            string[] pieces = raw.Split(';');
+
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                string piece = pieces[i].Trim();
+
+                if (piece.Length > 0) target.Add(piece);
+            }
+        }
+
+        private static bool ParseBool(string raw, bool fallback)
+        {
+            string text = (raw ?? string.Empty).Trim().ToLowerInvariant();
+
+            if (text == "1" || text == "true" || text == "yes" || text == "on") return true;
+            if (text == "0" || text == "false" || text == "no" || text == "off") return false;
+
+            return fallback;
         }
 
         private static bool HasSpace(string id)

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TehranNoir.Documents;
 using TehranNoir.Items;
 using TehranNoir.Settings;
 
@@ -546,10 +547,13 @@ namespace TehranNoir.UI
             RefreshDetail();
         }
 
-        /// <summary>Enter: روی نوار یعنی «همین دسته» یا «عوض کردن ترتیب».</summary>
+        /// <summary>
+        /// Enter: روی نوار یعنی «همین دسته» یا «عوض کردن ترتیب»،
+        /// روی کارت یعنی «فعل اصلی همین آیتم».
+        /// </summary>
         public bool Activate()
         {
-            if (!_focusFilter) return false;
+            if (!_focusFilter) return PerformSelected();
 
             if (_filterFocus == SortChip)
             {
@@ -569,6 +573,79 @@ namespace TehranNoir.UI
 
             RebuildKeepingFocus(_filterFocus);
             return true;
+        }
+
+        /// <summary>
+        /// فعل اصلی کارت: سند → خواندن، آیتم با قاعده/پرچم استفاده → استفاده،
+        /// بقیه → بررسی. خودِ «چه شرطی لازم است» در داده‌ی آیتم است، نه اینجا.
+        /// </summary>
+        private bool PerformSelected()
+        {
+            if (_filtered.Count == 0 || _index < 0 || _index >= _filtered.Count) return false;
+
+            ItemInstance instance = FindInstance(_filtered[_index].Definition.Id);
+
+            if (instance == null) return false;
+
+            ItemVerb verb = PrimaryVerb(instance.Definition);
+            bool showDocument = verb == ItemVerb.Read && instance.Definition.IsDocument;
+
+            // برگه را خودمان بعد از بستن منو باز می‌کنیم، وگرنه دو لایه روی هم می‌افتند.
+            bool previous = ItemRuntime.ShowDocumentOnRead;
+
+            if (showDocument) ItemRuntime.ShowDocumentOnRead = false;
+
+            ItemResult result = ItemRuntime.Perform(instance, verb);
+
+            ItemRuntime.ShowDocumentOnRead = previous;
+
+            if (result.Ok && showDocument)
+            {
+                if (_menu != null) _menu.Resume();
+
+                DocumentLayer.ShowResource(instance.Definition.DocumentPath);
+
+                return true;
+            }
+
+            RefreshDetail();
+
+            if (result.Ok)
+            {
+                _detail.text = instance.Definition.Name(Rtl) + "   ·   " +
+                               Loc.Get(Loc.Channel.Menu, ItemVerbs.LocKey(verb));
+            }
+            else
+            {
+                _detail.text = Loc.Get(Loc.Channel.Menu, result.ReasonKey);
+            }
+
+            return true;
+        }
+
+        private static ItemVerb PrimaryVerb(ItemDefinition definition)
+        {
+            if (definition.IsDocument) return ItemVerb.Read;
+            if (definition.HasRule(ItemVerb.Use)) return ItemVerb.Use;
+            if (definition.Has(ItemFlags.Usable)) return ItemVerb.Use;
+
+            return ItemVerb.Examine;
+        }
+
+        private static ItemInstance FindInstance(string definitionId)
+        {
+            ItemContainer player = InventoryManager.Player;
+
+            if (player == null) return null;
+
+            for (int i = 0; i < player.Items.Count; i++)
+            {
+                ItemInstance instance = player.Items[i];
+
+                if (instance.DefinitionId == definitionId) return instance;
+            }
+
+            return null;
         }
 
         private void RebuildKeepingFocus(int focus)

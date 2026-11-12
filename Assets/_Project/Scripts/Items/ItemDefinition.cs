@@ -1,10 +1,15 @@
 using System;
+using System.Collections.Generic;
+using TehranNoir.Dialogue;
 
 namespace TehranNoir.Items
 {
     /// <summary>
     /// کارهایی که آیتم اجازه می‌دهد. به‌جای یک بولی برای هر کار، یک عدد بیتی:
     /// آیتم تازه = یک مقدار در فایل، نه یک فیلد تازه در کلاس.
+    ///
+    /// این پرچم‌ها «اجازه‌ی کلی» هستند؛ شرط دقیق‌تر (مثلاً «فقط وقتی مهر باز است»)
+    /// در قاعده‌ی همان فعل نوشته می‌شود، نه اینجا.
     /// </summary>
     [Flags]
     public enum ItemFlags
@@ -16,15 +21,16 @@ namespace TehranNoir.Items
         Storable = 8,
         Examinable = 16,
         Destroyable = 32,
-        All = Usable | Droppable | Tradable | Storable | Examinable | Destroyable
+        Equippable = 64,
+        All = Usable | Droppable | Tradable | Storable | Examinable | Destroyable | Equippable
     }
 
     /// <summary>
-    /// تعریف یک آیتم: فقط داده، بدون وضعیت. همه‌ی فیلدها readonly‌اند تا هیچ‌کس
-    /// اشتباهی حالت یک نمونه را روی تعریف مشترک ننویسد.
+    /// تعریف یک آیتم: فقط داده، بدون وضعیت. همه‌ی فیلدهای ساده readonly‌اند تا
+    /// هیچ‌کس اشتباهی حالت یک نمونه را روی تعریف مشترک ننویسد.
     ///
-    /// وضعیت در ItemInstance است؛ دو سند با یک تعریف می‌توانند یکی بازشده و
-    /// یکی مهرشده باشند.
+    /// رفتار (چه شرطی، چه اثری) در `Rules` است و از `items.txt` می‌آید؛
+    /// برای آیتم تازه هیچ کلاس C# نوشته نمی‌شود.
     /// </summary>
     public sealed class ItemDefinition
     {
@@ -53,6 +59,21 @@ namespace TehranNoir.Items
         /// <summary>مسیر Prefab داخل Resources، بدون پسوند. خالی = دارد نیست.</summary>
         public readonly string PrefabPath;
 
+        /// <summary>مسیر سند خواندنی داخل Resources. خالی = سند نیست.</summary>
+        public readonly string DocumentPath;
+
+        /// <summary>وضعیت‌های اولیه‌ی نمونه؛ `state.sealed = 1` و مانند آن.</summary>
+        public readonly List<ItemStatePair> InitialState;
+
+        /// <summary>قاعده‌های فعل‌ها: use / read / open / unlock / …</summary>
+        public readonly ItemRuleSet Rules;
+
+        /// <summary>اثرهایی که خودِ برداشتن اجرا می‌کند.</summary>
+        public readonly string[] TakeEffects;
+
+        /// <summary>اثرهایی که خودِ انداختن اجرا می‌کند.</summary>
+        public readonly string[] DropEffects;
+
         public ItemDefinition(
             string id,
             string persian,
@@ -66,7 +87,12 @@ namespace TehranNoir.Items
             string prefabPath = "",
             string subcategory = "",
             string descriptionPersian = "",
-            string descriptionEnglish = "")
+            string descriptionEnglish = "",
+            string documentPath = "",
+            List<ItemStatePair> initialState = null,
+            ItemRuleSet rules = null,
+            string[] takeEffects = null,
+            string[] dropEffects = null)
         {
             Id = string.IsNullOrEmpty(id) ? string.Empty : id;
 
@@ -86,6 +112,12 @@ namespace TehranNoir.Items
 
             IconPath = iconPath ?? string.Empty;
             PrefabPath = prefabPath ?? string.Empty;
+            DocumentPath = documentPath ?? string.Empty;
+
+            InitialState = initialState ?? new List<ItemStatePair>(0);
+            Rules = rules ?? ItemRuleSet.Empty;
+            TakeEffects = takeEffects ?? ItemRule.Empty;
+            DropEffects = dropEffects ?? ItemRule.Empty;
         }
 
         /// <summary>سبد نمایشی قدیمی؛ رابط کاربری فعلی همین را می‌خواند.</summary>
@@ -106,6 +138,61 @@ namespace TehranNoir.Items
             get { return MaxStack > 1; }
         }
 
+        public bool IsDocument
+        {
+            get { return !string.IsNullOrEmpty(DocumentPath); }
+        }
+
+        /// <summary>آیا اصلاً برای این فعل قاعده‌ای نوشته شده؟ (بدون بررسی شرط)</summary>
+        public bool HasRule(ItemVerb verb)
+        {
+            return Rules != null && Rules.HasVerb(verb);
+        }
+
+        /// <summary>
+        /// پیدا کردن قاعده‌ی جاری. `view` دنیای «شده» است (دنیا + state این نمونه).
+        /// </summary>
+        public ItemRule FindRule(ItemVerb verb, WorldState view, string targetId)
+        {
+            if (Rules == null) return null;
+
+            return Rules.Find(verb, view, targetId);
+        }
+
+        /// <summary>
+        /// آیا این فعل روی این آیتم «قابل انجام» است؟ برای نمایش دکمه‌ها.
+        /// قاعده‌ی نوشته‌شده مقدم است؛ اگر قاعده‌ای نبود، پرچم‌ها و سند تعیین می‌کنند.
+        /// </summary>
+        public bool CanDo(ItemVerb verb, WorldState view, string targetId)
+        {
+            if (HasRule(verb)) return FindRule(verb, view, targetId) != null;
+
+            return HasDefault(verb);
+        }
+
+        /// <summary>رفتار پیش‌فرض وقتی طراحی برای فعل، قاعده‌ای ننوشته است.</summary>
+        public bool HasDefault(ItemVerb verb)
+        {
+            switch (verb)
+            {
+                case ItemVerb.Examine: return Has(ItemFlags.Examinable);
+                case ItemVerb.Drop: return Has(ItemFlags.Droppable);
+                case ItemVerb.Equip: return Has(ItemFlags.Equippable);
+                case ItemVerb.Unequip: return Has(ItemFlags.Equippable);
+                case ItemVerb.Read: return IsDocument;
+                case ItemVerb.Use:
+                case ItemVerb.Consume: return Has(ItemFlags.Usable);
+
+                default: return false;
+            }
+        }
+
+        /// <summary>کوتاه‌نویسی برای حالت‌های نمایشی (معادل HasDefault).</summary>
+        public bool Allows(ItemFlags flag)
+        {
+            return Has(flag);
+        }
+
         public string Name(bool persian)
         {
             return persian ? Persian : English;
@@ -122,7 +209,7 @@ namespace TehranNoir.Items
 
         public override string ToString()
         {
-            return Id + " (" + Category + ", max " + MaxStack + ")";
+            return Id + " (" + Category + ", max " + MaxStack + ", rules " + (Rules != null ? Rules.Count : 0) + ")";
         }
     }
 }

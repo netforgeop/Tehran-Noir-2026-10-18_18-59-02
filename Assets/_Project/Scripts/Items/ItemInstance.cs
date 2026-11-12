@@ -64,7 +64,12 @@ namespace TehranNoir.Items
 
             if (unique.Length == 0) return null;
 
-            return new ItemInstance(unique, id, ClampQuantity(quantity), 1f, string.Empty);
+            ItemInstance instance = new ItemInstance(unique, id, ClampQuantity(quantity), 1f, string.Empty);
+
+            // وضعیت‌های اولیه‌ی تعریف (state.sealed = 1 ...) روی نمونه می‌نشینند.
+            ItemState.ApplyDefaults(instance);
+
+            return instance;
         }
 
         /// <summary>
@@ -84,6 +89,8 @@ namespace TehranNoir.Items
             if (unique.Length == 0 || id.Length == 0) return null;
 
             ItemInstance instance = new ItemInstance(unique, id, ClampQuantity(quantity), ClampDurability(durability), containerId);
+
+            ItemState.ApplyDefaults(instance);
 
             return instance;
         }

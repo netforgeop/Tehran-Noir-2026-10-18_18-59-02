@@ -6,17 +6,19 @@
 
 چه چیزی را می‌گیرد:
   * شناسه‌ی خالی، دارای فاصله یا تکراری
-  * دسته‌ی ناشناس (در بازی بی‌صدا Miscellaneous می‌شود، یکجا همیشه ناشناس می‌ماند)
+  * دسته یا فعل ناشناس
   * بیشترین تعداد نامعتبر
   * گزینه‌ی بی‌شکل (بدون =) یا کلید ناشناس
-  * وزن/ارزش/پرچم نامعتبر
-  * آیکون یا Prefab که مسیرش وجود ندارد
+  * وزن/ارزش/پرچم/مصرف نامعتبر
+  * اثر بی‌عملگر (مثلاً `flag.x true`)
+  * آیکون، Prefab یا سندی که مسیرش وجود ندارد
 
 خروجی: یک خط برای هر مشکل، و در آخر شمارش. کد خروج ۱ یعنی مشکل هست.
 """
 
 import io
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -28,51 +30,73 @@ CATEGORIES = {
     "consumable", "tool", "quest", "item", "misc",
 }
 
-FLAGS = {"use", "drop", "trade", "store", "examine", "destroy"}
+VERBS = {
+    "use", "equip", "unequip", "drop", "read", "open", "close",
+    "consume", "unlock", "give", "store", "reload", "examine",
+}
+
+FLAGS = {"use", "drop", "trade", "store", "examine", "destroy", "equip"}
 FLAG_ALIASES = {"all", "none", "-", "*"}
-OPTION_KEYS = {"weight", "value", "flags", "icon", "prefab", "sub", "desc.fa", "desc.en"}
-ICON_EXTENSIONS = ("", ".png", ".jpg", ".jpeg")
+
+SIMPLE_KEYS = {"weight", "value", "flags", "icon", "prefab", "sub", "desc.fa", "desc.en", "doc"}
+
+BOOLEANS = {"1", "0", "true", "false", "yes", "no", "on", "off"}
+
+RULE_RE = re.compile(r"^(?P<verb>[a-z]+)\.(?P<field>if|do|consume|target)(?:\.(?P<order>\d+))?$")
+
+EXTENSIONS = ("", ".png", ".jpg", ".jpeg")
 
 
 def normalize(text):
     return (text or "").strip().lower()
 
 
-def check_icon(path, problems, line_no):
-    """icon=Icons/Keys/archive  →  Resources/Icons/Keys/archive.png"""
+def resource_exists(path, extension=".prefab"):
     clean = path.strip()
     base = os.path.join(RESOURCES, clean)
 
-    for ext in ICON_EXTENSIONS:
-        candidate = base + ext
-        if ext == "" and os.path.isdir(candidate):
-            return
-        if os.path.isfile(candidate):
-            return
+    if extension == "":
+        if os.path.isdir(base):
+            return True
 
-    problems.append((line_no, "آیکون پیدا نشد: " + clean))
+        for ext in EXTENSIONS:
+            if os.path.isfile(base + ext):
+                return True
 
+        return False
 
-def check_prefab(path, problems, line_no):
-    clean = path.strip()
-    candidate = os.path.join(RESOURCES, clean + ".prefab")
-
-    if not os.path.isfile(candidate):
-        problems.append((line_no, "Prefab پیدا نشد: " + clean))
+    return os.path.isfile(base + extension)
 
 
-def parse_float(text):
-    try:
-        return float(text)
-    except ValueError:
-        return None
+def has_operator(effect):
+    for index, char in enumerate(effect):
+        if char in "=+-" and index > 0:
+            return True
+
+    return False
 
 
-def parse_int(text):
-    try:
-        return int(text)
-    except ValueError:
-        return None
+def check_effects(raw, problems, line_no, label):
+    for piece in raw.split(";"):
+        piece = piece.strip()
+
+        if not piece:
+            continue
+
+        key = piece.split("=")[0].split("+")[0].split("-")[0].strip()
+
+        if not key:
+            problems.append((line_no, "%s اثر بی‌نام دارد: %s" % (label, piece)))
+            continue
+
+        if "." not in key and key not in {
+            "time", "weather", "energy", "fear", "sanity", "trust",
+            "playerAge", "season", "year", "month", "day", "hour",
+        }:
+            problems.append((line_no, "%s کلیدِ اثر بدون پیشوند: %s" % (label, key)))
+
+        if not has_operator(piece):
+            problems.append((line_no, "%s اثر بدون عملگر: %s" % (label, piece)))
 
 
 def main():
@@ -123,9 +147,12 @@ def main():
             problems.append((index, "دسته‌ی ناشناس «%s» (یکی از: %s)" % (category, ", ".join(sorted(CATEGORIES)))))
 
         if len(parts) >= 5 and parts[4].strip():
-            stack = parse_int(parts[4].strip())
+            try:
+                stack = int(parts[4].strip())
+            except ValueError:
+                stack = 0
 
-            if stack is None or stack < 1:
+            if stack < 1:
                 problems.append((index, "بیشترین تعداد نامعتبر: " + parts[4].strip()))
 
         for token in parts[5:]:
@@ -142,35 +169,67 @@ def main():
             key = normalize(key)
             value = value.strip()
 
-            if key not in OPTION_KEYS:
+            if key.startswith("state."):
+                if len(key) <= len("state."):
+                    problems.append((index, "کلید وضعیت خالی: " + token))
+                continue
+
+            if key in SIMPLE_KEYS:
+                if key == "weight":
+                    try:
+                        if float(value) < 0:
+                            raise ValueError
+                    except ValueError:
+                        problems.append((index, "وزن نامعتبر: " + value))
+
+                elif key == "value":
+                    try:
+                        if int(value) < 0:
+                            raise ValueError
+                    except ValueError:
+                        problems.append((index, "ارزش نامعتبر: " + value))
+
+                elif key == "flags":
+                    cleaned = normalize(value)
+                    if cleaned not in FLAG_ALIASES:
+                        for name in cleaned.split(","):
+                            name = name.strip()
+                            if name and name not in FLAGS:
+                                problems.append((index, "پرچم ناشناس: " + name))
+
+                elif key == "icon":
+                    if value and not resource_exists(value, ""):
+                        problems.append((index, "آیکون پیدا نشد: " + value))
+
+                elif key == "prefab":
+                    if value and not resource_exists(value):
+                        problems.append((index, "Prefab پیدا نشد: " + value))
+
+                elif key == "doc":
+                    if value and not resource_exists(value, ".txt"):
+                        problems.append((index, "سند پیدا نشد: " + value))
+
+                continue
+
+            match = RULE_RE.match(key)
+
+            if not match:
                 problems.append((index, "کلید ناشناس: " + key))
                 continue
 
-            if key == "weight":
-                number = parse_float(value)
-                if number is None or number < 0:
-                    problems.append((index, "وزن نامعتبر: " + value))
+            verb = match.group("verb")
+            field = match.group("field")
 
-            elif key == "value":
-                number = parse_int(value)
-                if number is None or number < 0:
-                    problems.append((index, "ارزش نامعتبر: " + value))
+            if verb not in VERBS:
+                problems.append((index, "فعل ناشناس: " + verb))
+                continue
 
-            elif key == "flags":
-                cleaned = normalize(value)
-                if cleaned not in FLAG_ALIASES:
-                    for name in cleaned.split(","):
-                        name = name.strip()
-                        if name and name not in FLAGS:
-                            problems.append((index, "پرچم ناشناس: " + name))
+            if field == "consume":
+                if normalize(value) not in BOOLEANS:
+                    problems.append((index, "مقدار مصرف باید ۰ یا ۱ باشد: " + value))
 
-            elif key == "icon":
-                if value:
-                    check_icon(value, problems, index)
-
-            elif key == "prefab":
-                if value:
-                    check_prefab(value, problems, index)
+            elif field == "do":
+                check_effects(value, problems, index, "%s.do" % verb)
 
         items += 1
 

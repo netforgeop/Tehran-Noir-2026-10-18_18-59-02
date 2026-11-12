@@ -23,6 +23,7 @@ import sys
 
 ITEMS = "Assets/_Project/Resources/Items/items.txt"
 SOURCES = ["Assets/_Project/Dialogue/*.txt", "Assets/_Project/Resources/Quests/*.txt"]
+DOCUMENTS = "Assets/_Project/Resources/Documents/*.txt"
 
 TAG_RE = re.compile(r"^\[(do|if|when|start|done)\]\s*(.*)$")
 ITEM_RE = re.compile(r"\bitem\.([A-Za-z0-9_.]+)")
@@ -99,6 +100,58 @@ def check_file(path, ids, problems):
     return refs
 
 
+def check_document(path, ids, problems):
+    """سندها هم شرط دارند: [when] ... و جدول [row] ... .
+
+    دو خطای بی‌صدا اینجا گرفته می‌شود:
+      * شناسه‌ی آیتمِ غلط در [when] → ردیف یا خط هرگز دیده نمی‌شود.
+      * تعداد خانه‌های [row] با [columns] نمی‌خواند → جدول جابه‌جا چاپ می‌شود.
+    """
+    refs = 0
+    column_count = 0
+    row_count = 0
+
+    with io.open(path, encoding="utf-8") as handle:
+        for number, raw in enumerate(handle, 1):
+            line = raw.strip()
+
+            if not line or line.startswith("#") or not line.startswith("["):
+                continue
+
+            close = line.find("]")
+            if close < 0:
+                continue
+
+            tag = line[1:close].strip().lower()
+            value = line[close + 1:].strip()
+
+            if tag == "when":
+                refs += 1
+                for token in ITEM_RE.findall(value):
+                    item_id = token.lower()
+                    if item_id not in ids:
+                        problems.append((path, number, "آیتم ناشناس در شرط سند: item." + token))
+                continue
+
+            if tag == "columns":
+                column_count = len([c for c in value.split("؛") if c.strip()])
+                continue
+
+            if tag == "row":
+                row_count += 1
+                cells = [c for c in value.split("؛")]
+                if column_count and len(cells) != column_count:
+                    problems.append((path, number,
+                                     "تعداد خانه‌های ردیف " + str(len(cells)) +
+                                     " است، ولی جدول " + str(column_count) + " ستون دارد."))
+                continue
+
+    if row_count and not column_count:
+        problems.append((path, 0, "سند ردیف دارد ولی [columns] ندارد."))
+
+    return refs
+
+
 def main():
     ids = load_ids()
     if not ids:
@@ -113,11 +166,17 @@ def main():
             files += 1
             refs += check_file(path, ids, problems)
 
+    documents = 0
+
+    for path in sorted(glob.glob(DOCUMENTS)):
+        documents += 1
+        refs += check_document(path, ids, problems)
+
     for path, number, message in problems:
         print("%s:%d: %s" % (path, number, message))
 
-    print("story files: %d refs: %d items: %d problems: %d" %
-          (files, refs, len(ids), len(problems)))
+    print("story files: %d documents: %d refs: %d items: %d problems: %d" %
+          (files, documents, refs, len(ids), len(problems)))
 
     return 1 if problems else 0
 

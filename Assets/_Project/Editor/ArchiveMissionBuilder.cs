@@ -3,6 +3,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TehranNoir.Dialogue;
+using TehranNoir.Documents;
 using TehranNoir.Interaction;
 
 namespace TehranNoir.EditorTools
@@ -83,10 +84,9 @@ namespace TehranNoir.EditorTools
                 "محمود|Mahmoud", "خدمه‌ی ساختمان|Building porter",
                 "mahmoud_corridor", string.Empty, ui);
 
-            Readable(root.transform, "Logbook", new Vector3(1f, 1.10f, -10.5f),
-                new Vector3(0.36f, 0.07f, 0.26f), paper,
-                "دفتر ثبت|Logbook", "۱۳۵۲ تا ۱۳۵۳|1352 to 1353",
-                "archive_log", "read", ui);
+            // دفتر ثبت، دیالوگ نیست: یک برگه‌ی جدول‌دار است که با «خواندن» باز می‌شود.
+            Logbook(root.transform, new Vector3(1f, 1.10f, -10.5f),
+                new Vector3(0.36f, 0.07f, 0.26f), paper);
 
             Readable(root.transform, "Note", new Vector3(-1f, 1.095f, -10.5f),
                 new Vector3(0.22f, 0.012f, 0.30f), paper,
@@ -158,6 +158,58 @@ namespace TehranNoir.EditorTools
             }
 
             Debug.Log("[Archive] " + done + " نفر آماده‌ی تحویل شدند و صحنه ذخیره شد.");
+        }
+
+        /// <summary>
+        /// تبدیل دفتر موجود در صحنه به سند، بدون ساختن دوباره‌ی اتاق.
+        ///
+        /// چرا جدا از منوی ساخت؟ چون آن منو کل `ArchiveWing` را پاک و از نو
+        /// می‌سازد؛ اگر بازیکن چیزی را در صحنه دستی تنظیم کرده باشد، از دست می‌رود.
+        /// این منو فقط روی آبجکت `Logbook` کار می‌کند.
+        /// </summary>
+        [MenuItem("Tehran Noir/اتصال دفتر ثبت به سند", false, 103)]
+        public static void ConnectLogbook()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogError("[Archive] در حالت Play نمی‌شود تغییر داد. اول Play را قطع کن.");
+                return;
+            }
+
+            GameObject logbook = GameObject.Find("Logbook");
+
+            if (logbook == null)
+            {
+                Debug.LogWarning("[Archive] آبجکتی به نام Logbook در صحنه نیست. اول «ساخت بایگانی و مأموریت» را بزن.");
+                return;
+            }
+
+            // این دو کامپوننت، دفتر را در نوار دیالوگ پخش می‌کردند.
+            DialogueStarter starter = logbook.GetComponent<DialogueStarter>();
+            if (starter != null) Undo.DestroyObjectImmediate(starter);
+
+            SimpleInteractable simple = logbook.GetComponent<SimpleInteractable>();
+            if (simple != null) Undo.DestroyObjectImmediate(simple);
+
+            DocumentInteractable document = logbook.GetComponent<DocumentInteractable>();
+            if (document == null) document = Undo.AddComponent<DocumentInteractable>(logbook);
+
+            SetString(document, "displayName", "دفتر ثبت بایگانی|Archive logbook");
+            SetString(document, "subtype", "۱۳۵۲ تا ۱۳۵۳|1352 to 1353");
+            SetString(document, "documentPath", LogbookDocument);
+            SetString(document, "onReadVariable", "flag.clue.log");
+
+            EditorUtility.SetDirty(document);
+
+            Scene scene = SceneManager.GetActiveScene();
+
+            if (scene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+
+            Debug.Log("[Archive] دفتر ثبت حالا سند است: " + LogbookDocument + " — صحنه ذخیره شد.");
         }
 
         [MenuItem("Tehran Noir/حذف بایگانی", false, 101)]
@@ -314,6 +366,27 @@ namespace TehranNoir.EditorTools
                 SetString(talk, "handoverNode", handoverNode);
             }
         }
+
+        /// <summary>
+        /// دفتر ثبت: یک کاغذ با کار «خواندن» که خودِ برگه را باز می‌کند.
+        ///
+        /// قبلاً مثل یادداشت با `SimpleInteractable` و `DialogueStarter` ساخته می‌شد؛
+        /// نتیجه این بود که متن دفتر در نوار دیالوگ پایین می‌آمد، در حالی که دفتر
+        /// یک سند است: باید یک برگه‌ی جدول‌دار وسط صفحه باز شود.
+        /// </summary>
+        private static void Logbook(Transform parent, Vector3 position, Vector3 size, Material material)
+        {
+            GameObject go = Box(parent, "Logbook", position, size, material);
+
+            DocumentInteractable read = go.AddComponent<DocumentInteractable>();
+            SetString(read, "displayName", "دفتر ثبت بایگانی|Archive logbook");
+            SetString(read, "subtype", "۱۳۵۲ تا ۱۳۵۳|1352 to 1353");
+            SetString(read, "documentPath", LogbookDocument);
+            SetString(read, "onReadVariable", "flag.clue.log");
+        }
+
+        /// <summary>خواندن دفتر، جعبه‌ی ۱۳۵۲ را از قفسه بیرون می‌آورد؛ پرچمش همین است.</summary>
+        public const string LogbookDocument = "Documents/archive_log";
 
         /// <summary>هر چیز خواندنی: مش + SimpleInteractable با کار Read + DialogueStarter.</summary>
         private static void Readable(Transform parent, string name, Vector3 position, Vector3 size, Material material,

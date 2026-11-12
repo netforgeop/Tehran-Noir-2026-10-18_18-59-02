@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -54,6 +55,10 @@ namespace TehranNoir.Documents
         [SerializeField] private float letterWidth = 760f;
         [SerializeField] private float noteWidth = 640f;
 
+        [Header("دست‌نویس")]
+        [Tooltip("فونت دست‌نویس فارسی؛ خالی = همان فونت معمولی با لرزش و جوهر آبی")]
+        [SerializeField] private TMP_FontAsset handwritingFont;
+
         /* ---------- پالتِ کاغذ ---------- */
 
         private static readonly Color BackdropColor = new Color(0.035f, 0.033f, 0.030f, 0.82f);
@@ -62,6 +67,7 @@ namespace TehranNoir.Documents
         private static readonly Color StampColor = new Color(0.560f, 0.145f, 0.110f, 0.78f);
         private static readonly Color HintColor = new Color(0.470f, 0.420f, 0.360f, 1f);
         private static readonly Color RuleColor = new Color(0.35f, 0.30f, 0.25f, 0.35f);
+        private static readonly Color InkHand = new Color(0.145f, 0.170f, 0.290f, 0.96f);
 
         /* ---------- وضعیت ---------- */
 
@@ -304,6 +310,7 @@ namespace TehranNoir.Documents
             TMP_FontAsset textFont = persian || latinFont == null ? Font : latinFont;
 
             bool isNote = document.Template == DocumentTemplate.Note;
+            bool isLedger = document.Template == DocumentTemplate.Ledger;
 
             float width = isNote ? noteWidth : letterWidth;
             float height = width * 1200f / 880f;
@@ -370,20 +377,30 @@ namespace TehranNoir.Documents
                 CenteredLine("Title", DocumentText.Pick(document.Title, persian), isNote ? 24f : 28f,
                     InkColor, isNote ? 150f : 252f, textFont, FontStyles.Bold);
 
-            RectTransform bodyRect = Node("Body", _content);
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(padX, bodyBottom);
-            bodyRect.offsetMax = new Vector2(-padX, -bodyTop);
+            if (isLedger)
+            {
+                BuildLedger(document, persian, width, padX, textFont);
+            }
+            else
+            {
+                RectTransform bodyRect = Node("Body", _content);
+                bodyRect.anchorMin = new Vector2(0f, 0f);
+                bodyRect.anchorMax = new Vector2(1f, 1f);
+                bodyRect.offsetMin = new Vector2(padX, bodyBottom);
+                bodyRect.offsetMax = new Vector2(-padX, -bodyTop);
 
-            _body = UiKit.MakeText(bodyRect.gameObject, 21f, InkColor, textFont, persian);
-            _body.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
-            _body.lineSpacing = 8f;
-            _body.paragraphSpacing = 12f;
-            _body.fontStyle = FontStyles.Normal;
-            _body.text = document.BuildBody(persian);
+                List<DocumentLine> lines = new List<DocumentLine>(document.Body.Count);
+                document.Resolve(CurrentWorld, lines, null);
 
-            FitBody(width - padX * 2f, height - bodyTop - bodyBottom, isNote);
+                _body = UiKit.MakeText(bodyRect.gameObject, 21f, InkColor, textFont, persian);
+                _body.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
+                _body.lineSpacing = 8f;
+                _body.paragraphSpacing = 12f;
+                _body.fontStyle = FontStyles.Normal;
+                _body.text = DocumentText.BuildBody(lines, persian);
+
+                FitBody(width - padX * 2f, height - bodyTop - bodyBottom, isNote);
+            }
 
             if (document.ShowStamp)
             {
@@ -403,6 +420,148 @@ namespace TehranNoir.Documents
             else
             {
                 _stampRect.gameObject.SetActive(false);
+            }
+        }
+
+        /* ============================================================
+           دفتر: جدول دست‌نویس
+           ============================================================ */
+
+        /// <summary>
+        /// قالب «دفتر»: سرصفحه‌ی چاپی بالا، سرستون‌های چاپی، و ردیف‌های دست‌نویس.
+        ///
+        /// چرا هر خانه جدا و نه یک متن بلند؟ چون ستون‌ها باید زیر هم بایستند.
+        /// با یک متن، فاصله‌ها با هر فونت عوض می‌شوند و جدول به‌هم می‌ریزد.
+        /// </summary>
+        private void BuildLedger(DocumentText document, bool persian, float width, float padX,
+            TMP_FontAsset textFont)
+        {
+            List<string> columns = SplitCells(document.Columns);
+            int count = Mathf.Clamp(columns.Count, 1, 6);
+
+            List<DocumentRow> rows = new List<DocumentRow>(document.Rows.Count);
+            document.Resolve(CurrentWorld, null, rows);
+
+            float columnWidth = (width - padX * 2f) / count;
+
+            // زیر عنوان؛ عنوان در ۲۵۲ تمام می‌شود و جدول از اینجا شروع می‌شود.
+            float top = 322f;
+
+            for (int i = 0; i < count; i++)
+            {
+                Cell("Column" + i, DocumentText.Pick(columns[i], persian), persian, width, padX,
+                    columnWidth, i, top, 13f, InkMuted, textFont, FontStyles.Bold, 0f, false);
+            }
+
+            Rule(padX, top + 28f, width);
+
+            float rowTop = top + 38f;
+            const float rowHeight = 46f;
+
+            for (int r = 0; r < rows.Count; r++)
+            {
+                DocumentRow row = rows[r];
+
+                for (int c = 0; c < count; c++)
+                {
+                    int seed = r * 17 + c * 31;
+                    float rotation = document.Handwritten ? (Jitter(seed) - 0.5f) * 1.5f : 0f;
+
+                    Cell("Row" + r + "_" + c, row.Cell(c, persian), persian, width, padX,
+                        columnWidth, c, rowTop, 16f,
+                        document.Handwritten ? InkHand : InkColor,
+                        document.Handwritten ? HandFont(textFont) : textFont,
+                        FontStyles.Normal, rotation, document.Handwritten);
+                }
+
+                Rule(padX, rowTop + rowHeight - 8f, width);
+                rowTop += rowHeight;
+            }
+
+            if (document.Footnote.Length == 0) return;
+
+            RectTransform rect = Node("Footnote", _content);
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.offsetMin = new Vector2(padX, 96f);
+            rect.offsetMax = new Vector2(-padX, 132f);
+
+            TMP_Text note = UiKit.MakeText(rect.gameObject, 13f, InkMuted, textFont, persian);
+            note.alignment = persian ? TextAlignmentOptions.BottomRight : TextAlignmentOptions.BottomLeft;
+            note.text = DocumentText.Pick(document.Footnote, persian);
+        }
+
+        /// <summary>یک خانه‌ی جدول. خانه‌ی اول (تاریخ) سمت راست برگه می‌نشیند.</summary>
+        private void Cell(string name, string text, bool persian, float width, float padX,
+            float columnWidth, int index, float top, float size, Color color,
+            TMP_FontAsset textFont, FontStyles style, float rotation, bool bleed)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+
+            float x = width - padX - (index + 1) * columnWidth + 5f;
+            float cellWidth = columnWidth - 10f;
+
+            // جوهر خودکار کمی پخش می‌شود؛ یک نسخه‌ی کم‌رنگ و جابه‌جا، پیش از متن اصلی.
+            if (bleed)
+            {
+                RectTransform ghostRect = Node(name + "_Bleed", _content);
+                Place(ghostRect, x + 0.8f, top + 0.7f, cellWidth, 34f);
+                ghostRect.localRotation = Quaternion.Euler(0f, 0f, rotation);
+
+                TMP_Text ghost = UiKit.MakeText(ghostRect.gameObject, size, color, textFont, persian);
+                ghost.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
+                ghost.text = text;
+                ghost.alpha = 0.22f;
+            }
+
+            RectTransform rect = Node(name, _content);
+            Place(rect, x, top, cellWidth, 34f);
+            rect.localRotation = Quaternion.Euler(0f, 0f, rotation);
+
+            TMP_Text label = UiKit.MakeText(rect.gameObject, size, color, textFont, persian);
+            label.alignment = persian ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
+            label.fontStyle = style;
+            label.text = text;
+        }
+
+        private static List<string> SplitCells(string source)
+        {
+            List<string> cells = new List<string>(6);
+            string text = source ?? string.Empty;
+            int start = 0;
+
+            for (int i = 0; i <= text.Length; i++)
+            {
+                if (i < text.Length && text[i] != '؛') continue;
+
+                cells.Add(text.Substring(start, i - start).Trim());
+                start = i + 1;
+            }
+
+            return cells;
+        }
+
+        /// <summary>لرزش پایدار: برای یک شماره همیشه یک عدد؛ پس سند هر فریم نمی‌لرزد.</summary>
+        private static float Jitter(int seed)
+        {
+            float value = Mathf.Sin(seed * 12.9898f) * 43758.5453f;
+            return value - Mathf.Floor(value);
+        }
+
+        private TMP_FontAsset HandFont(TMP_FontAsset fallback)
+        {
+            return handwritingFont != null ? handwritingFont : fallback;
+        }
+
+        /// <summary>دنیای واقعی بازی؛ در تست خالی است و شرط‌دارها دیده نمی‌شوند.</summary>
+        private static WorldState CurrentWorld
+        {
+            get
+            {
+                WorldStateProvider provider = WorldStateProvider.Instance;
+
+                return provider != null ? provider.State : null;
             }
         }
 

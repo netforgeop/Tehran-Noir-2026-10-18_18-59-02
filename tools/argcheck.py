@@ -153,6 +153,10 @@ def main():
 
     # type name -> list of (method, min, max)
     api = {}
+    # type name -> list of (min, max) declared constructors
+    ctors = {}
+    spans_by_file = {}
+    struct_names = set()
     # (type, method) pairs, so calls can be resolved
     for path, code in codes.items():
         spans = []
@@ -168,7 +172,12 @@ def main():
                     if depth == 0:
                         break
                 i += 1
+            if 'struct' in m.group(0):
+                struct_names.add(m.group(1))
+
             spans.append((m.group(1), brace + 1, i))
+
+        spans_by_file[path] = spans
 
         for name, start, end in spans:
             for line in code[start:end].split('\n'):
@@ -196,9 +205,59 @@ def main():
                   f'called with {count} argument(s); expected {candidates}')
             problems += 1
 
+    # --- constructors: collect declarations, then check `new Type(...)` -------
     for path, code in codes.items():
-        for type_name, entries in api.items():
-            pass
+        for type_name, start, end in spans_by_file.get(path, []):
+            body = code[start:end]
+            pattern = re.compile(r'\b' + re.escape(type_name) + r'\s*\(')
+
+            for m in pattern.finditer(body):
+                line_start = body.rfind('\n', 0, m.start()) + 1
+                prefix = body[line_start:m.start()].strip()
+
+                if not re.match(r'^(?:public|private|protected|internal)(?:\s+static)?$', prefix):
+                    continue
+
+                open_paren = body.find('(', m.start())
+                depth = 0
+                close = -1
+
+                for index in range(open_paren, len(body)):
+                    if body[index] == '(':
+                        depth += 1
+                    elif body[index] == ')':
+                        depth -= 1
+                        if depth == 0:
+                            close = index
+                            break
+
+                if close < 0:
+                    continue
+
+                lo, hi = param_range(body[open_paren + 1:close])
+                ctors.setdefault(type_name, []).append((lo, hi))
+
+    for path, code in codes.items():
+        for m in re.finditer(r'\bnew\s+([A-Za-z_]\w*)\s*\(', code):
+            type_name = m.group(1)
+            entries = ctors.get(type_name)
+
+            if not entries:
+                continue
+
+            count = split_args(code[m.end() - 1:])
+
+            # struct همیشه سازنده‌ی بی‌پارامتر دارد، حتی اگر در کد نوشته نشده باشد
+            if count == 0 and type_name in struct_names:
+                continue
+
+            if any(lo <= count <= hi for lo, hi in entries):
+                continue
+
+            line = code[:m.start()].count('\n') + 1
+            print(f'  {os.path.basename(path)} | line {line} | new {type_name}() '
+                  f'with {count} argument(s); expected {sorted(set(entries))}')
+            problems += 1
 
     print('files:', len(paths), 'problems:', problems)
 

@@ -1,7 +1,11 @@
 # وسایل نادر — هر خط یک آیتم:
-#   id | فارسی | انگلیسی | نوع | بیشترین تعداد
-# نوع: document / key / item
+#   id | فارسی | انگلیسی | دسته | بیشترین تعداد | گزینه‌ها
+# دسته: document / key / weapon / ammo / evidence / consumable / tool / quest / item
+# گزینه‌ها (هر کدام اختیاری، به شکل key=value):
+#   weight=0.1 | value=2 | flags=use,drop,trade,store,examine,destroy
+#   icon=Icons/Keys/archive | prefab=Prefabs/Items/key | sub=police
+#   desc.fa=متن | desc.en=text
 # شناسه با حروف کوچک و بدون فاصله. آیتم تازه = یک خط تازه؛ کد عوض نمی‌شود.
-file.sealed | پرونده‌ی مهرشده | Sealed file | document | 1
-key.archive | کلید بایگانی | Archive key | key | 1
-cigarettes | سیگار | Cigarettes | item | 20
+file.sealed | پرونده‌ی مهرشده | Sealed file | document | 1 | weight=0.1 | value=0 | sub=police | desc.fa=پرونده‌ای مهرشده از دفتر رئیس. | desc.en=Sealed file from the chief's office.
+key.archive | کلید بایگانی | Archive key | key | 1 | weight=0.02 | value=0 | sub=office
+cigarettes | سیگار | Cigarettes | item | 20 | weight=0.01 | value=2 | flags=use,drop,trade,store,examine,destroy | sub=smoking

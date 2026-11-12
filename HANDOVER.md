@@ -812,3 +812,24 @@ python3 tools/cscheck.py Assets/_Project/Scripts
 
 اجرا: `bash tools/preflight.sh`
 
+## ۳۳. آغاز چارچوب آیتم (جلسه‌ی ۲۴)
+
+فاز ۰ و ۱ از چارچوب آیتم انجام شد: تعریف و نمونه جدا شدند تا دو سند با یک
+تعریف بتوانند وضعیت متفاوت داشته باشند.
+
+| فایل | تغییر |
+| --- | --- |
+| `Items/ItemCategory.cs` | تازه: `ItemCategory`، `ItemKind`، `ItemCategories` (پارس دسته و پرچم) |
+| `Items/ItemDefinition.cs` | تازه: `ItemFlags` و تعریف کامل (وزن، ارزش، آیکون، Prefab، شرح دوزبانه) |
+| `Items/ItemInstance.cs` | تازه: شناسه‌ی یکتا، تعداد، دوام، وضعیت آزاد، `Split/Clone/CanStackWith` |
+| `Items/ItemCatalog.cs` | پارس نسخه‌ی ۲ با گزینه‌های `key=value`؛ API بیرونی عوض نشد |
+| `Resources/Items/items.txt` | ستون ششم و گزینه‌ها |
+
+**قاعده‌ی تازه:** `item.<id>` در `WorldState` تنها شمارشگر است و از این به بعد فقط
+`InventoryManager` آن را می‌نویسد؛ جزئیات در `ItemInstance` است.
+
+**ابزار تازه:** `tools/itemcheck.py` (اعتبارسنجی داده) و گسترش `tools/argcheck.py`
+به سازنده‌ها (`new Type(...)`). ساختار `struct` از قاعده مستثناست.
+
+سند کامل: `docs/34-item-framework.md`
+

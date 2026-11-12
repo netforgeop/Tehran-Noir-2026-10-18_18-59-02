@@ -1,52 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace TehranNoir.Items
 {
     /// <summary>
-    /// نوع آیتم فقط برای آیکون و دسته‌بندی است؛ هیچ منطقی به آن وابسته نیست.
-    /// </summary>
-    public enum ItemKind
-    {
-        Document = 0,
-        Key = 1,
-        Item = 2
-    }
-
-    /// <summary>
-    /// تعریف یک آیتم. نامش دوزبانه است تا تب «کاراکتر» با زبان بازی عوض شود.
-    /// </summary>
-    public sealed class ItemDefinition
-    {
-        public readonly string Id;
-        public readonly string Persian;
-        public readonly string English;
-        public readonly ItemKind Kind;
-        public readonly int MaxStack;
-
-        public ItemDefinition(string id, string persian, string english, ItemKind kind, int maxStack)
-        {
-            Id = id;
-            Persian = string.IsNullOrEmpty(persian) ? id : persian;
-            English = string.IsNullOrEmpty(english) ? id : english;
-            Kind = kind;
-            MaxStack = Mathf.Max(1, maxStack);
-        }
-
-        public string Name(bool persian)
-        {
-            return persian ? Persian : English;
-        }
-    }
-
-    /// <summary>
     /// فهرست آیتم‌ها از فایل می‌آید، نه از کد: Resources/Items/items.txt
     ///
-    ///   id | فارسی | انگلیسی | نوع | بیشترین تعداد
+    ///   id | فارسی | انگلیسی | دسته | بیشترین تعداد | گزینه‌ها
+    ///
+    /// ستون پنجم اختیاری است و هر گزینه‌ی بعد از آن به شکل key=value:
+    ///   weight=0.1  value=2  flags=use,drop  icon=Icons/Keys/archive
+    ///   prefab=Prefabs/Items/key  sub=police  desc.fa=...  desc.en=...
     ///
     /// آیتم تازه = یک خط در همان فایل؛ هیچ کلاسی عوض نمی‌شود.
     /// خط خراب فقط هشدار می‌دهد و رد می‌شود، پس یک غلط تایپی بازی را نمی‌خواباند.
+    ///
+    /// این کلاس تنها راه دسترسی به تعریف‌هاست؛ اگر روزی منبع داده از فایل به
+    /// ScriptableObject عوض شود، فقط همین فایل دست می‌خورد و بقیه‌ی کد نه.
     /// </summary>
     public static class ItemCatalog
     {
@@ -111,7 +83,7 @@ namespace TehranNoir.Items
             if (Map.TryGetValue(key, out definition)) return definition;
             if (Fallbacks.TryGetValue(key, out definition)) return definition;
 
-            definition = new ItemDefinition(key, key, key, ItemKind.Item, 1);
+            definition = new ItemDefinition(key, key, key, ItemCategory.Miscellaneous, 1);
             Fallbacks[key] = definition;
 
             Debug.LogWarning("[Items] آیتم «" + key + "» در " + ResourcePath + " تعریف نشده؛ موقتاً یک‌تایی فرض شد.");
@@ -197,7 +169,94 @@ namespace TehranNoir.Items
                 if (!int.TryParse(raw, out maxStack) || maxStack < 1) maxStack = 1;
             }
 
-            return new ItemDefinition(id, parts[1].Trim(), parts[2].Trim(), ParseKind(parts[3]), maxStack);
+            string subcategory = string.Empty;
+            string descriptionPersian = string.Empty;
+            string descriptionEnglish = string.Empty;
+            string iconPath = string.Empty;
+            string prefabPath = string.Empty;
+            ItemFlags flags = ItemFlags.All;
+            float weight = 0f;
+            int value = 0;
+
+            for (int i = MinFields + 1; i < parts.Length; i++)
+            {
+                string token = parts[i].Trim();
+
+                if (token.Length == 0) continue;
+
+                int split = token.IndexOf('=');
+
+                if (split <= 0)
+                {
+                    Debug.LogWarning("[Items] خط " + number + " گزینه‌ی بی‌شکل (باید key=value باشد): " + token);
+                    continue;
+                }
+
+                string key = token.Substring(0, split).Trim().ToLowerInvariant();
+                string val = token.Substring(split + 1).Trim();
+
+                switch (key)
+                {
+                    case "weight":
+                        if (!float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out weight) || weight < 0f)
+                        {
+                            weight = 0f;
+                            Debug.LogWarning("[Items] خط " + number + " وزن نامعتبر: " + val);
+                        }
+                        break;
+
+                    case "value":
+                        if (!int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out value) || value < 0)
+                        {
+                            value = 0;
+                            Debug.LogWarning("[Items] خط " + number + " ارزش نامعتبر: " + val);
+                        }
+                        break;
+
+                    case "flags":
+                        flags = ItemCategories.ParseFlags(val);
+                        break;
+
+                    case "icon":
+                        iconPath = val;
+                        break;
+
+                    case "prefab":
+                        prefabPath = val;
+                        break;
+
+                    case "sub":
+                        subcategory = val;
+                        break;
+
+                    case "desc.fa":
+                        descriptionPersian = val;
+                        break;
+
+                    case "desc.en":
+                        descriptionEnglish = val;
+                        break;
+
+                    default:
+                        Debug.LogWarning("[Items] خط " + number + " کلید ناشناس: " + key);
+                        break;
+                }
+            }
+
+            return new ItemDefinition(
+                id,
+                parts[1].Trim(),
+                parts[2].Trim(),
+                ItemCategories.Parse(parts[3]),
+                maxStack,
+                weight,
+                value,
+                flags,
+                iconPath,
+                prefabPath,
+                subcategory,
+                descriptionPersian,
+                descriptionEnglish);
         }
 
         private static bool HasSpace(string id)
@@ -206,16 +265,6 @@ namespace TehranNoir.Items
                 if (char.IsWhiteSpace(id[i])) return true;
 
             return false;
-        }
-
-        private static ItemKind ParseKind(string raw)
-        {
-            string kind = (raw ?? string.Empty).Trim().ToLowerInvariant();
-
-            if (kind == "document") return ItemKind.Document;
-            if (kind == "key") return ItemKind.Key;
-
-            return ItemKind.Item;
         }
     }
 }

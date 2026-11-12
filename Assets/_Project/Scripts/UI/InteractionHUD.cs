@@ -113,8 +113,6 @@ namespace TehranNoir.UI
         private RectTransform _footer;
         private Image _selectBadge;
         private TMP_Text _selectLetter;
-        private TMP_Text _selectText;
-        private TMP_Text _closeText;
 
         private TMP_Text _titleText;
         private TMP_Text _roleText;
@@ -316,7 +314,8 @@ namespace TehranNoir.UI
                 RectTransform arrowBox = UiKit.Box("Arrow", row.Rect, arrowX, (RowHeight - 16f) * 0.5f, 16f, 16f);
 
                 row.Arrow = arrowBox.gameObject.AddComponent<Image>();
-                row.Arrow.sprite = HudArt.Icon(HudArt.Glyph.ArrowLeft, 48, RowActiveText);
+                row.Arrow.sprite = HudArt.Icon(HudArt.Glyph.ArrowLeft, 48, Color.white);
+                row.Arrow.color = RowActiveText;
                 row.Arrow.raycastTarget = false;
                 row.Arrow.gameObject.SetActive(false);
 
@@ -386,7 +385,8 @@ namespace TehranNoir.UI
         {
             string key = gamepad ? "X" : "E";
 
-            Sprite sprite = UiKit.KeyIcon(key);
+            // آیکون کلید فقط برای کیبورد؛ برای دسته حرف نشان داده می‌شود
+            Sprite sprite = gamepad ? null : UiKit.KeyIcon(key);
 
             _selectBadge.sprite = sprite;
             _selectBadge.color = sprite != null ? Color.white : RowActiveFill;
@@ -621,9 +621,9 @@ namespace TehranNoir.UI
             RectTransform iconBox = UiKit.Box("HeaderIcon", _card, iconX, 14f, 34f, 34f);
 
             Image icon = iconBox.gameObject.AddComponent<Image>();
-            icon.sprite = HudArt.Icon(HudArt.Glyph.Chat, 64, TitleColor);
+            icon.sprite = HudArt.Icon(HudArt.Glyph.Chat, 64, Color.white);
             icon.raycastTarget = false;
-            icon.color = new Color(1f, 1f, 1f, 0.85f);
+            icon.color = new Color(TitleColor.r, TitleColor.g, TitleColor.b, 0.85f);
 
             float textWidth = Width - Pad * 2f - 34f - 10f;
 
@@ -687,18 +687,18 @@ namespace TehranNoir.UI
 
             RectTransform selectLabelBox = UiKit.Box("Select", _footer, selectLabelX, 0f, selectLabelWidth, FooterHeight);
 
-            _selectText = UiKit.Text("Text", selectLabelBox, 17f, FooterText, Font, Persian);
-            _selectText.alignment = Align;
-            _selectText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "hud.select");
+            TMP_Text selectText = UiKit.Text("Text", selectLabelBox, 17f, FooterText, Font, Persian);
+            selectText.alignment = Align;
+            selectText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "hud.select");
 
             float closeLabelX = closeBadgeX + 26f + 10f;
             float closeLabelWidth = Width * 0.5f - 12f - closeLabelX;
 
             RectTransform closeLabelBox = UiKit.Box("Close", _footer, closeLabelX, 0f, closeLabelWidth, FooterHeight);
 
-            _closeText = UiKit.Text("Text", closeLabelBox, 17f, FooterText, Font, Persian);
-            _closeText.alignment = TextAlignmentOptions.MidlineLeft;
-            _closeText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "pause.close");
+            TMP_Text closeText = UiKit.Text("Text", closeLabelBox, 17f, FooterText, Font, Persian);
+            closeText.alignment = TextAlignmentOptions.MidlineLeft;
+            closeText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "pause.close");
 
             RectTransform divider = UiKit.Box("Divider", _footer, Width * 0.5f, 16f, 1f, 22f);
 

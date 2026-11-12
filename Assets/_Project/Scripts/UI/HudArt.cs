@@ -12,6 +12,9 @@ namespace TehranNoir.UI
     /// به شکل مستطیل است، نه به شکل آلفای اسپرایت. یک بافت با آلفای نرم، هم گوشه را
     /// درست می‌کند هم حاشیه و گرادیان را، با یک draw call.
     ///
+    /// لبه‌ها با فاصله‌ی علامت‌دار (SDF) حساب می‌شوند: یک محاسبه‌ی ساده برای هر پیکسل،
+    /// نه چند نمونه در هر پیکسل. برای پنل ۴۴۰×۲۸۵ این تفاوت چند صد میلی‌ثانیه است.
+    ///
     /// هر بافت یک بار ساخته می‌شود؛ کلیدِ کش شامل اندازه است، پس تغییر قد پنل
     /// فقط یک بافت تازه می‌سازد، نه هر فریم.
     /// </summary>
@@ -96,25 +99,29 @@ namespace TehranNoir.UI
 
             size = Mathf.Max(8, size);
 
-            float[] body = new float[size * size];
-            float[] hole = new float[size * size];
-
-            float radius = size * 0.5f;
-
-            Circle(body, size, size, radius, radius, radius - 1f);
-            Circle(hole, size, size, radius, radius, Mathf.Max(0f, radius - 1f - rimWidth));
-
             Color32[] pixels = new Color32[size * size];
 
-            for (int i = 0; i < pixels.Length; i++)
+            float radius = size * 0.5f;
+            float bodyRadius = radius - 0.5f;
+            float holeRadius = Mathf.Max(0f, bodyRadius - rimWidth);
+
+            for (int y = 0; y < size; y++)
             {
-                float coverage = body[i];
-                float edge = Mathf.Clamp01(body[i] - hole[i]);
+                float dy = y + 0.5f - radius;
 
-                Color pixel = Color.Lerp(fill, rim, edge);
-                pixel.a = Mathf.Max(coverage * fill.a, edge * rim.a);
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - radius;
+                    float distance = Mathf.Sqrt(dx * dx + dy * dy);
 
-                pixels[i] = ToColor32(pixel);
+                    float coverage = Mathf.Clamp01(0.5f + bodyRadius - distance);
+                    float edge = Mathf.Clamp01(0.5f + holeRadius - distance);
+
+                    Color pixel = Color.Lerp(fill, rim, edge);
+                    pixel.a = Mathf.Max(coverage * fill.a, edge * rim.a);
+
+                    pixels[y * size + x] = ToColor32(pixel);
+                }
             }
 
             return Store(key, pixels, size, size);
@@ -124,7 +131,10 @@ namespace TehranNoir.UI
            آیکون
            ============================================================ */
 
-        /// <summary>آیکون خطی ساده. اندازه بر حسب پیکسل بافت؛ در رابط هر اندازه‌ای بخواهی می‌شود.</summary>
+        /// <summary>
+        /// آیکون خطی. رنگ را داخل بافت می‌پزد؛ برای تغییر رنگ بدون ساخت بافت تازه،
+        /// سفید بساز و با Image.color رنگ بزن.
+        /// </summary>
         public static Sprite Icon(Glyph icon, int size, Color color)
         {
             string key = "icon." + icon + "." + size + "." + Mathf.RoundToInt(color.r * 255f) + "."
@@ -268,30 +278,29 @@ namespace TehranNoir.UI
 
         private static void Rect(float[] mask, int w, int h, float x0, float y0, float x1, float y1)
         {
-            Add(mask, w, h, x0, y0, x1, y1, false);
+            AddRect(mask, w, h, x0, y0, x1, y1, false);
         }
 
         private static void CutRect(float[] mask, int w, int h, float x0, float y0, float x1, float y1)
         {
-            Add(mask, w, h, x0, y0, x1, y1, true);
+            AddRect(mask, w, h, x0, y0, x1, y1, true);
         }
 
-        private static void Add(float[] mask, int w, int h, float x0, float y0, float x1, float y1, bool cut)
+        private static void AddRect(float[] mask, int w, int h, float x0, float y0, float x1, float y1, bool cut)
         {
             int i0 = Mathf.Max(0, Mathf.FloorToInt(x0));
             int i1 = Mathf.Min(w - 1, Mathf.CeilToInt(x1));
             int j0 = Mathf.Max(0, Mathf.FloorToInt(y0));
             int j1 = Mathf.Min(h - 1, Mathf.CeilToInt(y1));
 
-            // یک بار ساخته می‌شود، نه در هر پیکسل؛ وگرنه ساخت پنل هزاران closure می‌سازد
-            System.Func<Vector2, bool> inside =
-                px => px.x >= x0 && px.x <= x1 && px.y >= y0 && px.y <= y1;
-
             for (int y = j0; y <= j1; y++)
             {
                 for (int x = i0; x <= i1; x++)
                 {
-                    float coverage = Coverage(x, y, inside);
+                    float coverage = Mathf.Clamp01(0.5f + Mathf.Min(
+                        Mathf.Min(x + 0.5f - x0, x1 - (x + 0.5f)),
+                        Mathf.Min(y + 0.5f - y0, y1 - (y + 0.5f))));
+
                     int index = y * w + x;
 
                     mask[index] = cut ? mask[index] * (1f - coverage) : Mathf.Max(mask[index], coverage);
@@ -303,28 +312,82 @@ namespace TehranNoir.UI
         {
             if (radius <= 0f) return;
 
-            AddShape(mask, w, h, cx - radius, cy - radius, cx + radius, cy + radius,
-                px => (px - new Vector2(cx, cy)).sqrMagnitude <= radius * radius, false);
+            int i0 = Mathf.Max(0, Mathf.FloorToInt(cx - radius) - 1);
+            int i1 = Mathf.Min(w - 1, Mathf.CeilToInt(cx + radius) + 1);
+            int j0 = Mathf.Max(0, Mathf.FloorToInt(cy - radius) - 1);
+            int j1 = Mathf.Min(h - 1, Mathf.CeilToInt(cy + radius) + 1);
+
+            for (int y = j0; y <= j1; y++)
+            {
+                float dy = y + 0.5f - cy;
+
+                for (int x = i0; x <= i1; x++)
+                {
+                    float dx = x + 0.5f - cx;
+                    float coverage = Mathf.Clamp01(0.5f + radius - Mathf.Sqrt(dx * dx + dy * dy));
+
+                    if (coverage <= 0f) continue;
+
+                    int index = y * w + x;
+                    if (coverage > mask[index]) mask[index] = coverage;
+                }
+            }
         }
 
+        /// <summary>
+        /// مستطیل گوشه‌گرد با شعاع متفاوت بالا و پایین.
+        /// فاصله‌ی علامت‌دار: یک بار برای هر پیکسل، بدون نمونه‌برداری چندگانه.
+        /// </summary>
         private static void RoundedRect(float[] mask, int w, int h, float x0, float y0, float x1, float y1,
             float rTop, float rBottom)
         {
-            // اجتماع دو نوار و چهار گِردی گوشه — دقیقاً همان شکل گوشه‌گرد
-            Add(mask, w, h, x0 + Mathf.Max(rTop, 0f), y0 + rTop, x1 - Mathf.Max(rTop, 0f), y1 - rBottom, false);
-            Add(mask, w, h, x0, y0 + rTop, x1, y1 - rBottom, false);
+            int i0 = Mathf.Max(0, Mathf.FloorToInt(x0) - 1);
+            int i1 = Mathf.Min(w - 1, Mathf.CeilToInt(x1) + 1);
+            int j0 = Mathf.Max(0, Mathf.FloorToInt(y0) - 1);
+            int j1 = Mathf.Min(h - 1, Mathf.CeilToInt(y1) + 1);
 
-            if (rTop > 0f)
-            {
-                Circle(mask, w, h, x0 + rTop, y0 + rTop, rTop);
-                Circle(mask, w, h, x1 - rTop, y0 + rTop, rTop);
-            }
+            float cx = (x0 + x1) * 0.5f;
+            float cy = (y0 + y1) * 0.5f;
+            float halfW = (x1 - x0) * 0.5f;
+            float halfH = (y1 - y0) * 0.5f;
 
-            if (rBottom > 0f)
+            float limit = Mathf.Min(halfW, halfH);
+
+            rTop = Mathf.Clamp(rTop, 0f, limit);
+            rBottom = Mathf.Clamp(rBottom, 0f, limit);
+
+            for (int y = j0; y <= j1; y++)
             {
-                Circle(mask, w, h, x0 + rBottom, y1 - rBottom, rBottom);
-                Circle(mask, w, h, x1 - rBottom, y1 - rBottom, rBottom);
+                float py = y + 0.5f - cy;
+
+                // y به سمت بالا؛ بالا = شعاع بالا، پایین = شعاع پایین
+                float radius = py > 0f ? rTop : rBottom;
+
+                for (int x = i0; x <= i1; x++)
+                {
+                    float px = x + 0.5f - cx;
+
+                    float coverage = RoundCoverage(px, py, halfW, halfH, radius);
+
+                    if (coverage <= 0f) continue;
+
+                    int index = y * w + x;
+                    if (coverage > mask[index]) mask[index] = coverage;
+                }
             }
+        }
+
+        private static float RoundCoverage(float px, float py, float halfW, float halfH, float radius)
+        {
+            float qx = Mathf.Abs(px) - halfW + radius;
+            float qy = Mathf.Abs(py) - halfH + radius;
+
+            float ox = Mathf.Max(qx, 0f);
+            float oy = Mathf.Max(qy, 0f);
+
+            float distance = Mathf.Min(Mathf.Max(qx, qy), 0f) + Mathf.Sqrt(ox * ox + oy * oy) - radius;
+
+            return Mathf.Clamp01(0.5f - distance);
         }
 
         private static void CutRoundedRect(float[] mask, int w, int h, float x0, float y0, float x1, float y1,
@@ -349,7 +412,23 @@ namespace TehranNoir.UI
                 maxY = Mathf.Max(maxY, points[i].y);
             }
 
-            AddShape(mask, w, h, minX, minY, maxX, maxY, px => Inside(px, points), false);
+            int i0 = Mathf.Max(0, Mathf.FloorToInt(minX) - 1);
+            int i1 = Mathf.Min(w - 1, Mathf.CeilToInt(maxX) + 1);
+            int j0 = Mathf.Max(0, Mathf.FloorToInt(minY) - 1);
+            int j1 = Mathf.Min(h - 1, Mathf.CeilToInt(maxY) + 1);
+
+            for (int y = j0; y <= j1; y++)
+            {
+                for (int x = i0; x <= i1; x++)
+                {
+                    float coverage = Inside4(x, y, points);
+
+                    if (coverage <= 0f) continue;
+
+                    int index = y * w + x;
+                    if (coverage > mask[index]) mask[index] = coverage;
+                }
+            }
         }
 
         private static void CutPolygon(float[] mask, int w, int h, Vector2[] points)
@@ -361,44 +440,22 @@ namespace TehranNoir.UI
             for (int i = 0; i < mask.Length; i++) mask[i] *= 1f - part[i];
         }
 
-        private static void AddShape(float[] mask, int w, int h, float x0, float y0, float x1, float y1,
-            System.Func<Vector2, bool> inside, bool cut)
+        /// <summary>چهار نمونه در هر پیکسل؛ فقط برای چندضلعی‌های کوچک آیکون به‌کار می‌رود.</summary>
+        private static float Inside4(int x, int y, Vector2[] polygon)
         {
-            int i0 = Mathf.Max(0, Mathf.FloorToInt(x0) - 1);
-            int i1 = Mathf.Min(w - 1, Mathf.CeilToInt(x1) + 1);
-            int j0 = Mathf.Max(0, Mathf.FloorToInt(y0) - 1);
-            int j1 = Mathf.Min(h - 1, Mathf.CeilToInt(y1) + 1);
-
-            for (int y = j0; y <= j1; y++)
-            {
-                for (int x = i0; x <= i1; x++)
-                {
-                    float coverage = Coverage(x, y, inside);
-                    int index = y * w + x;
-
-                    mask[index] = cut ? mask[index] * (1f - coverage) : Mathf.Max(mask[index], coverage);
-                }
-            }
-        }
-
-        /// <summary>۴ نمونه در هر پیکسل؛ لبه‌ی شکل نرم می‌شود بدون گران‌شدن.</summary>
-        private static float Coverage(int x, int y, System.Func<Vector2, bool> inside)
-        {
-            const int side = 2;
-
             int hits = 0;
 
-            for (int sy = 0; sy < side; sy++)
+            for (int sy = 0; sy < 2; sy++)
             {
-                for (int sx = 0; sx < side; sx++)
+                for (int sx = 0; sx < 2; sx++)
                 {
-                    Vector2 point = new Vector2(x + (sx + 0.5f) / side, y + (sy + 0.5f) / side);
+                    Vector2 point = new Vector2(x + (sx + 0.5f) * 0.5f, y + (sy + 0.5f) * 0.5f);
 
-                    if (inside(point)) hits++;
+                    if (Inside(point, polygon)) hits++;
                 }
             }
 
-            return hits / (float)(side * side);
+            return hits * 0.25f;
         }
 
         /// <summary>الگوریتم پرتوی فرد-زوج؛ برای ستاره و تاج کافی است.</summary>

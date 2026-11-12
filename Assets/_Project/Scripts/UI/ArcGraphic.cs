@@ -121,7 +121,9 @@ namespace TehranNoir.UI
 
             if (span < 1f) return tint;
 
-            float fade = Mathf.Clamp01(fadeDegrees / span);
+            // هر سر حداکثر یک‌چهارم کمان را محو می‌کند؛ وگرنه کمان کوتاه
+            // (استقامت کم) کامل محو می‌شد و به‌جای کم‌شدن، ناپدید می‌شد.
+            float fade = Mathf.Min(fadeDegrees, span * 0.25f) / span;
 
             if (fade <= 0f) return tint;
 

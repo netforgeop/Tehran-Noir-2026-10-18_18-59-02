@@ -324,7 +324,9 @@ namespace TehranNoir.UI
 
                 if (_sheetIcons[i] != null)
                 {
-                    _sheetIcons[i].sprite = IconFor(id);
+                    // آیکون سفید ساخته می‌شود و رنگش با Image.color داده می‌شود،
+                    // وگرنه هر رنگ یک بافت تازه در کش می‌ساخت.
+                    _sheetIcons[i].sprite = HudArt.Icon(IconFor(id), 48, Color.white);
                     _sheetIcons[i].color = lead ? Cream : new Color(Grey.r, Grey.g, Grey.b, 0.8f);
                 }
             }
@@ -532,9 +534,9 @@ namespace TehranNoir.UI
                 // آیکون، سمت راست ردیف
                 RectTransform iconBox = UiKit.Box("Icon_" + i, sheet, SheetWidth - 42f, y + 12f, 22f, 22f);
 
-
                 _sheetIcons[i] = iconBox.gameObject.AddComponent<Image>();
-                _sheetIcons[i].sprite = HudArt.Icon(HudArt.Glyph.Star, 48, Cream);
+                _sheetIcons[i].sprite = HudArt.Icon(HudArt.Glyph.Star, 48, Color.white);
+                _sheetIcons[i].color = Grey;
                 _sheetIcons[i].raycastTarget = false;
                 _sheetIcons[i].preserveAspect = true;
 

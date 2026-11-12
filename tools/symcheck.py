@@ -52,6 +52,15 @@ DECL_FIELD = re.compile(r'(?:^|[;{}])\s*(?:\[[^\]]*\]\s*)*'
                         r'(?:(?:public|private|protected|internal|static|readonly|const|volatile|new|event)\s+)*'
                         r'[A-Za-z_][\w<>\[\],\.\?]*\s+([A-Za-z_]\w*)\s*(?:=[^;]*)?;')
 
+# A delegate-typed field is called exactly like a method (`Hook(x)`), so it must
+# count as a callable. The types here may contain spaces after commas
+# (`Func<string, WorldState, bool>`), which DECL_FIELD cannot match.
+DECL_DELEGATE = re.compile(
+    r'(?:^|[;{}])\s*(?:\[[^\]]*\]\s*)*'
+    r'(?:(?:public|private|protected|internal|static|readonly|volatile|new|event)\s+)*'
+    r'(?:System\s*\.\s*)?(?:Func|Action|Predicate|Comparison|Converter)\s*<[^;\n]*>\s+'
+    r'([A-Za-z_]\w*)\s*(?:=[^;]*)?;', re.MULTILINE)
+
 # A method signature may carry a default argument or sit on its own line, so it
 # is matched over the whole file instead of per line.
 DECL_SIGNATURE = re.compile(
@@ -161,6 +170,9 @@ def declared_names(code):
     for m in re.finditer(DECL_FIELD.pattern, code, re.MULTILINE):
         names.add(m.group(1))
 
+    for m in DECL_DELEGATE.finditer(code):
+        names.add(m.group(1))
+
     return names
 
 
@@ -215,6 +227,8 @@ def main():
 
     print('files:', len(paths), 'problems:', problems)
 
+    return 1 if problems else 0
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

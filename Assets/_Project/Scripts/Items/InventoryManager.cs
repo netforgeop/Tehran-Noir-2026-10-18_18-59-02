@@ -332,6 +332,68 @@ namespace TehranNoir.Items
             return ItemResult.Success();
         }
 
+        /// <summary>
+        /// دادن: بردن همه‌ی پشته‌های یک تعریف از «همراه بازیکن» به یک ظرف دیگر.
+        ///
+        /// چرا جدا از `Move`؟ چون تحویل داستانی همیشه «همه‌ی آنچه از این آیتم
+        /// همراه داری» است و با شناسه‌ی تعریف صدا زده می‌شود، نه با نمونه.
+        /// مهم‌تر: همان نمونه جابه‌جا می‌شود؛ پس مهرِ شکسته و خوانده‌شدنش
+        /// همراه پرونده به بایگانی می‌رود و یک نسخه‌ی تازه ساخته نمی‌شود.
+        ///
+        /// `quantity` صفر یا منفی = همه.
+        /// ظرف مقصد باید از قبل وجود داشته باشد؛ ساختنش کار لایه‌ی بالاست.
+        /// </summary>
+        public static ItemResult Give(string definitionId, string toContainerId, int quantity = 0)
+        {
+            string id = ItemCatalog.Normalize(definitionId);
+            ItemContainer to = Get(toContainerId);
+
+            if (id.Length == 0 || to == null)
+                return ItemResult.Fail(ItemOutcome.Invalid, "item.reason.container");
+
+            // اول یک عکس می‌گیریم؛ وسط حلقه نباید روی فهرستِ در حال تغییر بگردیم.
+            List<ItemInstance> moving = new List<ItemInstance>(4);
+
+            for (int c = 0; c < CarriedIds.Length; c++)
+            {
+                ItemContainer container = Get(CarriedIds[c]);
+
+                if (container == null) continue;
+
+                for (int i = 0; i < container.Items.Count; i++)
+                {
+                    ItemInstance instance = container.Items[i];
+
+                    if (instance != null && instance.DefinitionId == id) moving.Add(instance);
+                }
+            }
+
+            if (moving.Count == 0)
+                return ItemResult.Fail(ItemOutcome.NotFound, "item.reason.missing");
+
+            int left = quantity <= 0 ? int.MaxValue : quantity;
+            int moved = 0;
+
+            for (int i = 0; i < moving.Count && left > 0; i++)
+            {
+                ItemInstance instance = moving[i];
+                int amount = left == int.MaxValue ? instance.Quantity : Mathf.Min(left, instance.Quantity);
+
+                // `Move` خودش مقصد را بررسی می‌کند؛ اگر جا نبود، هیچ‌چیز جابه‌جا نمی‌شود.
+                ItemResult result = Move(instance, to.Id, amount);
+
+                if (!result.Ok) return result;
+
+                moved += amount;
+
+                if (left != int.MaxValue) left -= amount;
+            }
+
+            return moved > 0
+                ? ItemResult.Success()
+                : ItemResult.Fail(ItemOutcome.NotFound, "item.reason.missing");
+        }
+
         /// <summary>جدا کردن بخشی از یک پشته، در همان ظرف.</summary>
         public static ItemResult Split(ItemInstance instance, int quantity)
         {

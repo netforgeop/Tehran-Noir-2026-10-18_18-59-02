@@ -24,7 +24,7 @@ namespace TehranNoir.Interaction
         [SerializeField] private bool logInteraction = true;
 
         [Header("Handover")]
-        [Tooltip("تا وقتی این متغیر درست است، کار «دادن» هم نمایش داده می‌شود (مثلاً flag.file.taken). خالی = فقط صحبت")]
+        [Tooltip("شرط نمایش کار «دادن»، با گرامر [if] دیالوگ:  item.file.sealed >= 1  یا  flag.file.taken. خالی = فقط صحبت")]
         [SerializeField] private string handoverVariable = string.Empty;
 
         [Tooltip("کار «دادن» دیالوگ را از این گره شروع می‌کند")]
@@ -35,13 +35,24 @@ namespace TehranNoir.Interaction
 
         private readonly List<InteractionAction> _verbs = new List<InteractionAction>(2);
 
+        private Condition _handoverCondition;
+        private string _handoverSource;
+        private bool _handoverBroken;
+
         private void Awake()
         {
             if (dialogueStarter == null)
                 dialogueStarter = GetComponent<DialogueStarter>();
         }
 
-        /// <summary>کار «دادن» فقط وقتی معنی دارد که چیزی در دست بازیکن باشد.</summary>
+        /// <summary>
+        /// کار «دادن» فقط وقتی معنی دارد که چیزی در دست بازیکن باشد.
+        ///
+        /// فیلد Inspector از این جلسه یک **شرط** است، نه فقط نام متغیر:
+        /// `item.file.sealed >= 1` مستقیم از خود آیتم می‌پرسد و به هیچ پرچم
+        /// کپی‌شده‌ای وابسته نیست. نام ساده‌ی قدیمی (`flag.file.taken`) هم
+        /// مثل قبل کار می‌کند، چون شرطِ تک‌نام یعنی «درست است؟».
+        /// </summary>
         private bool CanHandOver
         {
             get
@@ -49,8 +60,36 @@ namespace TehranNoir.Interaction
                 if (string.IsNullOrWhiteSpace(handoverVariable)) return false;
                 if (WorldStateProvider.Instance == null) return false;
 
-                return WorldStateProvider.Instance.Get(handoverVariable.Trim()).Truthy();
+                Condition condition = HandoverCondition();
+
+                return condition != null && condition.IsTrue(WorldStateProvider.Instance.State);
             }
+        }
+
+        /// <summary>شرط یک بار خوانده می‌شود، نه هر فریم؛ خطا هم یک بار گزارش می‌شود.</summary>
+        private Condition HandoverCondition()
+        {
+            string source = handoverVariable.Trim();
+
+            if (_handoverBroken)
+                return _handoverCondition;
+
+            if (_handoverCondition != null && _handoverSource == source)
+                return _handoverCondition;
+
+            _handoverSource = source;
+
+            string error;
+
+            if (ConditionParser.TryParse(source, out _handoverCondition, out error))
+                return _handoverCondition;
+
+            _handoverCondition = null;
+            _handoverBroken = true;
+
+            Debug.LogError("[Interaction] شرط «دادن» بدخط است: «" + source + "» — " + error, this);
+
+            return null;
         }
 
         /// <summary>۱) صحبت  ۲) دادن — دومی فقط با داشتن آن چیز.</summary>

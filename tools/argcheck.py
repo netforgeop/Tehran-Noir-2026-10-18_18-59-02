@@ -261,6 +261,8 @@ def main():
 
     print('files:', len(paths), 'problems:', problems)
 
+    return 1 if problems else 0
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

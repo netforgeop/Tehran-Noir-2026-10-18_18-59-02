@@ -37,9 +37,13 @@
 [text] با رضا درباره‌ی پرونده حرف بزن | Talk to Reza about the file
 [when] flag.quest.file == 2
 
+[step] logged
+[text] به رضا خبر بده که ثبت شد | Tell Reza it is logged
+[when] flag.quest.file == 3
+
 [step] deliver
 [text] پرونده را به بایگانی برسان | Take the file to the archive
-[when] flag.file.taken == true
+[when] item.file.sealed >= 1
 
 [step] pickup
 [text] پرونده را از میز رضا بردار | Pick the file up from Reza's desk

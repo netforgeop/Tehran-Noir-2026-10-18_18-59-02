@@ -48,6 +48,10 @@ namespace TehranNoir.Items
             ItemRuntime.ShowDocumentOnRead = false;
             ItemDropSpawner.Spawning = false;
 
+            // قلاب `[do] item.give.*` در بازی خودکار نصب می‌شود؛ تست هم صریح
+            // نصبش می‌کند تا در اجرای دستی از منوی کامپوننت هم همان مسیر واقعی آزموده شود.
+            ItemDialogueEffect.Install();
+
             try
             {
                 TestDefinitions();
@@ -66,6 +70,7 @@ namespace TehranNoir.Items
                 TestDuplicates();
                 TestTitles();
                 TestStoryFlags();
+                TestHandover();
                 TestVerbList();
                 TestSubscriptionsSurvive();
                 TestWorldRoundTrip();
@@ -426,6 +431,53 @@ namespace TehranNoir.Items
             Check("شرط داستان با پرچم آیتم جواب می‌دهد", storyCondition.IsTrue(world));
         }
 
+        /// <summary>
+        /// تحویل: همان مسیری که دیالوگ با `[do] item.give.file.sealed = archive`
+        /// طی می‌کند. پرونده باید از جیب بیرون برود، همان نمونه در مقصد بنشیند
+        /// و مهرِ شکسته‌اش را با خودش ببرد.
+        /// </summary>
+        private void TestHandover()
+        {
+            WorldState world = Fresh();
+
+            InventoryManager.Take("file.sealed", 1);
+
+            ItemInstance document = FirstOf("file.sealed");
+
+            ItemRuntime.Perform(document, ItemVerb.Open);
+
+            string instanceId = document != null ? document.InstanceId : string.Empty;
+
+            // از راه واقعی دیالوگ، نه با صدا زدن مستقیم مدیر.
+            DialogueRunner.ApplyEffect("item.give.file.sealed = archive", world);
+
+            ItemContainer archive = InventoryManager.Get("archive");
+            ItemInstance stored = archive != null && archive.Items.Count == 1 ? archive.Items[0] : null;
+
+            Check("تحویل: پرونده از جیب بیرون رفت",
+                InventoryManager.CountOf("file.sealed") == 0);
+
+            Check("تحویل: در بایگانی نشست",
+                stored != null, "تعداد: " + (archive != null ? archive.CountOf("file.sealed") : -1));
+
+            Check("تحویل: همان نمونه است، نه نسخه‌ی تازه",
+                stored != null && stored.InstanceId == instanceId);
+
+            Check("تحویل: مهرِ شکسته همراه نمونه رفت",
+                stored != null && stored.GetState("sealed") == "0");
+
+            Check("تحویل: پروجکشن صفر شد",
+                world.Get("item.file.sealed").AsNumber() == 0d);
+
+            ItemResult again = InventoryManager.Give("file.sealed", "archive");
+
+            Check("تحویل دوباره نسخه نمی‌سازد",
+                !again.Ok && TotalOf("file.sealed") == 1);
+
+            Check("آبجکت صحنه به نمونه‌ی بایگانی وصل می‌شود",
+                SceneItemBinding.FindExisting("file.sealed") == stored);
+        }
+
         /// <summary>فهرست فعل‌ها همان چیزی است که نوار ۱..۴ نشان می‌دهد.</summary>
         private void TestVerbList()
         {
@@ -515,6 +567,21 @@ namespace TehranNoir.Items
                 returned != null && returned.InstanceId == instanceId);
             Check("حالت سند بعد از رفت‌وبرگشت",
                 returned != null && returned.GetState("sealed") == "0");
+        }
+
+        /// <summary>تعداد کل یک تعریف در همه‌ی ظرف‌ها؛ برای «نسخه‌ی تازه ساخته نشود».</summary>
+        private static int TotalOf(string definitionId)
+        {
+            int total = 0;
+
+            foreach (ItemContainer container in InventoryManager.All)
+            {
+                if (container == null) continue;
+
+                total += container.CountOf(definitionId);
+            }
+
+            return total;
         }
 
         private static string Names(List<ItemVerb> verbs)

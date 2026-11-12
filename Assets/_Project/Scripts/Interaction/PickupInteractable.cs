@@ -69,6 +69,15 @@ namespace TehranNoir.Interaction
 
             // آبجکت روی میز و آیتم در جیب باید یک واقعیت باشند، نه دو نسخه.
             BoundInstance = SceneItemBinding.Ensure(this, itemKey);
+
+            // اگر نمونه از قبل از زمین بیرون رفته (در جیب یا بایگانی است)،
+            // این آبجکت از همان لحظه‌ی Awake «برداشته‌شده» است. وگرنه با هر
+            // بار لود شدن صحنه، یک پرونده‌ی مهرشده‌ی تازه روی میز ظاهر می‌شد.
+            if (BoundInstance != null && BoundInstance.ContainerId != InventoryManager.WorldId)
+            {
+                _taken = true;
+                SetVisible(false);
+            }
         }
 
         private void Update()

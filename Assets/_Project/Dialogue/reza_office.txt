@@ -2,7 +2,10 @@
 # مأموریت «پرونده‌ی مهر و موم‌شده» — مرحله‌ی ۳
 #
 # flag.quest.file:  0 = نگرفته   1 = پرونده دست نادر   2 = تحویل داده
-# flag.file.taken:  پرونده در دست نادر است
+# flag.file.taken:  پرونده در دست نادر است (کپی داستانیِ item.file.sealed)
+#
+# تحویل واقعی: [do] item.give.file.sealed = reza
+#   شرط داشتن پرونده از خود آیتم می‌آید: [if] item.file.sealed >= 1
 # flag.file.opened: مهر شکسته (مدرک)
 # flag.delivery:    personal (دستی) یا desk (روی میز)
 # flag.claim.seal:  opened | already | none | unknown   (آخرین ادعا)
@@ -30,7 +33,7 @@
 [if] flag.quest.file == 4 -> finished
 [if] flag.quest.file == 3 -> archive_done
 [if] flag.quest.file == 2 -> after
-[if] flag.file.taken == true -> carrying
+[if] item.file.sealed >= 1 -> carrying
 [if] flag.quest.file == 1 -> go_get
 [go] offer
 
@@ -79,6 +82,7 @@
 
 [node] handover
 [do] met.reza = true
+[do] item.give.file.sealed = reza
 [do] flag.delivery = personal
 [do] flag.delivery.seen = true
 [do] flag.quest.file = 2
@@ -148,6 +152,7 @@
 [go] delivered
 
 [node] delivered
+[do] flag.quest.file = 4
 [say] reza | پرونده رسید. کاری برات ندارم. | The file is in. I have nothing for you.
 [end]
 
@@ -183,6 +188,7 @@
 [end]
 
 [node] witness_done
+[do] flag.quest.file = 4
 [say] reza | دیگه حرفی نداریم. | We have nothing more to say.
 [end]
 

@@ -114,9 +114,11 @@ def check(path):
     return problems
 
 if __name__=='__main__':
-    root=sys.argv[1]; total=0
+    root=sys.argv[1] if len(sys.argv)>1 else 'Assets/_Project/Scripts'; total=0
     for f in sorted(glob.glob(os.path.join(root,'**','*.cs'), recursive=True)):
         if 'RTLTMPro' in f: continue
         for x in check(f):
             print('  ',x[0].split('/')[-1],'|',x[1],'|',x[2]); total+=1
     print('problems:', total)
+    # کد خروج مهم است: preflight با `|| status=1` همین را می‌بیند.
+    sys.exit(1 if total else 0)

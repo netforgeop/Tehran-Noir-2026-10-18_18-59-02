@@ -13,6 +13,18 @@ namespace TehranNoir.Dialogue
         private static readonly Regex EffectPattern =
             new Regex(@"^\s*([A-Za-z0-9_.]+)\s*([+\-=])\s*(.+?)\s*$");
 
+        /// <summary>
+        /// اثرهایی که موتور دیالوگ معنی‌شان را نمی‌داند و لایه‌ی دیگری (آیتم‌ها)
+        /// می‌شناسد؛ مثل `[do] item.give.file.sealed = archive`.
+        ///
+        /// چرا قلاب و نه `using TehranNoir.Items`؟ چون جهت وابستگی باید یکی بماند:
+        /// آیتم‌ها به دیالوگ وابسته‌اند، نه برعکس. اگر قلاب `true` برگرداند،
+        /// گرامر عادی `[do]` دیگر اجرا نمی‌شود؛ اگر `false` برگرداند، مثل قبل.
+        ///
+        /// تنظیم و پاک‌کردنش کار `Items/ItemDialogueEffect.cs` است.
+        /// </summary>
+        public static Func<string, WorldState, bool> ExternalEffect;
+
         private readonly List<OptionItem> _options = new List<OptionItem>();
         private int _index;
 
@@ -255,6 +267,9 @@ namespace TehranNoir.Dialogue
         public static void ApplyEffect(string source, WorldState world)
         {
             if (world == null || string.IsNullOrEmpty(source)) return;
+
+            // لایه‌ی آیتم‌ها اول شانس دارد: گرامرهایی مثل `item.give.*` را خودش می‌شناسد.
+            if (ExternalEffect != null && ExternalEffect(source, world)) return;
 
             Match match = EffectPattern.Match(source);
             if (!match.Success) return;

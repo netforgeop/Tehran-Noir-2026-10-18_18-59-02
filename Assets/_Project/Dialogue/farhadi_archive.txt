@@ -5,6 +5,10 @@
 # flag.delivery:    personal | desk | archive
 # flag.archive.logged: در دفتر ثبت شد
 # known.farhadi.seal: خانم فرهادی مهر شکسته را دید
+#
+# تحویل واقعی: [do] item.give.file.sealed = archive
+#   پرونده از جیب بازیکن بیرون می‌رود و همان نمونه در ظرف «بایگانی» می‌نشیند.
+#   شرط داشتنش هم از خود آیتم می‌آید: [if] item.file.sealed >= 1
 
 [person] farhadi
 [name] خانم فرهادی | Mrs. Farhadi
@@ -13,7 +17,7 @@
 
 [node] start
 [if] flag.quest.file == 3 -> after
-[if] flag.file.taken == true -> handover
+[if] item.file.sealed >= 1 -> handover
 [say] farhadi | بایگانی. چیزی لازم داری؟ | Archive. Need something?
 [opt] دنبال پرونده‌ی ۱۳۵۲ هستم. | I am looking for the 1352 file. -> clue
 [opt] فقط سر می‌زنم. | Just looking around. -> look
@@ -32,6 +36,7 @@
 [say] farhadi | بده. | Give it here.
 [say] farhadi | پرونده‌ی مهر و موم‌شده... شماره‌اش رو بگو. | A sealed file... give me the number.
 [if] flag.file.opened == true -> broken
+[do] item.give.file.sealed = archive
 [do] flag.quest.file = 3
 [do] flag.delivery = archive
 [do] flag.file.taken = false
@@ -41,6 +46,7 @@
 [end]
 
 [node] broken
+[do] item.give.file.sealed = archive
 [do] flag.quest.file = 3
 [do] flag.delivery = archive
 [do] flag.file.taken = false

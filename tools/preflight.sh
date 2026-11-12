@@ -20,4 +20,8 @@ echo
 echo "۴) using جاافتاده (CS0103 روی نام نوع)"
 python3 tools/usingcheck.py "$root" || status=1
 
+echo
+echo "۵) ارجاع داستان به آیتم‌ها (شناسه‌ی ناشناس / پروجکشن دستی)"
+python3 tools/storycheck.py || status=1
+
 exit $status

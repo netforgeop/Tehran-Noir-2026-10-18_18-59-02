@@ -47,7 +47,7 @@ https://github.com/netforgeop/Tehran-Noir-2026-10-18_18-59-02
 | مسیر پروژه روی کامپیوتر کاربر | `D:\PYWP\Game\Unity Games\Tehran Noir\` |
 | ریپو | https://github.com/netforgeop/Tehran-Noir-2026-10-18_18-59-02 |
 | شاخه | `arena/4796527a-tehran-noir-2026-10-18-18-59-0` |
-| آخرین کامیت این نوشته | `37b380d` — feat(interaction): several verbs per object, and a file you can open |
+| آخرین کامیت این نوشته | `b3ffebc` — fix(items): last matching title wins; align the seal test with flag.file.opened |
 
 بازی اول کاربر است؛ سطح مهارت برنامه‌نویسی: مبتدی. کد باید ساده، مدولار و قابل توضیح بماند.
 
@@ -277,8 +277,13 @@ again:  flag.file.taken == true → carrying
 [go] next                        پرش بی‌شرط
 [do] rel.reza +5                 تغییر WorldState
 [do] met.reza = true
+[do] item.give.file.sealed = archive   تحویل واقعی: آیتم از جیب به ظرف «بایگانی»
 [end]                            پایان
 ```
+
+**گرامر تحویل:** `[do] item.give.<شناسه‌ی آیتم> = <شناسه‌ی ظرف>`
+همان نمونه را از «همراه بازیکن» به ظرف مقصد می‌برد (با مهر و خوانده‌شدنش).
+در `PlaceInteractable` هم همین خط کار می‌کند، چون هر دو از `DialogueRunner.ApplyEffect` رد می‌شوند.
 
 - عملگرها: `=`, `+`, `-`
 - مقدارها: عدد، `true`، `false`، یا متن
@@ -357,7 +362,7 @@ again:  flag.file.taken == true → carrying
 
 | # | کار | چرا الان | اندازه |
 | --- | --- | --- | --- |
-| ۱ | **مرحله ۳ مأموریت**: تحویل پرونده و رویارویی رضا | اولین «دروغ» واقعی بازی و جایی که دو دفتر (واقعیت/باور) کار می‌کند | یک نشست |
+| ۱ | **اتصال صحنه‌ی تحویل** (جدول §۱۷) | کد و داده‌اش در جلسه‌ی ۳۴ آماده شد؛ فقط چند فیلد Inspector مانده | نیم نشست |
 | ۲ | **مرحله ۴**: نوارهای آبرو + تب «پرونده‌ها» در منوی توقف | بدون این، انتخاب‌های مرحله ۳ هیچ نتیجه‌ی دیدنی ندارند | یک تا دو نشست |
 | ۳ | دایره‌ی وضعیت (سلامت/انرژی/زره) گوشه‌ی راست | بریف کاربر هست، ولی فقط با آمار واقعی؛ الان فقط `energy` واقعی است | یک نشست |
 | ۴ | تب «نقشه بازی»، «کدکس»، «پرونده‌ها» از Placeholder به محتوا | پوسته آماده است | هر تب یک نشست |
@@ -390,6 +395,15 @@ again:  flag.file.taken == true → carrying
 10. **`DialogueUI.Current` و `PauseMenuUI.IsOpen`** دو پرچم عمومی‌اند که سیستم‌های دیگر
     با آن‌ها می‌فهمند بازی مشغول است. قبل از کار روی ورودی، همیشه اول این‌ها را چک کن.
 11. **`.unity` و `.meta` در گیت نیستند.** هیچ‌وقت `.meta` را دستی حذف نکن.
+12. **`[do] item.<id> = ...` در دیالوگ ننویس.** پروجکشن `item.*` فقط دست
+    `InventoryManager` است و `SyncProjection` هر نوشتن دیگر را پاک می‌کند؛ برای
+    جابه‌جایی همان `[do] item.give.<id> = <ظرف>` است. `tools/storycheck.py` این را می‌گیرد.
+13. **شرط داشتن آیتم را از خود آیتم بپرس** (`item.file.sealed >= 1`)، نه از پرچم
+    کپی (`flag.file.taken`). پرچم کپی با انداختن/تحویل از واقعیت جدا می‌شود.
+14. **آبجکت صحنه باید نمونه‌ی موجود را در هر ظرفی پیدا کند**، وگرنه با هر بار لود
+    صحنه یک نسخه‌ی تازه‌ی مهرشده روی میز ظاهر می‌شود (`SceneItemBinding.FindExisting`).
+15. **ابزارهای گیت باید کد خروج غیرصفر بدهند.** تا جلسه‌ی ۳۴ سه ابزار اول
+    `sys.exit` نداشتند و `preflight.sh` همیشه سبز بود، حتی با خطا.
 
 ---
 
@@ -433,6 +447,22 @@ PY
 
 tree-sitter فقط **سینتکس** را ثابت می‌کند. خطاهای نوع، تکرار اعضا و ارجاع‌های گم‌شده
 فقط در Unity دیده می‌شوند، پس بعد از هر تغییر باید کاربر Console را بفرستد.
+
+### پیش‌بررسی اجباری — پنج بررسی
+
+```bash
+bash tools/preflight.sh
+```
+
+| # | ابزار | چه چیزی را می‌گیرد |
+| --- | --- | --- |
+| ۱ | `cscheck.py` | هم‌نامی فیلد و متد در یک نوع (CS0102) |
+| ۲ | `symcheck.py` | فراخوانی یا فیلدِ اعلام‌نشده (CS0103) |
+| ۳ | `argcheck.py` | تعداد آرگومان (CS1501/CS7036) |
+| ۴ | `usingcheck.py` | `using` جاافتاده برای نوع پروژه (CS0103) |
+| ۵ | `storycheck.py` | شناسه‌ی ناشناس آیتم در دیالوگ/کار + نوشتن دستی `item.*` |
+
+هر پنج ابزار با کد خروج غیرصفر برمی‌گردند و `preflight.sh` همان را جمع می‌زند.
 
 ### گیت
 
@@ -522,6 +552,9 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 | `docs/22` | ممیزی بکاپ ۲۰۲۶-۱۱-۰۷ و پنج اتصال باقی‌مانده |
 | `docs/23` | **اسناد کاغذی**: الگو، تگ‌ها، سه راه باز کردن، RTLTMPro |
 | `docs/24` | **کارها و ژورنال**: فرمت کار، تراکر گوشه، نقشه‌ی چهار بخش منو |
+| `docs/25`–`docs/34` | آمار و پنل تست، کمان HUD، حرکت پنل، HUD تازه، تب کاراکتر، ساعت‌ها، ترتیب عدد، جیب، شبکه‌ی وسایل، چارچوب آیتم |
+| `docs/35`–`docs/37` | آیتم داده‌محور (قاعده‌ها)، فعل‌ها و انداختن، اتصال پرونده به سیستم آیتم |
+| `docs/38` | **تحویل واقعی پرونده**: گرامر `item.give`، شرط از خود آیتم، گیت پنجم |
 
 ---
 
@@ -546,26 +579,27 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 
 ## ۱۷. قدم بعدی — دقیق
 
-**اتصال صحنه، نه کد تازه.** مرحله‌ی ۳ (تحویل و رویارویی) در بکاپ ۲۰۲۶-۱۱-۰۷ نوشته شده است؛
-چیزی که مانده پنج اتصال در Inspector است و هر پنج‌تا در `docs/22` با مقدار دقیق فیلدها آمده‌اند:
+**اتصال صحنه‌ی تحویل.** کد و داده‌ی تحویل در جلسه‌ی ۳۴ آماده شد؛ چیزی که مانده
+پر کردن چند فیلد در Inspector است.
 
-۱. `OutlineEffect` روی `Reza` و `Cube` با متریال `M_Outline`.
-۲. `Cube`: تعویض `PickupInteractable` با `FileInteractable` و پر کردن `Document Path`
-   با `Documents/file_sealed`. (`Content Reader` دیگر لازم نیست.)
-۳. `Reza`: `Handover Variable = flag.file.taken` (وگرنه کار «دادن» هرگز نمی‌آید).
-۴. `DeskPoint` زیر میز با `PlaceInteractable` و سه اثر `flag.delivery = desk`،
-   `flag.quest.file = 2`، `flag.file.taken = false`.
-۵. `Tehran Noir/ساخت لایه‌ی اسناد و اتصال پرونده` — این خودش `DocumentLayer` را می‌سازد
-   و `Document Path` پرونده را ست می‌کند.
-۶. اجرای `Tehran Noir/ساخت بایگانی و مأموریت` و بعد `Ctrl+S`.
+| # | کجا | چه چیزی |
+| --- | --- | --- |
+| ۱ | `Reza` → `TalkInteractable` | `Handover Variable` = `item.file.sealed >= 1` (به‌جای `flag.file.taken`) |
+| ۲ | `DeskPoint` → `PlaceInteractable` | سه اثر: `item.give.file.sealed = reza`، `flag.delivery = desk`، `flag.quest.file = 2` |
+| ۳ | خانم فرهادی | `DialogueStarter` روی `Dialogue/farhadi_archive` + `TalkInteractable` با همان شرط `item.file.sealed >= 1` |
+| ۴ | `ItemSelfTest` | Play → انتظار **۶۰ قبول، ۰ رد** |
 
-تا شماره ۲ انجام نشود `flag.file.opened` همیشه false است و سه گره
-(`handover_broken`, `desk_open`, `broken`) دست‌نیافتنی می‌مانند.
+آزمایش دستی، دقیقاً به این ترتیب:
 
-بعد از اتصال، آزمایش این ترتیب است: گرفتن کار از رضا → برداشتن پرونده → `۱` (باز کردن)
-→ دیدن برگه‌ی کاغذی → بستن با `Esc` → `۲` (برداشتن) → رفتن به رضا → کار «دادن»
-→ دیدن «چرا درش بازه؟».
-هیچ‌کدام از این‌ها بدون آن پنج اتصال قابل آزمایش نیست.
+۱. رضا → گرفتن کار → پرونده روی میز → برداشتن (کارت «پرونده‌ی مهرشده»).
+۲. `۱` = باز کردن → کارت «پرونده‌ی بازشده»؛ `۲` = خواندن → «پرونده‌ی خوانده‌شده».
+۳. رفتن به بایگانی → کار «دادن» → «این مهر شکسته.»
+۴. `F10` → `item.file.sealed` باید **۰** باشد و پرونده در «وسایل» نباشد.
+۵. برگشتن به رضا → «خانم فرهادی دفتر رو نشونم داد.» → `flag.quest.file = 4` → کار بسته می‌شود.
+
+اگر پرونده روی میز رضا گذاشته شود (مسیر `DeskPoint`)، بعد از تحویل هم
+`item.file.sealed` صفر می‌شود و اگر صحنه دوباره لود شود، آبجکت میز نسخه‌ی
+مهرشده‌ی تازه نمی‌سازد؛ به همان نمونه‌ی موجود وصل می‌شود.
 
 ---
 
@@ -861,7 +895,9 @@ python3 tools/cscheck.py Assets/_Project/Scripts
 | `Items/InventoryManager.cs` | تراکنش‌ها + پروجکشن `item.*` |
 | `Items/ItemRuntime.cs` | اجرای فعل |
 | `Items/ItemSave.cs` | ذخیره‌ی نسخه‌دار |
-| `Items/ItemSelfTest.cs` | ۱۴ گروه تست داخل بازی |
+| `Items/ItemSelfTest.cs` | ۱۹ گروه تست داخل بازی (۶۰ بررسی) |
+| `Items/SceneItemBinding.cs` | پیوند آبجکت صحنه به نمونه‌ی آیتم؛ جست‌وجو در همه‌ی ظرف‌ها |
+| `Items/ItemDialogueEffect.cs` | گرامر `[do] item.give.<id> = <ظرف>`؛ قلاب موتور دیالوگ |
 | `Editor/ItemBrowserWindow.cs` | پنجره‌ی `Tehran Noir/آیتم‌ها` |
 
 ### قواعد ثابت
@@ -1043,3 +1079,31 @@ Play هیچ شنونده‌ای نداشت.
 **درس:** وقتی یک نام مشترک (پرچم یا قاعده) عوض می‌شود، همه‌ی خواننده‌هایش را
 با `grep` پیدا کن، نه فقط آن‌هایی که خودت نوشتی.
 
+
+## ۴۳. تحویل واقعی پرونده: گرامر `item.give` و گیت پنجم (جلسه‌ی ۳۴)
+
+**علت (از کد، نه حدس):** گره‌های تحویل در `farhadi_archive.txt` و `reza_office.txt`
+فقط `flag.file.taken = false` می‌نوشتند. پرچم عوض می‌شد، ولی نمونه‌ی آیتم در
+ظرف `player` می‌ماند؛ پس بعد از تحویل هم کارت پرونده در «وسایل» بود و اگر صحنه
+دوباره لود می‌شد، `SceneItemBinding` برای میز یک نسخه‌ی مهرشده‌ی تازه می‌ساخت.
+
+| فایل | تغییر |
+| --- | --- |
+| `Items/InventoryManager.cs` | متد `Give(definitionId, toContainerId, quantity)` — همه‌ی پشته‌های همراه با `Move` به ظرف مقصد، همان نمونه‌ها |
+| `Dialogue/DialogueRunner.cs` | فیلد `ExternalEffect` (قلاب) + صدا زدنش در اول `ApplyEffect` |
+| `Items/ItemDialogueEffect.cs` | تازه: گرامر `[do] item.give.<id> = <ظرف>`، ساخت ظرف مقصد، لاگ خطا |
+| `Dialogue/farhadi_archive.txt` | `[if] item.file.sealed >= 1`، `[do] item.give.file.sealed = archive` در دو گره |
+| `Dialogue/reza_office.txt` | همان شرط، `[do] item.give.file.sealed = reza`، بستن کار در `delivered` و `witness_done` |
+| `Resources/Quests/case_file.txt` | قدم تازه‌ی `logged`؛ قدم `deliver` از `item.file.sealed >= 1` |
+| `Interaction/TalkInteractable.cs` | فیلد تحویل حالا یک **شرط** است (`ConditionParser`)، نه فقط نام متغیر |
+| `Items/SceneItemBinding.cs` | `FindExisting` در همه‌ی ظرف‌ها + `Awake` آبجکت اگر نمونه بیرون از زمین است، پنهان |
+| `Items/ItemSelfTest.cs` | گروه `TestHandover` (۷ بررسی) → **۶۰** |
+| `tools/storycheck.py` | تازه: شناسه‌ی ناشناس آیتم + نوشتن دستی `item.*` |
+| `tools/{cs,sym,arg}check.py` | کد خروج غیرصفر (باگ گیت: همیشه سبز بود) |
+| `tools/preflight.sh` | بررسی پنجم |
+
+**قاعده‌ی ثابت:** دیالوگ از سیستم آیتم می‌پرسد، نه از پرچم کپی. هر جا داشتن
+یک آیتم شرط است، `item.<id> >= 1` نوشته می‌شود.
+
+**تست:** `ItemSelfTest` → ۶۰ قبول؛ `storycheck` → `refs: 6 problems: 0`؛ تخریب
+`storycheck` با شناسه‌ی نادرست → ۴ خطا؛ تخریب `symcheck` با حذف فیلد قلاب → همان خط.

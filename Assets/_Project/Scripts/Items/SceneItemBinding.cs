@@ -24,8 +24,8 @@ namespace TehranNoir.Items
 
         /// <summary>
         /// نمونه‌ی همین آبجکت را برمی‌گرداند و اگر نبود می‌سازد.
-        /// اول در ظرف زمین دنبال یک نمونه‌ی آزاد از همان تعریف می‌گردد تا
-        /// اگر چیزی از قبل افتاده بود، آبجکت تازه دوتایش نکند.
+        /// اول دنبال یک نمونه‌ی آزاد از همان تعریف در هر ظرفی می‌گردد (زمین،
+        /// جیب، بایگانی) تا اگر آیتم از قبل وجود دارد، آبجکت دوتایش نکند.
         /// </summary>
         public static ItemInstance Ensure(Component owner, string definitionId)
         {
@@ -40,24 +40,14 @@ namespace TehranNoir.Items
             if (Bound.TryGetValue(owner, out existing) && existing != null)
                 return existing;
 
-            InventoryManager.EnsureDefaults();
+            ItemInstance found = FindExisting(id);
 
-            ItemContainer world = InventoryManager.WorldBox;
-
-            if (world != null)
+            if (found != null)
             {
-                for (int i = 0; i < world.Items.Count; i++)
-                {
-                    ItemInstance candidate = world.Items[i];
+                Bound[owner] = found;
+                Claimed.Add(found.InstanceId);
 
-                    if (candidate.DefinitionId != id) continue;
-                    if (Claimed.Contains(candidate.InstanceId)) continue;
-
-                    Bound[owner] = candidate;
-                    Claimed.Add(candidate.InstanceId);
-
-                    return candidate;
-                }
+                return found;
             }
 
             ItemInstance made = ItemInstance.Create(id);
@@ -70,6 +60,58 @@ namespace TehranNoir.Items
             Claimed.Add(made.InstanceId);
 
             return made;
+        }
+
+        /// <summary>
+        /// نمونه‌ی آزادِ این تعریف در **هر** ظرفی — اول زمین، بعد جیب و بقیه.
+        ///
+        /// چرا کل ظرف‌ها؟ چون آبجکت صحنه دوباره ساخته می‌شود ولی آیتم یکی است.
+        /// اگر پرونده در بایگانی باشد و صحنه دوباره لود شود، جست‌وجوی فقط-زمین
+        /// یک نسخه‌ی مهرشده‌ی تازه روی میز می‌گذاشت. حالا همان نمونه‌ی موجود
+        /// پیدا می‌شود و آبجکت از همان لحظه «برداشته‌شده» حساب می‌شود.
+        /// </summary>
+        public static ItemInstance FindExisting(string definitionId)
+        {
+            string id = ItemCatalog.Normalize(definitionId);
+
+            if (id.Length == 0) return null;
+
+            InventoryManager.EnsureDefaults();
+
+            ItemContainer world = InventoryManager.WorldBox;
+
+            if (world != null)
+            {
+                ItemInstance inWorld = FindIn(world, id);
+
+                if (inWorld != null) return inWorld;
+            }
+
+            foreach (ItemContainer container in InventoryManager.All)
+            {
+                if (container == null || container.Id == InventoryManager.WorldId) continue;
+
+                ItemInstance elsewhere = FindIn(container, id);
+
+                if (elsewhere != null) return elsewhere;
+            }
+
+            return null;
+        }
+
+        private static ItemInstance FindIn(ItemContainer container, string definitionId)
+        {
+            for (int i = 0; i < container.Items.Count; i++)
+            {
+                ItemInstance candidate = container.Items[i];
+
+                if (candidate == null || candidate.DefinitionId != definitionId) continue;
+                if (Claimed.Contains(candidate.InstanceId)) continue;
+
+                return candidate;
+            }
+
+            return null;
         }
 
         public static void Release(Component owner)

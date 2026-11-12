@@ -89,6 +89,6 @@ action.place = گذاشتن
 hud.select = انتخاب
 hud.scroll = چرخ موس: هدف بعدی
 hud.verbs = کلید ۱ تا ۳: انتخاب کار
-doc.close = Esc یا E: بستن
+doc.close = برای بستن Esc یا E
 quest.main = اصلی
 quest.side = جانبی

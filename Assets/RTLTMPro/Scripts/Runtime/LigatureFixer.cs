@@ -109,6 +109,28 @@ namespace RTLTMPro
                         }
                     }
 
+                    // علامتی که بین دو رقم است (دونقطه‌ی ساعت، ممیز هزار، اسلش تاریخ)
+                    // باید داخل همان رشته‌ی چپ‌به‌راست بماند. اگر مثل علائم راست‌به‌چپ
+                    // جدا شود، رشته دو نیم می‌شود و هر نیم جدا وارونه می‌شود:
+                    // 08:28 به ۸۰:۸۲ و 4,500 به ۴,۰۰۵ تبدیل می‌شد.
+                    if (isInMiddle &&
+                        Char32Utils.IsNumber(previousCharacter, preserveNumbers, farsi) &&
+                        Char32Utils.IsNumber(nextCharacter, preserveNumbers, farsi))
+                    {
+                        LtrTextHolder.Add(characterAtThisIndex);
+                        continue;
+                    }
+
+                    // علامتِ آخرِ جمله در متن فارسی باید سمت چپ بنشیند (یعنی پایان
+                    // جمله). اگر داخل رشته‌ی چپ‌به‌راست برود، «صفحه‌ی ۴۱.» به
+                    // «۴۱.» می‌رسد و نقطه سمت راست رقم‌ها می‌ماند.
+                    if (isAtEnd && farsi)
+                    {
+                        FlushBufferToOutput(LtrTextHolder, output);
+                        output.Append(characterAtThisIndex);
+                        continue;
+                    }
+
                     if (isInMiddle)
                     {
                         bool isAfterRTLCharacter = Char32Utils.IsRTLCharacter(previousCharacter);

@@ -94,6 +94,19 @@ namespace TehranNoir.UI
             return gameObject.AddComponent<TextMeshProUGUI>();
         }
 
+        /// <summary>
+        /// متنی که فقط عدد است (مثل مقدار ویژگی‌ها) هیچ حرفی ندارد؛ RTLTMPro چنین متنی را
+        /// دست‌نخورده رد می‌کند و رقمش هم فارسی نمی‌شود. با ForceFix مجبورش می‌کنیم
+        /// مثل بقیه پردازش شود. فقط برای عدد خالص؛ روی متن انگلیسی خاموش بماند.
+        /// </summary>
+        public static void ForceFixNumbers(TMP_Text text, bool on)
+        {
+            if (text == null) return;
+
+            Component rtl = FindRtlComponent(text.gameObject);
+            if (rtl != null) SetBoolMember(rtl, "ForceFix", on);
+        }
+
         private static void SetRtl(TMP_Text text, bool farsi)
         {
             if (text == null) return;

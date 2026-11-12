@@ -178,12 +178,14 @@ namespace RTLTMPro
                     continue;
                 }
 
-                if (char.IsLetter(character))
+                if (char.IsLetter(character) && IsRTLCharacter(character))
                 {
-                    return IsRTLCharacter(character);
+                    return true;
                 }
             }
 
+            // متن مختلط که با انگلیسی شروع می‌شود (مثل «Esc یا E: بستن») هم باید
+            // راست‌به‌چپ پردازش شود؛ وگرنه فارسی‌اش وارونه و بی‌شکل می‌ماند.
             return false;
         }
     }

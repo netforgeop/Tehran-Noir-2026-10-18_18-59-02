@@ -321,6 +321,10 @@ namespace TehranNoir.UI
             RectTransform valueBox = UiKit.Box("Value", row, 0f, 0f, valueWidth, SettingsLayout.RowHeight);
             TMP_Text valueText = UiKit.Text("Text", valueBox, SettingsLayout.RowFont, UiKit.Dim, _font, _persian);
             valueText.alignment = TextAlignmentOptions.MidlineRight;
+
+            // مقدارها عددی‌اند (FPS، حجم صدا) و حرفی ندارند؛ بی ForceFix تبدیل نمی‌شدند
+            UiKit.ForceFixNumbers(valueText, _persian);
+
             valueText.text = readValue != null ? readValue() : string.Empty;
 
             RectTransform labelBox = UiKit.Box("Label", row, valueWidth + 20f, 0f,

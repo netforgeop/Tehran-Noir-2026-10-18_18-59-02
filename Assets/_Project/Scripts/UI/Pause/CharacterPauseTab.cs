@@ -55,12 +55,12 @@ namespace TehranNoir.UI
         private const float PipX = 176f;
         private const float NameX = 240f;
 
-        /// <summary>زیر این مقدار، سرخ؛ بالای آن، کم‌کم سفید.</summary>
-        private const float LowMark = 30f;
+        /// <summary>زیر این مقدار، سرخِ کامل؛ بالای آن، کم‌کم به استخوانی می‌رسد.</summary>
+        private const float LowMark = 25f;
 
-        private static readonly Color HighColor = new Color(0.94f, 0.92f, 0.87f, 1f);
+        private static readonly Color HighColor = new Color(0.96f, 0.95f, 0.92f, 1f);
         private static readonly Color LowColor = new Color(0.72f, 0.16f, 0.14f, 1f);
-        private static readonly Color MidColor = new Color(0.74f, 0.66f, 0.53f, 1f);
+        private static readonly Color MidColor = new Color(0.80f, 0.77f, 0.70f, 1f);
         private static readonly Color TrackColor = new Color(0.25f, 0.24f, 0.22f, 0.75f);
 
         private static readonly string[] PersianMonths =
@@ -94,12 +94,14 @@ namespace TehranNoir.UI
         private readonly List<ArcGraphic> _pips = new List<ArcGraphic>(5);
         private readonly List<ArcGraphic> _pipTracks = new List<ArcGraphic>(5);
         private readonly List<Image> _pipIcons = new List<Image>(5);
+        private readonly List<TMP_Text> _valueTexts = new List<TMP_Text>(5);
 
         private RectTransform _content;
         private Image _crest;
         private Image _crestIcon;
         private TMP_Text _nameText;
         private TMP_Text _metaText;
+        private string _metaShown;
         private TMP_Text _note;
 
         private int _section;
@@ -204,6 +206,7 @@ namespace TehranNoir.UI
             _pips.Clear();
             _pipTracks.Clear();
             _pipIcons.Clear();
+            _valueTexts.Clear();
 
             // ردیف‌های بخش پیشین: اول خاموش، بعد نابود
             for (int i = _content.childCount - 1; i >= 0; i--)
@@ -244,7 +247,10 @@ namespace TehranNoir.UI
             RectTransform valueBox = UiKit.Box("Value", row, valueX, 0f, ValueWidth, RowHeight);
 
             TMP_Text valueText = UiKit.Text("Text", valueBox, RowFont, UiKit.Dim, Menu.Font, Menu.Persian);
-            valueText.alignment = rtl ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.MidlineRight;
+            valueText.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
+
+            // عدد خالص است و هیچ حرفی ندارد؛ RTLTMPro بدون ForceFix آن را تبدیل نمی‌کند
+            UiKit.ForceFixNumbers(valueText, Menu.Persian);
 
             RectTransform pip = UiKit.Node("Pip", row);
             pip.anchorMin = new Vector2(0f, 1f);
@@ -283,10 +289,9 @@ namespace TehranNoir.UI
             PauseRow data = new PauseRow();
             data.Rect = row;
             data.Label = labelText;
-            data.ValueText = valueText;
-            data.ReadValue = () => CharacterStats.Get(id).ToString();
 
             Rows.Add(data);
+            _valueTexts.Add(valueText);
         }
 
         private static ArcGraphic MakeArc(RectTransform parent, string name, float radius,
@@ -325,20 +330,30 @@ namespace TehranNoir.UI
         /// </summary>
         private static Color TraitColor(float value)
         {
-            float t = Mathf.Clamp01(value / 100f);
-
+            // ۵۰ = نقطه‌ی شروع بازی؛ باید استخوانی و بی‌طرف دیده شود، نه سرخ.
             if (value <= LowMark) return LowColor;
 
-            float fromMark = Mathf.InverseLerp(LowMark, 100f, value);
+            if (value < 50f) return Color.Lerp(LowColor, MidColor, Mathf.InverseLerp(LowMark, 50f, value));
 
-            return fromMark < 0.5f
-                ? Color.Lerp(LowColor, MidColor, fromMark * 2f)
-                : Color.Lerp(MidColor, HighColor, (fromMark - 0.5f) * 2f);
+            return Color.Lerp(MidColor, HighColor, Mathf.InverseLerp(50f, 100f, value));
+        }
+
+        /// <summary>نقش و تاریخ؛ فقط وقتی متن عوض شده باشد دوباره نوشته می‌شود.</summary>
+        private void RefreshMeta()
+        {
+            string text = Loc.Get(Loc.Channel.Menu, "char.role") + "   ·   " + FormatDate();
+
+            if (text == _metaShown) return;
+
+            _metaShown = text;
+            _metaText.text = text;
         }
 
         /// <summary>هر فریم صدا زده می‌شود تا منو با مقدارهای تازه هم‌خوان بماند.</summary>
         public override void TickValues()
         {
+            RefreshMeta();
+
             for (int i = 0; i < TraitOrder.Length && i < _pips.Count; i++)
             {
                 float value = CharacterStats.GetFloat(TraitOrder[i]);
@@ -351,6 +366,13 @@ namespace TehranNoir.UI
                 _pips[i].color = color;
 
                 if (_pipIcons[i] != null) _pipIcons[i].color = color;
+
+                if (_valueTexts[i] != null)
+                {
+                    // عدد ASCII؛ تبدیل به رقم فارسی کار RTLTMPro است (ForceFix)
+                    _valueTexts[i].text = CharacterStats.Get(TraitOrder[i]).ToString();
+                    _valueTexts[i].color = color;
+                }
             }
 
             if (_crestIcon != null)
@@ -375,12 +397,12 @@ namespace TehranNoir.UI
             base.OnShow();
 
             _nameText.text = Loc.Get(Loc.Channel.Menu, "char.name");
-            _metaText.text = Loc.Get(Loc.Channel.Menu, "char.role") + "   ·   " + FormatDate();
 
             BuildSection();
             RefreshRail();
             Select(0);
 
+            RefreshMeta();
             TickValues();
         }
 

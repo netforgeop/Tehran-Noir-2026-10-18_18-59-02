@@ -657,6 +657,9 @@ namespace TehranNoir.UI
 
                 _sheetValues[i] = UiKit.Text("Text", valueBox, 18f, Dim, _font, _persian);
                 _sheetValues[i].alignment = TextAlignmentOptions.Center;
+
+                // مقدار فقط عدد است؛ بی ForceFix هیچ تبدیلی روی آن انجام نمی‌شد
+                UiKit.ForceFixNumbers(_sheetValues[i], _persian);
             }
         }
 

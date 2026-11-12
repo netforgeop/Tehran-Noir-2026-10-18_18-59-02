@@ -18,6 +18,13 @@ namespace TehranNoir.EditorTools
     public static class ArchiveMissionBuilder
     {
         private const string RootName = "ArchiveWing";
+
+        /// <summary>
+        /// شرطی که کار «دادن» را روی آدم‌ها نشان می‌دهد. از خود آیتم می‌پرسد
+        /// («حداقل یکی همراهت هست؟»)، نه از پرچم کپی‌شده؛ پس با انداختن یا
+        /// تحویل، از واقعیت جدا نمی‌شود.
+        /// </summary>
+        public const string HandoverCondition = "item.file.sealed >= 1";
         private const string DialogueFolder = "Assets/_Project/Dialogue/";
         private const string MaterialFolder = "Assets/_Project/Art/Materials/Generated";
 
@@ -246,7 +253,7 @@ namespace TehranNoir.EditorTools
 
             if (!string.IsNullOrEmpty(handoverNode))
             {
-                SetString(talk, "handoverVariable", "flag.file.taken");
+                SetString(talk, "handoverVariable", HandoverCondition);
                 SetString(talk, "handoverNode", handoverNode);
             }
         }

@@ -579,27 +579,30 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 
 ## ۱۷. قدم بعدی — دقیق
 
-**اتصال صحنه‌ی تحویل.** کد و داده‌ی تحویل در جلسه‌ی ۳۴ آماده شد؛ چیزی که مانده
-پر کردن چند فیلد در Inspector است.
+**سه کار در صحنه، بدون کد تازه.** کد و داده در جلسه‌ی ۳۴ آماده شد؛ فقط این سه:
 
-| # | کجا | چه چیزی |
-| --- | --- | --- |
-| ۱ | `Reza` → `TalkInteractable` | `Handover Variable` = `item.file.sealed >= 1` (به‌جای `flag.file.taken`) |
-| ۲ | `DeskPoint` → `PlaceInteractable` | سه اثر: `item.give.file.sealed = reza`، `flag.delivery = desk`، `flag.quest.file = 2` |
-| ۳ | خانم فرهادی | `DialogueStarter` روی `Dialogue/farhadi_archive` + `TalkInteractable` با همان شرط `item.file.sealed >= 1` |
-| ۴ | `ItemSelfTest` | Play → انتظار **۶۰ قبول، ۰ رد** |
+۱. **رضا:** روی `Reza` → کامپوننت `Talk Interactable` → فیلد `Handover Variable` =
+   `item.file.sealed >= 1` (اگر خالی یا `flag.file.taken` است، عوضش کن).
+   بدون این، کار «دادن» هرگز روی رضا ظاهر نمی‌شود.
+۲. **بایگانی:** Play را قطع کن، صحنه‌ی `Sandbox` را باز کن، از منوی
+   `Tehran Noir` → `ساخت بایگانی و مأموریت`. راهرو، اتاق، `Farhadi`، `Mahmoud`،
+   دفتر ثبت و جعبه ساخته و صحنه ذخیره می‌شود. سازنده حالا `Handover Variable`
+   فرهادی را `item.file.sealed >= 1` می‌گذارد.
+۳. **`ItemSelfTest`:** روی یک GameObject خالی، Play → انتظار **۶۰ قبول، ۰ رد**.
 
-آزمایش دستی، دقیقاً به این ترتیب:
+**نقطه‌ی `DeskPoint` (گذاشتن پرونده روی میز) هنوز در صحنه نیست** و برای آزمایش
+امروز لازم نیست؛ مسیر دستی و مسیر بایگانی بدون آن کار می‌کنند. اگر ساخت،
+`Place Interactable` با سه اثر: `item.give.file.sealed = reza`،
+`flag.delivery = desk`، `flag.quest.file = 2`.
 
-۱. رضا → گرفتن کار → پرونده روی میز → برداشتن (کارت «پرونده‌ی مهرشده»).
-۲. `۱` = باز کردن → کارت «پرونده‌ی بازشده»؛ `۲` = خواندن → «پرونده‌ی خوانده‌شده».
-۳. رفتن به بایگانی → کار «دادن» → «این مهر شکسته.»
+آزمایش دستی، به همین ترتیب:
+
+۱. رضا → گرفتن کار → برداشتن پرونده از میز.
+۲. `Esc` → تب «وسایل» → `۱` باز کردن → `۲` خواندن (نام کارت عوض می‌شود).
+۳. رفتن به رضا → کار «دادن» → «این مهر شکسته.» → انتخاب یکی از چهار جواب.
 ۴. `F10` → `item.file.sealed` باید **۰** باشد و پرونده در «وسایل» نباشد.
-۵. برگشتن به رضا → «خانم فرهادی دفتر رو نشونم داد.» → `flag.quest.file = 4` → کار بسته می‌شود.
-
-اگر پرونده روی میز رضا گذاشته شود (مسیر `DeskPoint`)، بعد از تحویل هم
-`item.file.sealed` صفر می‌شود و اگر صحنه دوباره لود شود، آبجکت میز نسخه‌ی
-مهرشده‌ی تازه نمی‌سازد؛ به همان نمونه‌ی موجود وصل می‌شود.
+۵. مسیر بایگانی: همان پرونده را به خانم فرهادی دادن → `flag.quest.file = 3`،
+   بعد برگشتن به رضا → «خانم فرهادی دفتر رو نشونم داد.» → `flag.quest.file = 4`.
 
 ---
 
@@ -1096,6 +1099,7 @@ Play هیچ شنونده‌ای نداشت.
 | `Dialogue/reza_office.txt` | همان شرط، `[do] item.give.file.sealed = reza`، بستن کار در `delivered` و `witness_done` |
 | `Resources/Quests/case_file.txt` | قدم تازه‌ی `logged`؛ قدم `deliver` از `item.file.sealed >= 1` |
 | `Interaction/TalkInteractable.cs` | فیلد تحویل حالا یک **شرط** است (`ConditionParser`)، نه فقط نام متغیر |
+| `Editor/ArchiveMissionBuilder.cs` | فرهادی با شرط `item.file.sealed >= 1` ساخته می‌شود، نه پرچم قدیمی |
 | `Items/SceneItemBinding.cs` | `FindExisting` در همه‌ی ظرف‌ها + `Awake` آبجکت اگر نمونه بیرون از زمین است، پنهان |
 | `Items/ItemSelfTest.cs` | گروه `TestHandover` (۷ بررسی) → **۶۰** |
 | `tools/storycheck.py` | تازه: شناسه‌ی ناشناس آیتم + نوشتن دستی `item.*` |

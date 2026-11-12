@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using TehranNoir.Characters;
-using TehranNoir.Items;
 using TehranNoir.Settings;
 using TehranNoir.World;
 
@@ -59,17 +58,6 @@ namespace TehranNoir.UI
         /// <summary>زیر این مقدار، سرخِ کامل؛ بالای آن، کم‌کم به استخوانی می‌رسد.</summary>
         private const float LowMark = 25f;
 
-        /* ---------- ردیف وسیله ---------- */
-        private const float ItemRowHeight = 56f;
-        private const float ItemRowGap = 8f;
-        private const float ItemFont = 26f;
-        private const float ItemIconSize = 26f;
-
-        /// <summary>
-        /// بیشتر از این تعداد ردیف از کادر بیرون می‌زند؛ بقیه با یک شمارنده‌ی «+n»
-        /// نشان داده می‌شوند. سقف عمدی است، نه پنهان: هیچ ردیفی زیر نوار پایین نمی‌رود.
-        /// </summary>
-        private const int MaxItemRows = 10;
 
         private static readonly Color HighColor = new Color(0.96f, 0.95f, 0.92f, 1f);
         private static readonly Color LowColor = new Color(0.72f, 0.16f, 0.14f, 1f);
@@ -108,7 +96,6 @@ namespace TehranNoir.UI
         private readonly List<ArcGraphic> _pipTracks = new List<ArcGraphic>(5);
         private readonly List<Image> _pipIcons = new List<Image>(5);
         private readonly List<TMP_Text> _valueTexts = new List<TMP_Text>(5);
-        private readonly List<InventorySlot> _items = new List<InventorySlot>(16);
 
         private RectTransform _content;
         private Image _crest;
@@ -119,8 +106,9 @@ namespace TehranNoir.UI
         private TMP_Text _note;
         private RectTransform _noteBox;
 
+        private CharacterItemsSection _itemsSection;
+
         private int _section;
-        private int _itemSignature = int.MinValue;
 
         public override string Id => "character";
 
@@ -138,6 +126,9 @@ namespace TehranNoir.UI
             BuildRail(panel);
             BuildHeader(panel);
             BuildContent(panel);
+
+            // بخش وسایل کلاس خودش را دارد؛ تب فقط صدا‌اش می‌زند
+            _itemsSection = new CharacterItemsSection(Menu);
 
             BuildSection();
             RefreshRail();
@@ -209,7 +200,7 @@ namespace TehranNoir.UI
 
         private void BuildContent(RectTransform panel)
         {
-            _content = UiKit.Box("Content", panel, PanelX, RowTop, PanelWidth, 460f);
+            _content = UiKit.Box("Content", panel, PanelX, RowTop, PanelWidth, 620f);
         }
 
         /* ============================================================
@@ -223,7 +214,6 @@ namespace TehranNoir.UI
             _pipTracks.Clear();
             _pipIcons.Clear();
             _valueTexts.Clear();
-            _items.Clear();
 
             // ردیف‌های بخش پیشین: اول خاموش، بعد نابود
             for (int i = _content.childCount - 1; i >= 0; i--)
@@ -244,113 +234,13 @@ namespace TehranNoir.UI
                     return;
 
                 case 1:
-                    BuildItems();
+                    _itemsSection.Build(_content);
                     return;
 
                 default:
                     ShowNote(Loc.Get(Loc.Channel.Menu, "pause.soon"), RowTop);
                     return;
             }
-        }
-
-        /* ============================================================
-           وسایل
-           ============================================================ */
-
-        /// <summary>
-        /// فهرست وسایل مستقیم از Inventory خوانده می‌شود، که خودش فقط
-        /// WorldState را می‌بیند. پس تغییر دستی در F10 هم همین‌جا دیده می‌شود.
-        /// </summary>
-        private void BuildItems()
-        {
-            _itemSignature = Inventory.Signature();
-
-            int total = Inventory.Slots(_items);
-
-            if (total == 0)
-            {
-                ShowNote(Loc.Get(Loc.Channel.Menu, "char.items.empty"), RowTop);
-                return;
-            }
-
-            HideNote();
-
-            int shown = Mathf.Min(total, MaxItemRows);
-
-            for (int i = 0; i < shown; i++)
-                AddItemRow(_items[i], i);
-
-            if (total > shown)
-                ShowNote("+" + (total - shown), RowTop + shown * (ItemRowHeight + ItemRowGap));
-        }
-
-        /// <summary>یک ردیف وسیله: تعداد سمت چپ، آیکون در ستون ساعت‌ها، نام سمت راست.</summary>
-        private void AddItemRow(InventorySlot slot, int index)
-        {
-            float y = index * (ItemRowHeight + ItemRowGap);
-
-            RectTransform row = UiKit.Box("Item_" + index, _content, 0f, y, PanelWidth, ItemRowHeight);
-
-            bool rtl = Menu.Persian;
-
-            RectTransform countBox = UiKit.Box("Count", row, 0f, 0f, ValueWidth, ItemRowHeight);
-
-            TMP_Text countText = UiKit.Text("Text", countBox, ItemFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
-            countText.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
-
-            // فقط عدد است؛ بی ForceFix به رقم فارسی تبدیل نمی‌شد
-            UiKit.ForceFixNumbers(countText, Menu.Persian);
-
-            countText.text = slot.Count.ToString();
-
-            float iconX = rtl
-                ? PipX + (PipSize - ItemIconSize) * 0.5f
-                : PanelWidth - PipX - (PipSize + ItemIconSize) * 0.5f;
-
-            RectTransform iconBox = UiKit.Box("Icon", row, iconX,
-                (ItemRowHeight - ItemIconSize) * 0.5f, ItemIconSize, ItemIconSize);
-
-            Image icon = iconBox.gameObject.AddComponent<Image>();
-            icon.sprite = HudArt.Icon(IconFor(slot.Definition.Kind), 48, Color.white);
-            icon.color = new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.8f);
-            icon.raycastTarget = false;
-            icon.preserveAspect = true;
-
-            float nameX = rtl ? NameX : 0f;
-
-            RectTransform labelBox = UiKit.Box("Label", row, nameX, 0f, PanelWidth - NameX, ItemRowHeight);
-
-            TMP_Text label = UiKit.Text("Text", labelBox, ItemFont, UiKit.RowIdle, Menu.Font, Menu.Persian);
-            label.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
-            label.text = slot.Definition.Name(Menu.Persian);
-
-            PauseRow data = new PauseRow();
-            data.Rect = row;
-            data.Label = label;
-
-            Rows.Add(data);
-        }
-
-        private static HudArt.Glyph IconFor(ItemKind kind)
-        {
-            switch (kind)
-            {
-                case ItemKind.Key: return HudArt.Glyph.Key;
-                case ItemKind.Item: return HudArt.Glyph.Case;
-                default: return HudArt.Glyph.Document;
-            }
-        }
-
-        private void ShowNote(string text, float y)
-        {
-            _note.text = text;
-            _noteBox.anchoredPosition = new Vector2(PanelX, -y);
-            _note.gameObject.SetActive(true);
-        }
-
-        private void HideNote()
-        {
-            _note.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -490,13 +380,7 @@ namespace TehranNoir.UI
                 return;
             }
 
-            if (_section == 1 && Inventory.Signature() != _itemSignature)
-            {
-                int selected = Selected;
-
-                BuildSection();
-                Select(selected);
-            }
+            if (_section == 1) _itemsSection.Tick();
         }
 
         private void RefreshTraits()
@@ -553,11 +437,37 @@ namespace TehranNoir.UI
             TickValues();
         }
 
+        public override void Move(int delta)
+        {
+            if (_section == 1 && _itemsSection != null) _itemsSection.Move(delta);
+        }
+
+        public override void Step(int delta)
+        {
+            if (_section == 1 && _itemsSection != null) _itemsSection.Step(delta);
+        }
+
+        public override void Activate()
+        {
+            // در بخش وسایل، Enter یعنی «همین دسته» یا «عوض کردن ترتیب»
+            if (_section == 1 && _itemsSection != null)
+            {
+                _itemsSection.Activate();
+                return;
+            }
+
+            base.Activate();
+        }
+
         public override void Section(int delta)
         {
             if (delta == 0) return;
 
             _section = (_section + delta + SectionKeys.Length) % SectionKeys.Length;
+
+            // ورود تازه به یک بخش یعنی انتخاب از اول؛ وگرنه نشانگر جایی می‌ماند
+            // که کاربر انتظارش را ندارد.
+            if (_section == 1 && _itemsSection != null) _itemsSection.FocusFirst();
 
             OnShow();
         }
@@ -581,6 +491,9 @@ namespace TehranNoir.UI
         /// <summary>کلیک روی ریل بخش، همان کاری را می‌کند که Q/E.</summary>
         public override void Pointer(Vector2 screenPoint, bool clicked)
         {
+            // شبکه‌ی وسایل اول: کارت‌ها و نوار دسته‌ها جای خودشان را دارند
+            if (_section == 1 && _itemsSection != null && _itemsSection.Pointer(screenPoint, clicked)) return;
+
             for (int i = 0; i < _railRects.Count; i++)
             {
                 if (_railRects[i] == null) continue;

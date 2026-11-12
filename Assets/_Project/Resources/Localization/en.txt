@@ -29,6 +29,17 @@ pause.quit = Exit Game
 pause.close = Close
 pause.switch = Switch tab
 char.items.empty = Your pockets are empty
+char.items.none = Nothing in this category
+char.items.all = All
+char.items.docs = Documents
+char.items.keys = Keys
+char.items.misc = Other
+char.items.kind.document = Document
+char.items.kind.key = Key
+char.items.kind.item = Item
+char.items.sort.name = Sort: name
+char.items.sort.count = Sort: count
+char.items.page = Page
 pause.soon = This section is coming in a later step.
 
 # --- Settings page ---

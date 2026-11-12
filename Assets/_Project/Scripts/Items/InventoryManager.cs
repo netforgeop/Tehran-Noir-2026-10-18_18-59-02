@@ -424,8 +424,8 @@ namespace TehranNoir.Items
             ItemRuntime.ApplyEffects(instance, definition.DropEffects, ItemWorld.Current);
 
             // شنونده‌ی انداختن باید پیش از رویداد وجود داشته باشد، وگرنه آیتم در
-            // داده هست ولی روی زمین دیده نمی‌شود.
-            ItemDropSpawner.Ensure();
+            // داده هست ولی روی زمین دیده نمی‌شود. در تست، میزبان هم ساخته نمی‌شود.
+            if (ItemDropSpawner.Spawning) ItemDropSpawner.Ensure();
 
             ItemEvents.RaiseDropped(new ItemEvent(instance, ItemVerb.Drop, string.Empty, WorldId));
 

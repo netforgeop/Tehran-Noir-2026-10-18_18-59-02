@@ -82,6 +82,9 @@ namespace TehranNoir.Items
         /// <summary>اثرهایی که خودِ انداختن اجرا می‌کند.</summary>
         public readonly string[] DropEffects;
 
+        /// <summary>نام‌های جایگزین بر اساس وضعیت؛ خالی = همیشه نام پایه.</summary>
+        public readonly List<ItemTitleVariant> Titles;
+
         public ItemDefinition(
             string id,
             string persian,
@@ -100,7 +103,8 @@ namespace TehranNoir.Items
             List<ItemStatePair> initialState = null,
             ItemRuleSet rules = null,
             string[] takeEffects = null,
-            string[] dropEffects = null)
+            string[] dropEffects = null,
+            List<ItemTitleVariant> titles = null)
         {
             Id = string.IsNullOrEmpty(id) ? string.Empty : id;
 
@@ -126,6 +130,7 @@ namespace TehranNoir.Items
             Rules = rules ?? ItemRuleSet.Empty;
             TakeEffects = takeEffects ?? ItemRule.Empty;
             DropEffects = dropEffects ?? ItemRule.Empty;
+            Titles = titles ?? new List<ItemTitleVariant>(0);
         }
 
         /// <summary>سبد نمایشی قدیمی؛ رابط کاربری فعلی همین را می‌خواند.</summary>
@@ -236,6 +241,28 @@ namespace TehranNoir.Items
         public string Name(bool persian)
         {
             return persian ? Persian : English;
+        }
+
+        /// <summary>
+        /// نام همین نمونه در این لحظه: اولین variant که شرطش برقرار است،
+        /// وگرنه نام پایه. سندِ مهرشده بعد از باز شدن، نام دیگری می‌گیرد.
+        /// </summary>
+        public string Title(WorldState view, bool persian)
+        {
+            if (Titles != null && Titles.Count > 0)
+            {
+                for (int i = 0; i < Titles.Count; i++)
+                {
+                    ItemTitleVariant variant = Titles[i];
+
+                    if (!variant.HasText) continue;
+                    if (!variant.Matches(view)) continue;
+
+                    return variant.Text(persian);
+                }
+            }
+
+            return Name(persian);
         }
 
         /// <summary>شرح؛ اگر ترجمه خالی باشد همان زبان دیگر، و اگر آن هم نبود خالی.</summary>

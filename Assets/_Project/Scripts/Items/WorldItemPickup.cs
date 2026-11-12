@@ -41,7 +41,7 @@ namespace TehranNoir.Items
             {
                 if (_instance == null) return base.Title;
 
-                return _instance.Definition.Name(Localization.Persian);
+                return ItemRuntime.Title(_instance, Localization.Persian);
             }
         }
 

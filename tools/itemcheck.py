@@ -43,6 +43,7 @@ SIMPLE_KEYS = {"weight", "value", "flags", "icon", "prefab", "sub", "desc.fa", "
 BOOLEANS = {"1", "0", "true", "false", "yes", "no", "on", "off"}
 
 RULE_RE = re.compile(r"^(?P<verb>[a-z]+)\.(?P<field>if|do|consume|target)(?:\.(?P<order>\d+))?$")
+TITLE_RE = re.compile(r"^title\.(?P<field>if|fa|en)(?:\.(?P<order>\d+))?$")
 
 EXTENSIONS = ("", ".png", ".jpg", ".jpeg")
 
@@ -392,6 +393,19 @@ def main():
                 elif key == "doc":
                     if value and not resource_exists(value, ".txt"):
                         problems.append((index, "سند پیدا نشد: " + value))
+
+                continue
+
+            title = TITLE_RE.match(key)
+
+            if title:
+                field = title.group("field")
+
+                if field == "if":
+                    if not value.strip():
+                        problems.append((index, "title.if خالی است"))
+                    else:
+                        check_condition(value, problems, index, "title.if")
 
                 continue
 

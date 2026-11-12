@@ -149,6 +149,20 @@ namespace TehranNoir.Items
             }
         }
 
+        private sealed class TitleDraft
+        {
+            public int Order;
+            public string WhenSource = string.Empty;
+            public Condition When;
+            public string Persian = string.Empty;
+            public string English = string.Empty;
+
+            public ItemTitleVariant Build()
+            {
+                return new ItemTitleVariant(When, WhenSource, Persian, English, Order);
+            }
+        }
+
         private sealed class RuleDraft
         {
             public ItemVerb Verb;
@@ -214,6 +228,9 @@ namespace TehranNoir.Items
             Dictionary<string, RuleDraft> drafts =
                 new Dictionary<string, RuleDraft>(4, StringComparer.Ordinal);
 
+            Dictionary<string, TitleDraft> titleDrafts =
+                new Dictionary<string, TitleDraft>(2, StringComparer.Ordinal);
+
             for (int i = MinFields + 1; i < parts.Length; i++)
             {
                 string token = CleanToken(parts[i]);
@@ -263,6 +280,53 @@ namespace TehranNoir.Items
                     }
 
                     initialState.Add(new ItemStatePair(stateKey, val));
+                    continue;
+                }
+
+                string titleField;
+                int titleOrder;
+
+                if (TrySplitTitleKey(key, out titleField, out titleOrder))
+                {
+                    string draftKey = titleOrder.ToString(CultureInfo.InvariantCulture);
+
+                    TitleDraft titleDraft;
+
+                    if (!titleDrafts.TryGetValue(draftKey, out titleDraft))
+                    {
+                        titleDraft = new TitleDraft();
+                        titleDraft.Order = titleOrder;
+                        titleDrafts[draftKey] = titleDraft;
+                    }
+
+                    switch (titleField)
+                    {
+                        case "if":
+                            titleDraft.WhenSource = val;
+
+                            Condition titleCondition;
+                            string titleError;
+
+                            if (ConditionParser.TryParse(val, out titleCondition, out titleError))
+                            {
+                                titleDraft.When = titleCondition;
+                            }
+                            else
+                            {
+                                Debug.LogError("[Items] خط " + number + " («" + id + "»): شرط نام «" +
+                                               key + "» خوانده نشد: " + titleError);
+                            }
+                            break;
+
+                        case "fa":
+                            titleDraft.Persian = val;
+                            break;
+
+                        case "en":
+                            titleDraft.English = val;
+                            break;
+                    }
+
                     continue;
                 }
 
@@ -373,6 +437,13 @@ namespace TehranNoir.Items
             foreach (KeyValuePair<string, RuleDraft> pair in drafts)
                 if (!pair.Value.Broken) rules.Add(pair.Value.Build());
 
+            List<ItemTitleVariant> titles = new List<ItemTitleVariant>(titleDrafts.Count);
+
+            foreach (KeyValuePair<string, TitleDraft> pair in titleDrafts)
+                titles.Add(pair.Value.Build());
+
+            titles.Sort(CompareTitles);
+
             return new ItemDefinition(
                 id,
                 parts[1].Trim(),
@@ -391,7 +462,35 @@ namespace TehranNoir.Items
                 initialState,
                 new ItemRuleSet(rules),
                 takeEffects.ToArray(),
-                dropEffects.ToArray());
+                dropEffects.ToArray(),
+                titles);
+        }
+
+        /// <summary>«title.if» یا «title.fa.2» را به فیلد و شماره می‌شکند.</summary>
+        private static bool TrySplitTitleKey(string key, out string field, out int order)
+        {
+            field = string.Empty;
+            order = 0;
+
+            string[] pieces = (key ?? string.Empty).Split('.');
+
+            if (pieces.Length < 2 || pieces.Length > 3) return false;
+            if (pieces[0] != "title") return false;
+
+            field = pieces[1];
+
+            if (field != "if" && field != "fa" && field != "en") return false;
+
+            if (pieces.Length == 3 &&
+                !int.TryParse(pieces[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out order))
+                return false;
+
+            return true;
+        }
+
+        private static int CompareTitles(ItemTitleVariant left, ItemTitleVariant right)
+        {
+            return left.Order.CompareTo(right.Order);
         }
 
         /// <summary>«read.if» یا «read.do.2» را به فعل، فیلد و شماره می‌شکند.</summary>

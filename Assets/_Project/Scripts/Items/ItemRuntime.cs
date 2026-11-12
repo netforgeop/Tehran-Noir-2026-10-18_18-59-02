@@ -164,6 +164,21 @@ namespace TehranNoir.Items
             world.Set(StoryFlag(definitionId, verb), true);
         }
 
+        /// <summary>
+        /// نام همین نمونه در این لحظه. سندِ مهرشده بعد از باز شدن، «پرونده‌ی بازشده»
+        /// می‌شود؛ این متد همان جایی است که رابط کاربری باید صدا بزند.
+        /// </summary>
+        public static string Title(ItemInstance instance, bool persian)
+        {
+            if (instance == null) return string.Empty;
+
+            ItemDefinition definition = instance.Definition;
+
+            if (definition == null) return string.Empty;
+
+            return definition.Title(ItemState.View(ItemWorld.Current, instance), persian);
+        }
+
         /// <summary>متن «بررسی»: شرح آیتم و وضعیت‌های تازه‌اش.</summary>
         public static string Describe(ItemInstance instance, bool persian)
         {

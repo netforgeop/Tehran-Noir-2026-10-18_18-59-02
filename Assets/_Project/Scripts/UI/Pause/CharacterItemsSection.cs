@@ -472,7 +472,8 @@ namespace TehranNoir.UI
 
             TMP_Text nameText = UiKit.Text("Text", nameBox, NameFont, UiKit.RowIdle, Font, Rtl);
             nameText.alignment = Rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
-            nameText.text = Fit(slot.Definition.Name(Rtl), 22);
+            view.Definition = slot.Definition;
+            nameText.text = Fit(ItemRuntime.Title(FindInstance(slot.Definition.Id), Rtl), 22);
 
             RectTransform kindBox = UiKit.Box("Kind", card, textX, 52f, textWidth, 22f);
 
@@ -535,6 +536,10 @@ namespace TehranNoir.UI
 
                 card.Border.SetActive(active);
                 card.Name.color = active ? UiKit.Gold : UiKit.RowIdle;
+
+                // نام از وضعیت می‌آید، پس با باز شدن مهر عوض می‌شود.
+                if (card.Definition != null)
+                    card.Name.text = Fit(ItemRuntime.Title(FindInstance(card.Definition.Id), Rtl), 22);
                 card.Background.sprite = HudArt.Panel(
                     active ? "item.card.on" : "item.card",
                     Mathf.RoundToInt(CardWidth), Mathf.RoundToInt(CardHeight), 6f,
@@ -560,7 +565,7 @@ namespace TehranNoir.UI
                 "char.items.kind." + slot.Definition.Kind.ToString().ToLowerInvariant());
 
             // عددها ASCII؛ تبدیل و جهت‌دهی کار RTLTMPro است
-            _detail.text = slot.Definition.Name(Rtl) + "   ·   " + kind + "   ·   "
+            _detail.text = ItemRuntime.Title(FindInstance(slot.Definition.Id), Rtl) + "   ·   " + kind + "   ·   "
                 + slot.Count + " / " + slot.Definition.MaxStack;
 
             RefreshVerbs();
@@ -741,8 +746,11 @@ namespace TehranNoir.UI
             RefreshDetail();
 
             _detail.text = result.Ok
-                ? instance.Definition.Name(Rtl) + "   ·   " + Loc.Get(Loc.Channel.Menu, ItemVerbs.LocKey(verb))
+                ? ItemRuntime.Title(instance, Rtl) + "   ·   " + Loc.Get(Loc.Channel.Menu, ItemVerbs.LocKey(verb))
                 : Loc.Get(Loc.Channel.Menu, result.ReasonKey);
+
+            // نام کارت هم فوری عوض شود (مهر باز شد → «پرونده‌ی بازشده»).
+            RefreshCards();
 
             // RefreshDetail خودش نوار فعل‌ها را هم تازه می‌کند.
             return true;
@@ -965,6 +973,7 @@ namespace TehranNoir.UI
             public TMP_Text Name;
             public TMP_Text Count;
             public GameObject Border;
+            public ItemDefinition Definition;
         }
 
         private sealed class VerbView

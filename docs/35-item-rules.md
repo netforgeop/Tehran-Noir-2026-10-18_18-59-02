@@ -57,7 +57,23 @@ id | فارسی | انگلیسی | دسته | بیشترین تعداد | گزی
 state.sealed=1 | state.read=0 | state.ammo=8 | state.owner=nader
 ```
 
-### ۲.۳ قاعده‌ها
+### ۲.۳ نام بر اساس وضعیت
+
+| کلید | معنا |
+| --- | --- |
+| `title.if=<شرط>` | چه وقت این نام فعال شود |
+| `title.fa=…` / `title.en=…` | متن نام |
+| `title.if.2` / `title.fa.2` | نام دوم؛ هر تعداد |
+
+اگر هیچ شرطی برقرار نباشد، ستون دوم و سوم (نام پایه) استفاده می‌شود.
+
+```
+file.sealed | پرونده‌ی مهرشده | Sealed file | document | 1
+| title.if=state.sealed = 0 | title.fa=پرونده‌ی بازشده | title.en=Opened file
+| title.if.2=state.read = 1 | title.fa.2=پرونده‌ی خوانده‌شده | title.en.2=Read file
+```
+
+### ۲.۴ قاعده‌ها
 
 | کلید | معنا |
 | --- | --- |
@@ -89,7 +105,7 @@ state.sealed=1 | state.read=0 | state.ammo=8 | state.owner=nader
 اثر روی «تعداد آیتم» (`item.x - 1`) نوشته نشود؛ شمارش را `InventoryManager`
 نگه می‌دارد. برای کم‌کردن یک عدد از خود آیتم، `consume=1` بگذار.
 
-### ۲.۴ فعل‌ها
+### ۲.۵ فعل‌ها
 
 `use`، `examine`، `equip`، `unequip`، `drop`، `read`، `open`، `close`،
 `consume`، `unlock`، `give`، `store`، `reload`.

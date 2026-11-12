@@ -64,6 +64,7 @@ namespace TehranNoir.Items
                 TestSave();
                 TestMissingDefinition();
                 TestDuplicates();
+                TestTitles();
                 TestVerbList();
                 TestSubscriptionsSurvive();
                 TestWorldRoundTrip();
@@ -362,6 +363,35 @@ namespace TehranNoir.Items
 
             Check("شناسه‌ی تکراری در یک ظرف رد می‌شود",
                 first && !second && container.StackCount == 1);
+        }
+
+        /// <summary>
+        /// نام آیتم باید از وضعیت بیاید، نه از تعریف ثابت.
+        /// اگر پرونده بعد از باز شدن هنوز «مهرشده» باشد، بازیکن فکر می‌کند کار نکرد.
+        /// </summary>
+        private void TestTitles()
+        {
+            Fresh();
+
+            InventoryManager.Take("file.sealed", 1);
+
+            ItemInstance document = FirstOf("file.sealed");
+
+            string sealedName = ItemRuntime.Title(document, true);
+
+            Check("نام پایه‌ی سند", sealedName == "پرونده‌ی مهرشده", sealedName);
+
+            ItemRuntime.Perform(document, ItemVerb.Open);
+
+            string openedName = ItemRuntime.Title(document, true);
+
+            Check("نام بعد از باز کردن مهر", openedName == "پرونده‌ی بازشده", openedName);
+
+            ItemRuntime.Perform(document, ItemVerb.Read);
+
+            string readName = ItemRuntime.Title(document, true);
+
+            Check("نام بعد از خواندن", readName == "پرونده‌ی خوانده‌شده", readName);
         }
 
         /// <summary>فهرست فعل‌ها همان چیزی است که نوار ۱..۴ نشان می‌دهد.</summary>

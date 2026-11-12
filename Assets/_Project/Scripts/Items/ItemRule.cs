@@ -143,6 +143,54 @@ namespace TehranNoir.Items
         }
     }
 
+    /// <summary>
+    /// نام جایگزین آیتم بر اساس وضعیت.
+    ///
+    /// پرونده‌ای که مهرش باز شده نباید هنوز «پرونده‌ی مهرشده» نام داشته باشد.
+    /// قاعده‌اش مثل قاعده‌های فعل است، فقط نتیجه‌اش متن است:
+    ///
+    ///   title.if=state.sealed = 0
+    ///   title.fa=پرونده‌ی بازشده
+    ///   title.en=Opened file
+    ///
+    /// اگر شرط برقرار نباشد، نام پایه (ستون دوم و سوم فایل) استفاده می‌شود.
+    /// </summary>
+    public sealed class ItemTitleVariant
+    {
+        public readonly Condition When;
+        public readonly string WhenSource;
+        public readonly string Persian;
+        public readonly string English;
+        public readonly int Order;
+
+        public ItemTitleVariant(Condition when, string whenSource, string persian, string english, int order)
+        {
+            When = when;
+            WhenSource = whenSource ?? string.Empty;
+            Persian = persian ?? string.Empty;
+            English = english ?? string.Empty;
+            Order = order;
+        }
+
+        public bool Matches(WorldState view)
+        {
+            return When == null || When.IsTrue(view);
+        }
+
+        public string Text(bool persian)
+        {
+            string chosen = persian ? Persian : English;
+            if (!string.IsNullOrEmpty(chosen)) return chosen;
+
+            return persian ? English : Persian;
+        }
+
+        public bool HasText
+        {
+            get { return !string.IsNullOrEmpty(Persian) || !string.IsNullOrEmpty(English); }
+        }
+    }
+
     /// <summary>یک جفت کلید/مقدار اولیه‌ی وضعیت، مثل `state.sealed = 1`.</summary>
     public sealed class ItemStatePair
     {

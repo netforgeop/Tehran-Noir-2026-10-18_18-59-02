@@ -973,3 +973,22 @@ Play هیچ شنونده‌ای نداشت.
 **قاعده‌ی ثابت:** هیچ تست خودکار اجازه ندارد وضعیت مشترک بازی را پاک کند؛
 فقط چیزی را که خودش ساخته برمی‌دارد.
 
+## ۳۹. نام آیتم باید از وضعیت بیاید (جلسه‌ی ۳۰)
+
+گزارش: «پرونده را باز کردم، باز هم نوشته مهرشده.»
+
+نام کارت از `ItemDefinition.Name` (تعریف ثابت) می‌آمد و باز شدن مهر فقط
+`state.sealed` را عوض می‌کرد؛ پس رابط چیزی نمی‌فهمید.
+
+| تغییر | فایل |
+| --- | --- |
+| `title.if` / `title.fa` / `title.en` (+ شماره) | `Items/ItemCatalog.cs`، `Resources/Items/items.txt` |
+| `ItemTitleVariant` | `Items/ItemRule.cs` |
+| `ItemDefinition.Title(view, persian)` | `Items/ItemDefinition.cs` |
+| `ItemRuntime.Title(instance, persian)` | `Items/ItemRuntime.cs` |
+| کارت، خط شرح و کارت تعامل زمین | `UI/Pause/CharacterItemsSection.cs`، `Items/WorldItemPickup.cs` |
+| تست نام در سه حالت | `Items/ItemSelfTest.cs` (۴۹ تست) |
+
+**قاعده:** هیچ متنی در رابط نباید مستقیماً از تعریف ثابت خوانده شود اگر آن
+آیتم وضعیت دارد؛ از `ItemRuntime.Title` بخوان.
+

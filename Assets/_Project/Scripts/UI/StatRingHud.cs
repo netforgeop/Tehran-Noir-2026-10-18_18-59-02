@@ -11,45 +11,51 @@ using TehranNoir.World;
 namespace TehranNoir.UI
 {
     /// <summary>
-    /// کمانِ سمت راست صفحه، به سبک Mafia: The Old Country.
+    /// گیج دایره‌ای سمت راست صفحه.
     ///
-    ///   کمان بیرونی چپ — جان (سرخ) + زره (آبی). هر دو روی یک کمان‌اند و مجموعشان ۲۰۰ است،
-    ///                    پس اگر جان ۱۰۰ و زره ۵۰ باشد، ۷۵٪ کمان پر است و از آن، یک‌سوم آبی.
-    ///   کمان درونی چپ — استقامت (زرد). زیر صفر، همان کمان قرمز می‌شود و از پایین بالا می‌آید.
-    ///   کمان راست      — یکی از پنج ویژگی. معمولاً شرافت؛ هر کدام عوض شود ۲۵ ثانیه جایش را می‌گیرد.
+    ///   دیسک تیره — پشت همه چیز، با یک رینگ نازک خاکستری دور آن.
+    ///   کمان بیرونی چپ — جان (سرخ) + زره (آبی). هر دو روی یک مقیاس ۲۰۰ هستند،
+    ///                    پس جان ۱۰۰ و زره ۵۰ یعنی ۷۵٪ کمان پر، و یک‌سومش آبی.
+    ///   کمان درونی چپ — استقامت (زرد). زیر صفر همان کمان قرمز می‌شود و از پایین بالا می‌آید.
+    ///   سه قطعه‌ی لبه‌ی راست — سه ویژگیِ برگه. ویژگیِ فعال کرم، بقیه خاکستری.
+    ///   برگه‌ی پشت دیسک — سه ردیف: آیکون، نام، مقدار.
     ///
     /// هیچ عددی از خودش نگه نمی‌دارد: همه از CharacterStats و WorldState می‌آید.
-    /// مثل بقیه‌ی HUD، هنگام دیالوگ/سند/منوی توقف محو می‌شود.
+    /// مثل بقیه‌ی HUD، هنگام دیالوگ/سند/منوی توقف کنار می‌رود.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StatRingHud : MonoBehaviour
     {
         /* ---------- چیدمان (واحد کانواس ۱۹۲۰×۱۰۸۰) ---------- */
         private const float CenterRightOffset = 360f;
-        private const float RootSize = 420f;
+        private const float RootSize = 460f;
 
-        private const float OuterRadius = 140f;
+        private const float DiscSize = 330f;
+        private const float OuterRadius = 138f;
         private const float OuterThickness = 9f;
         private const float InnerRadius = 118f;
         private const float InnerThickness = 7f;
-        private const float PulseRadius = 162f;
+        private const float PulseRadius = 158f;
         private const float PulseThickness = 2.5f;
+
+        private const float SegmentRadius = 150f;
+        private const float SegmentThickness = 7f;
+
+        /// <summary>چقدر از دو سر هر کمان محو شود.</summary>
+        private const float FadeDegrees = 26f;
 
         private const float LeftStart = 60f;
         private const float LeftEnd = 300f;
         private const float LeftSweep = LeftEnd - LeftStart;
 
-        private const float RightStart = -40f;
-        private const float RightEnd = 40f;
-        private const float RightSweep = RightEnd - RightStart;
+        /// <summary>مرکز سه قطعه‌ی لبه‌ی راست، بالای افق و پایین آن.</summary>
+        private static readonly float[] SegmentCenter = { 15f, 0f, -15f };
 
-        /// <summary>لبه‌ی چپ جعبه‌ی برچسب در حالت انگلیسی: کمی بعد از کمان.</summary>
-        private const float LabelOffset = 152f;
-
-        /// <summary>لبه‌ی راست جعبه در حالت فارسی؛ متن راست‌چین از همین‌جا شروع می‌شود.</summary>
-        private const float LabelRightEdge = 340f;
-
-        private const float LabelWidth = 160f;
+        private const float SheetX = 142f;
+        private const float SheetWidth = 190f;
+        private const float SheetHeight = 196f;
+        private const float SheetRowHeight = 46f;
+        private const float SheetRowTop = 26f;
 
         /* ---------- رنگ‌ها ---------- */
         private static readonly Color HealthColor = new Color(0.72f, 0.20f, 0.16f, 1f);
@@ -57,9 +63,14 @@ namespace TehranNoir.UI
         private static readonly Color StaminaColor = new Color(0.90f, 0.74f, 0.28f, 1f);
         private static readonly Color ExhaustedColor = new Color(0.86f, 0.15f, 0.13f, 1f);
         private static readonly Color PulseColor = new Color(0.95f, 0.12f, 0.10f, 1f);
-        private static readonly Color TrackColor = new Color(0.02f, 0.02f, 0.02f, 0.35f);
-        private static readonly Color NameColor = new Color(0.86f, 0.86f, 0.83f, 1f);
-        private static readonly Color ValueColor = new Color(0.96f, 0.95f, 0.92f, 1f);
+        private static readonly Color TrackColor = new Color(0.02f, 0.02f, 0.02f, 0.45f);
+        private static readonly Color DiscFill = new Color(0.043f, 0.035f, 0.030f, 0.97f);
+        private static readonly Color DiscRim = new Color(0.26f, 0.25f, 0.23f, 0.85f);
+        private static readonly Color SheetFill = new Color(0.075f, 0.061f, 0.052f, 0.94f);
+        private static readonly Color SheetEdge = new Color(0.26f, 0.23f, 0.20f, 0.55f);
+        private static readonly Color Cream = new Color(0.93f, 0.90f, 0.84f, 1f);
+        private static readonly Color Grey = new Color(0.56f, 0.54f, 0.49f, 1f);
+        private static readonly Color Dim = new Color(0.44f, 0.42f, 0.38f, 1f);
 
         [Header("رفتار")]
         [Tooltip("چند ثانیه بعد از آخرین تغییر، کمان کم‌رنگ می‌شود")]
@@ -73,7 +84,7 @@ namespace TehranNoir.UI
         [Tooltip("سرعت کم‌رنگ و پررنگ شدن در حالت بی‌حرکتی")]
         [SerializeField] private float fadeSpeed = 6f;
 
-        [Tooltip("وقتی کارت تعامل باز است، کمان کنار برود (فریم‌های مرجع همین را نشان می‌دهند)")]
+        [Tooltip("وقتی کارت تعامل باز است، کمان کنار برود")]
         [SerializeField] private bool hideWhileCardShown = true;
 
         [Header("حرکت")]
@@ -87,15 +98,19 @@ namespace TehranNoir.UI
         private CanvasGroup _group;
         private CanvasGroup _idle;
         private PanelMotion _motion;
-        private RectTransform _labelBox;
-        private TMP_Text _nameText;
-        private TMP_Text _valueText;
 
         private ArcGraphic _health;
         private ArcGraphic _armor;
         private ArcGraphic _stamina;
-        private ArcGraphic _right;
         private ArcGraphic _pulse;
+
+        private readonly ArcGraphic[] _segments = new ArcGraphic[3];
+        private readonly Image[] _sheetIcons = new Image[3];
+        private readonly TMP_Text[] _sheetLabels = new TMP_Text[3];
+        private readonly TMP_Text[] _sheetValues = new TMP_Text[3];
+        private readonly StatId[] _sheetIds = { StatId.Honor, StatId.Charisma, StatId.Fame };
+
+        private TMP_FontAsset _font;
 
         private readonly float[] _seen = new float[9];
         private bool _seeded;
@@ -105,6 +120,7 @@ namespace TehranNoir.UI
         private float _activeUntil;
         private float _pulsePhase;
         private float _idleAlpha = 1f;
+        private int _sheetSignature = int.MinValue;
         private bool _persian;
 
         private void Awake()
@@ -138,8 +154,7 @@ namespace TehranNoir.UI
             if (Localization.Persian == _persian) return;
 
             _persian = Localization.Persian;
-            LayoutLabel();
-            UpdateLabel(true);
+            _sheetSignature = int.MinValue;
         }
 
         private void Update()
@@ -152,7 +167,7 @@ namespace TehranNoir.UI
             UpdateStamina();
             UpdateFocus(now);
             UpdatePulse();
-            UpdateLabel();
+            UpdateSheet();
             UpdatePresence();
         }
 
@@ -168,7 +183,7 @@ namespace TehranNoir.UI
             float healthShare = health / CharacterStats.VitalMax;
             float armorShare = armor / CharacterStats.VitalMax;
 
-            // از بالای کمان به پایین پر می‌شود؛ پس پر شدن از بالا شروع می‌شود
+            // از بالای کمان به پایین پر می‌شود
             float top = LeftEnd;
             float healthBottom = top - healthShare * LeftSweep;
             float armorBottom = healthBottom - armorShare * LeftSweep;
@@ -206,8 +221,10 @@ namespace TehranNoir.UI
         }
 
         /* ============================================================
-           ویژگی سمت راست
+           برگه‌ی ویژگی‌ها
            ============================================================ */
+
+        private static readonly StatId[] SheetTrio = { StatId.Honor, StatId.Charisma, StatId.Fame };
 
         private void UpdateFocus(float now)
         {
@@ -225,52 +242,104 @@ namespace TehranNoir.UI
 
             if (now >= _focusUntil) _focus = StatId.Honor;
 
-            float current = CharacterStats.GetFloat(_focus);
-            float share = Mathf.Clamp01(current / 100f);
-
-            _right.color = TraitColor(_focus);
-            _right.SetAngles(RightStart, RightStart + share * RightSweep);
-
             _seeded = true;
+
+            UpdateSegments();
         }
 
-        private static Color TraitColor(StatId id)
+        /// <summary>سه ردیف: ویژگیِ فعال بالا، دو تای دیگر زیرش.</summary>
+        private void FillSheetIds()
         {
-            switch (id)
+            _sheetIds[0] = _focus;
+
+            int next = 1;
+
+            for (int i = 0; i < SheetTrio.Length && next < 3; i++)
             {
-                case StatId.Honor: return new Color(0.85f, 0.78f, 0.52f, 1f);
-                case StatId.Charisma: return new Color(0.74f, 0.56f, 0.74f, 1f);
-                case StatId.Fame: return new Color(0.52f, 0.70f, 0.76f, 1f);
-                case StatId.Honesty: return new Color(0.72f, 0.74f, 0.60f, 1f);
-                case StatId.Loyalty: return new Color(0.80f, 0.55f, 0.44f, 1f);
-                default: return NameColor;
+                if (SheetTrio[i] == _focus) continue;
+
+                _sheetIds[next++] = SheetTrio[i];
+            }
+
+            while (next < 3) _sheetIds[next++] = StatId.Honor;
+        }
+
+        /// <summary>سه قطعه‌ی لبه‌ی راست؛ بلندی هر کدام از مقدار ویژگی می‌آید.</summary>
+        private void UpdateSegments()
+        {
+            FillSheetIds();
+
+            for (int i = 0; i < _segments.Length; i++)
+            {
+                if (_segments[i] == null) continue;
+
+                StatId id = _sheetIds[i];
+                float share = Mathf.Clamp01(CharacterStats.GetFloat(id) / 100f);
+
+                float half = 3f + 8f * share;
+
+                _segments[i].color = i == 0 ? Cream : Grey;
+                _segments[i].SetAngles(SegmentCenter[i] - half, SegmentCenter[i] + half);
             }
         }
 
-        private StatId _shownStat = StatId.Money;
-        private int _shownValue = int.MinValue;
-
         /// <summary>
-        /// فقط وقتی مقدار یا ویژگی عوض شود متن بازنویسی می‌شود؛
+        /// فقط با تغییر مقدار یا ویژگی، متن بازنویسی می‌شود؛
         /// نوشتن هر فریم در TMP یعنی بازسازی مش هر فریم.
         /// </summary>
-        private void UpdateLabel(bool force = false)
+        private void UpdateSheet()
         {
-            if (_nameText == null || _valueText == null) return;
+            FillSheetIds();
 
-            int value = CharacterStats.Get(_focus);
+            int honor = CharacterStats.Get(StatId.Honor);
+            int charisma = CharacterStats.Get(StatId.Charisma);
+            int fame = CharacterStats.Get(StatId.Fame);
 
-            if (!force && _focus == _shownStat && value == _shownValue) return;
+            int signature = (int)_focus * 1000000 + honor * 10000 + charisma * 100 + fame;
 
-            _shownStat = _focus;
-            _shownValue = value;
+            if (signature == _sheetSignature) return;
 
-            StatDefinition definition = CharacterStats.Definition(_focus);
+            _sheetSignature = signature;
 
-            _nameText.text = definition.Label(_persian);
-            _nameText.color = NameColor;
-            _valueText.text = value.ToString();
-            _valueText.color = TraitColor(_focus);
+            for (int i = 0; i < _sheetIds.Length; i++)
+            {
+                StatId id = _sheetIds[i];
+                bool lead = i == 0;
+
+                if (_sheetLabels[i] != null)
+                {
+                    _sheetLabels[i].text = CharacterStats.Definition(id).Label(_persian);
+                    _sheetLabels[i].color = lead ? Cream : Grey;
+                    _sheetLabels[i].fontStyle = lead ? FontStyles.Bold : FontStyles.Normal;
+                    _sheetLabels[i].alignment = _persian
+                        ? TextAlignmentOptions.MidlineRight
+                        : TextAlignmentOptions.MidlineLeft;
+                }
+
+                if (_sheetValues[i] != null)
+                {
+                    _sheetValues[i].text = HudArt.Digits(CharacterStats.Get(id), _persian);
+                    _sheetValues[i].color = lead ? Cream : Dim;
+                }
+
+                if (_sheetIcons[i] != null)
+                {
+                    _sheetIcons[i].sprite = IconFor(id);
+                    _sheetIcons[i].color = lead ? Cream : new Color(Grey.r, Grey.g, Grey.b, 0.8f);
+                }
+            }
+        }
+
+        private static HudArt.Icon IconFor(StatId id)
+        {
+            switch (id)
+            {
+                case StatId.Charisma: return HudArt.Icon.Crown;
+                case StatId.Fame: return HudArt.Icon.People;
+                case StatId.Honesty: return HudArt.Icon.Document;
+                case StatId.Loyalty: return HudArt.Icon.People;
+                default: return HudArt.Icon.Star;
+            }
         }
 
         /* ============================================================
@@ -301,7 +370,7 @@ namespace TehranNoir.UI
         }
 
         /* ============================================================
-           تغییرها و محو شدن
+           تغییرها و حضور
            ============================================================ */
 
         /// <summary>اگر مقدار عوض شده باشد true و زمان «فعال ماندن» تمدید می‌شود.</summary>
@@ -319,8 +388,8 @@ namespace TehranNoir.UI
         }
 
         /// <summary>
-        /// دو چیز جدا: «بودن» کمان (انیمیشن ورود و خروج) و «پررنگی» آن (بی‌حرکتی).
-        /// اگر هر دو روی یک CanvasGroup بودند، محو شدن تدریجی، حرکت را خنثی می‌کرد.
+        /// دو چیز جدا: «بودن» گیج (انیمیشن ورود و خروج) و «پررنگی» آن (بی‌حرکتی).
+        /// اگر هر دو روی یک CanvasGroup بودند، کم‌رنگ شدن، حرکت را خنثی می‌کرد.
         /// </summary>
         private void UpdatePresence()
         {
@@ -386,20 +455,101 @@ namespace TehranNoir.UI
             _idle.interactable = false;
             _idle.alpha = 1f;
 
-            // ریل‌های تیره: بدون این‌ها کمان روی زمین روشن گم می‌شود
-            MakeTrack(body, "Health Track", OuterRadius, OuterThickness, LeftStart, LeftEnd);
-            MakeTrack(body, "Stamina Track", InnerRadius, InnerThickness, LeftStart, LeftEnd);
-            MakeTrack(body, "Trait Track", OuterRadius, OuterThickness - 1f, RightStart, RightEnd);
+            _font = FindFont();
 
-            _health = MakeArc(body, "Health", OuterRadius, OuterThickness, HealthColor);
-            _armor = MakeArc(body, "Armor", OuterRadius, OuterThickness, ArmorColor);
-            _stamina = MakeArc(body, "Stamina", InnerRadius, InnerThickness, StaminaColor);
-            _right = MakeArc(body, "Trait", OuterRadius, OuterThickness - 1f, NameColor);
+            // برگه اول ساخته می‌شود تا پشت دیسک بماند
+            BuildSheet(body);
+            BuildDisc(body);
+            BuildArcs(body);
+            BuildSegments(body);
+        }
 
-            _pulse = MakeArc(body, "Pulse", PulseRadius, PulseThickness, new Color(PulseColor.r, PulseColor.g, PulseColor.b, 0f));
+        private void BuildDisc(RectTransform parent)
+        {
+            RectTransform disc = UiKit.Node("Disc", parent);
+            disc.anchorMin = new Vector2(0.5f, 0.5f);
+            disc.anchorMax = new Vector2(0.5f, 0.5f);
+            disc.pivot = new Vector2(0.5f, 0.5f);
+            disc.anchoredPosition = Vector2.zero;
+            disc.sizeDelta = new Vector2(DiscSize, DiscSize);
+
+            Image image = disc.gameObject.AddComponent<Image>();
+            image.sprite = HudArt.Disc("hud.disc", Mathf.CeilToInt(DiscSize), DiscFill, DiscRim, 1.3f);
+            image.raycastTarget = false;
+        }
+
+        private void BuildArcs(RectTransform parent)
+        {
+            // ریل‌های تیره: بدون این‌ها کمان روی دیسک گم می‌شود
+            ArcGraphic healthTrack = MakeArc(parent, "Health Track", OuterRadius, OuterThickness, TrackColor);
+            healthTrack.SetAngles(LeftStart, LeftEnd);
+
+            ArcGraphic staminaTrack = MakeArc(parent, "Stamina Track", InnerRadius, InnerThickness, TrackColor);
+            staminaTrack.SetAngles(LeftStart, LeftEnd);
+
+            _pulse = MakeArc(parent, "Pulse", PulseRadius, PulseThickness,
+                new Color(PulseColor.r, PulseColor.g, PulseColor.b, 0f));
+
             _pulse.SetAngles(0f, 360f);
 
-            BuildLabel(body);
+            _health = MakeArc(parent, "Health", OuterRadius, OuterThickness, HealthColor);
+            _armor = MakeArc(parent, "Armor", OuterRadius, OuterThickness, ArmorColor);
+            _stamina = MakeArc(parent, "Stamina", InnerRadius, InnerThickness, StaminaColor);
+
+            _health.SetFade(FadeDegrees);
+            _armor.SetFade(FadeDegrees);
+            _stamina.SetFade(FadeDegrees);
+        }
+
+        private void BuildSegments(RectTransform parent)
+        {
+            for (int i = 0; i < _segments.Length; i++)
+            {
+                _segments[i] = MakeArc(parent, "Trait_" + i, SegmentRadius, SegmentThickness, Grey);
+                _segments[i].SetFade(0f);
+                _segments[i].SetAngles(SegmentCenter[i] - 3f, SegmentCenter[i] + 3f);
+            }
+        }
+
+        private void BuildSheet(RectTransform parent)
+        {
+            RectTransform sheet = UiKit.Node("Sheet", parent);
+            sheet.anchorMin = new Vector2(0.5f, 0.5f);
+            sheet.anchorMax = new Vector2(0.5f, 0.5f);
+            sheet.pivot = new Vector2(0f, 0.5f);
+            sheet.anchoredPosition = new Vector2(SheetX, 0f);
+            sheet.sizeDelta = new Vector2(SheetWidth, SheetHeight);
+
+            Image background = sheet.gameObject.AddComponent<Image>();
+            background.sprite = HudArt.Panel("hud.sheet", Mathf.CeilToInt(SheetWidth), Mathf.CeilToInt(SheetHeight),
+                14f, SheetFill, SheetFill, SheetEdge, 1f);
+            background.raycastTarget = false;
+
+            for (int i = 0; i < 3; i++)
+            {
+                float y = SheetRowTop + i * SheetRowHeight;
+
+                // آیکون، سمت راست ردیف
+                RectTransform iconBox = UiKit.Box("Icon_" + i, sheet, SheetWidth - 42f, y + 12f, 22f, 22f);
+
+
+                _sheetIcons[i] = iconBox.gameObject.AddComponent<Image>();
+                _sheetIcons[i].sprite = HudArt.Icon(HudArt.Icon.Star, 48, Cream);
+                _sheetIcons[i].raycastTarget = false;
+                _sheetIcons[i].preserveAspect = true;
+
+                // نام، راست‌چین تا کنار آیکون
+                RectTransform labelBox = UiKit.Box("Label_" + i, sheet, 66f, y, 76f, SheetRowHeight);
+
+                _sheetLabels[i] = UiKit.Text("Text", labelBox, 19f, Grey, _font, _persian);
+                _sheetLabels[i].alignment = TextAlignmentOptions.MidlineRight;
+
+                // مقدار، کم‌رنگ، سمت چپ نام
+                RectTransform valueBox = UiKit.Box("Value_" + i, sheet, 24f, y, 38f, SheetRowHeight);
+
+                _sheetValues[i] = UiKit.Text("Text", valueBox, 18f, Dim, _font, _persian);
+                _sheetValues[i].alignment = TextAlignmentOptions.Center;
+            }
         }
 
         private static ArcGraphic MakeArc(RectTransform parent, string name, float radius,
@@ -420,69 +570,14 @@ namespace TehranNoir.UI
             return arc;
         }
 
-        private static void MakeTrack(RectTransform parent, string name, float radius,
-            float thickness, float start, float end)
+        /// <summary>همان فونت دیالوگ؛ اگر نبود، فونت پیش‌فرض TMP.</summary>
+        private static TMP_FontAsset FindFont()
         {
-            ArcGraphic track = MakeArc(parent, name, radius, thickness, TrackColor);
-            track.SetAngles(start, end);
-        }
-
-        private void BuildLabel(RectTransform root)
-        {
-            TMP_FontAsset font = null;
-
             DialogueUI ui = FindAnyObjectByType<DialogueUI>(FindObjectsInactive.Include);
-            if (ui != null) font = ui.Font;
-            if (font == null) font = TMP_Settings.defaultFontAsset;
 
-            RectTransform box = UiKit.Node("Trait Label", root);
-            _labelBox = box;
-            box.anchorMin = new Vector2(0.5f, 0.5f);
-            box.anchorMax = new Vector2(0.5f, 0.5f);
-            box.pivot = new Vector2(0f, 0.5f);
-            box.sizeDelta = new Vector2(LabelWidth, 60f);
-            box.anchoredPosition = new Vector2(LabelOffset, 0f);
+            if (ui != null && ui.Font != null) return ui.Font;
 
-            RectTransform nameBox = UiKit.Node("Name", box);
-            nameBox.anchorMin = new Vector2(0f, 0.5f);
-            nameBox.anchorMax = new Vector2(0f, 0.5f);
-            nameBox.pivot = new Vector2(0f, 0f);
-            nameBox.sizeDelta = new Vector2(LabelWidth, 30f);
-            nameBox.anchoredPosition = new Vector2(0f, 2f);
-
-            _nameText = UiKit.MakeText(nameBox.gameObject, 21f, NameColor, font, _persian);
-            _nameText.alignment = TextAlignmentOptions.MidlineLeft;
-
-            RectTransform valueBox = UiKit.Node("Value", box);
-            valueBox.anchorMin = new Vector2(0f, 0.5f);
-            valueBox.anchorMax = new Vector2(0f, 0.5f);
-            valueBox.pivot = new Vector2(0f, 1f);
-            valueBox.sizeDelta = new Vector2(LabelWidth, 26f);
-            valueBox.anchoredPosition = new Vector2(0f, -2f);
-
-            _valueText = UiKit.MakeText(valueBox.gameObject, 17f, ValueColor, font, _persian);
-            _valueText.alignment = TextAlignmentOptions.MidlineLeft;
-
-            LayoutLabel();
-        }
-
-        /// <summary>متن فارسی راست‌چین و سمت چپ کمان می‌نشیند؛ انگلیسی چپ‌چین و سمت راست.</summary>
-        private void LayoutLabel()
-        {
-            RectTransform box = _labelBox;
-
-            if (box == null) return;
-
-            bool right = _persian;
-
-            box.pivot = new Vector2(right ? 1f : 0f, 0.5f);
-            box.sizeDelta = new Vector2(LabelWidth, 60f);
-            box.anchoredPosition = new Vector2(right ? LabelRightEdge : LabelOffset, 0f);
-
-            TextAlignmentOptions align = right ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
-
-            if (_nameText != null) _nameText.alignment = align;
-            if (_valueText != null) _valueText.alignment = align;
+            return TMP_Settings.defaultFontAsset;
         }
     }
 }

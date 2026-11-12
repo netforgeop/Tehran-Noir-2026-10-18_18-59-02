@@ -9,40 +9,48 @@ using TehranNoir.Interaction;
 namespace TehranNoir.UI
 {
     /// <summary>
-    /// کارت تعامل، گوشه‌ی راست-پایین صفحه: نوار اهداف نزدیک (بالای کارت) + کارت کار.
-    /// تمام رابط در زمان اجرا ساخته می‌شود.
-    /// کانواس در ریشه‌ی صحنه ساخته می‌شود؛ چون CanvasScaler فقط روی کانواس ریشه اثر دارد
-    /// و کانواس تودرتو مقیاس ۱۹۲۰×۱۰۸۰ را نمی‌گیرد.
-    /// هیچ اسم و متنی این‌جا نوشته نشده؛ همه از خودِ آبجکت و فایل زبان می‌آید.
+    /// کارت تعامل، گوشه‌ی پایین-راست: پنل کرم با گرادیان، سرصفحه‌ی نام و نقش،
+    /// ردیف‌های کار، و فوتر تیره با کلیدها.
+    ///
+    /// تمام رابط در زمان اجرا ساخته می‌شود. کانواس در ریشه‌ی صحنه است، نه زیر این آبجکت؛
+    /// CanvasScaler فقط روی کانواس ریشه مقیاس ۱۹۲۰×۱۰۸۰ را اعمال می‌کند.
+    ///
+    /// هیچ متن و نامی این‌جا نوشته نشده: عنوان و نقش از خودِ آبجکت، و برچسب کارها از
+    /// جدول مرکزی فعل‌ها می‌آید. فقط دو کلید ثابت فوتر از فایل زبان خوانده می‌شود.
     /// </summary>
     public class InteractionHUD : MonoBehaviour
     {
         /* ---------- چیدمان (واحد کانواس ۱۹۲۰×۱۰۸۰) ---------- */
-        private const float Width = 470f;
-        private const float CardHeight = 116f;
-        private const float PillHeight = 32f;
+        private const float Width = 440f;
+        private const float Pad = 20f;
+        private const float HeaderHeight = 78f;
+        private const float RowHeight = 42f;
+        private const float RowGap = 3f;
+        private const float FooterHeight = 54f;
+        private const float Corner = 12f;
         private const float StripGap = 8f;
+        private const float PillHeight = 32f;
         private const float MarginX = 48f;
         private const float MarginY = 44f;
-        private const float Pad = 18f;
-        private const float BadgeSize = 44f;
-        private const float BadgeGap = 14f;
-        private const float SlidePixels = 16f;
-        private const float VerbTop = 10f;
-        private const float VerbHeight = 24f;
+        private const float SlidePixels = 22f;
+        private const int MaxRows = 4;
         private const int MaxPills = 4;
         private const int MaxPillChars = 18;
 
         /* ---------- رنگ ---------- */
-        private static readonly Color CardColor = new Color(0.09f, 0.106f, 0.125f, 0.93f);
-        private static readonly Color RaisedColor = new Color(0.145f, 0.165f, 0.188f, 0.95f);
-        private static readonly Color PillIdleColor = new Color(0.145f, 0.165f, 0.188f, 0.9f);
-        private static readonly Color PillActiveColor = new Color(0.541f, 0.604f, 0.357f, 0.30f);
-        private static readonly Color PrimaryColor = new Color(0.941f, 0.933f, 0.914f);
-        private static readonly Color SecondaryColor = new Color(0.655f, 0.663f, 0.62f);
-        private static readonly Color MutedColor = new Color(0.45f, 0.47f, 0.43f);
-        private static readonly Color AccentColor = new Color(0.541f, 0.604f, 0.357f);
-        private static readonly Color BorderColor = new Color(0.23f, 0.25f, 0.22f, 0.9f);
+        private static readonly Color PanelTop = new Color(0.80f, 0.72f, 0.61f, 0.93f);
+        private static readonly Color PanelBottom = new Color(0.45f, 0.37f, 0.29f, 0.95f);
+        private static readonly Color PanelEdge = new Color(0.82f, 0.73f, 0.63f, 0.60f);
+        private static readonly Color FooterColor = new Color(0.07f, 0.06f, 0.055f, 0.96f);
+        private static readonly Color TitleColor = new Color(0.97f, 0.94f, 0.89f, 1f);
+        private static readonly Color RoleColor = new Color(0.78f, 0.71f, 0.61f, 1f);
+        private static readonly Color RowIdleText = new Color(0.95f, 0.91f, 0.85f, 1f);
+        private static readonly Color RowActiveText = new Color(0.10f, 0.09f, 0.07f, 1f);
+        private static readonly Color RowActiveFill = new Color(0.92f, 0.88f, 0.81f, 0.95f);
+        private static readonly Color RuleColor = new Color(0.82f, 0.73f, 0.63f, 0.30f);
+        private static readonly Color FooterText = new Color(0.93f, 0.90f, 0.85f, 1f);
+        private static readonly Color PillIdle = new Color(0.20f, 0.17f, 0.14f, 0.88f);
+        private static readonly Color PillActive = new Color(0.92f, 0.88f, 0.81f, 0.95f);
 
         private static InteractionHUD _active;
 
@@ -73,6 +81,14 @@ namespace TehranNoir.UI
         [Tooltip("اندازه در حالت بسته؛ کمتر از ۱ یعنی کارت هنگام آمدن کمی جمع است")]
         [SerializeField, Range(0.5f, 1f)] private float hiddenScale = 0.94f;
 
+        private sealed class Row
+        {
+            public RectTransform Rect;
+            public Image Background;
+            public TMP_Text Label;
+            public Image Arrow;
+        }
+
         private sealed class Pill
         {
             public RectTransform Rect;
@@ -80,38 +96,38 @@ namespace TehranNoir.UI
             public TMP_Text Label;
         }
 
-        private readonly List<Pill> _pills = new List<Pill>();
-        private readonly List<Interactable> _stripTargets = new List<Interactable>();
+        private readonly List<Row> _rows = new List<Row>(MaxRows);
+        private readonly List<Pill> _pills = new List<Pill>(MaxPills);
+        private readonly List<Interactable> _stripTargets = new List<Interactable>(MaxPills);
+        private readonly List<InteractionAction> _verbs = new List<InteractionAction>(MaxRows);
 
         private GameObject _canvasObject;
         private CanvasGroup _group;
+        private PanelMotion _motion;
         private RectTransform _root;
-        private RectTransform _strip;
         private RectTransform _card;
-        private GameObject _keyIcon;
+        private RectTransform _strip;
 
-        private readonly List<TMP_Text> _verbRows = new List<TMP_Text>();
-        private readonly List<InteractionAction> _verbs = new List<InteractionAction>(3);
+        private Image _panelImage;
+        private Image _footerImage;
+        private RectTransform _footer;
+        private Image _selectBadge;
+        private TMP_Text _selectLetter;
+        private TMP_Text _selectText;
+        private TMP_Text _closeText;
 
-        private TMP_Text _keyText;
         private TMP_Text _titleText;
-        private TMP_Text _subtitleText;
-        private TMP_Text _hintText;
-
-        private RectTransform _titleBox;
-        private RectTransform _subtitleBox;
-        private RectTransform _hintBox;
+        private TMP_Text _roleText;
 
         private Interactable _lastTarget;
         private int _lastVerb = -1;
         private int _lastSignature;
         private bool _lastGamepad;
         private bool _lastMulti;
-        private PanelMotion _motion;
 
         private static readonly Interactable[] NoTargets = new Interactable[0];
 
-        /// <summary>آیا کارت همین حالا روی صفحه است (یا در حال آمدن). کمان این را می‌خواند.</summary>
+        /// <summary>آیا کارت همین حالا روی صفحه است. کمان این را می‌خواند.</summary>
         public static bool IsShown
         {
             get { return _active != null && _active._lastTarget != null; }
@@ -198,7 +214,7 @@ namespace TehranNoir.UI
             else if (verb != _lastVerb)
             {
                 _lastVerb = verb;
-                HighlightVerbs(verb);
+                Highlight(verb);
             }
 
             SyncStrip(list, sensor.Index);
@@ -242,131 +258,142 @@ namespace TehranNoir.UI
 
             _titleText.text = target.Title;
 
-            string subtitle = target.Subtitle;
-            _subtitleText.text = subtitle;
-            _subtitleBox.gameObject.SetActive(!string.IsNullOrEmpty(subtitle));
+            string role = target.Subtitle;
+            _roleText.text = role;
+            _roleText.gameObject.SetActive(!string.IsNullOrEmpty(role));
 
-            BuildVerbs(target);
-            ApplyHint();
+            BuildRows(target);
+            Layout();
 
-            SetKey(usingGamepad ? "X" : "E");
+            SetSelectKey(usingGamepad);
+
+            Highlight(0);
         }
 
-        /// <summary>
-        /// کارهای هدف را به‌صورت ردیف می‌سازد: «باز کردن»، «برداشتن».
-        /// ارتفاع کارت با تعداد کارها حساب می‌شود، پس یک کار همان کارت کوچک قبل است.
-        /// </summary>
-        private void BuildVerbs(Interactable target)
+        /// <summary>ردیف‌های کار؛ حداکثر چهار تا مثل مرجع.</summary>
+        private void BuildRows(Interactable target)
         {
-            for (int i = 0; i < _verbRows.Count; i++)
+            for (int i = 0; i < _rows.Count; i++)
             {
-                if (_verbRows[i] == null) continue;
+                if (_rows[i].Rect == null) continue;
 
-                _verbRows[i].transform.parent.gameObject.SetActive(false);
-                Destroy(_verbRows[i].transform.parent.gameObject);
+                _rows[i].Rect.gameObject.SetActive(false);
+                Destroy(_rows[i].Rect.gameObject);
             }
 
-            _verbRows.Clear();
+            _rows.Clear();
             _verbs.Clear();
 
             IReadOnlyList<InteractionAction> verbs = target.Verbs;
+
             if (verbs != null)
-                for (int i = 0; i < verbs.Count && i < 3; i++) _verbs.Add(verbs[i]);
+                for (int i = 0; i < verbs.Count && i < MaxRows; i++) _verbs.Add(verbs[i]);
 
             if (_verbs.Count == 0) _verbs.Add(target.Action);
 
-            float textWidth = Width - Pad * 2f - BadgeSize - BadgeGap;
-            float textX = Persian ? Pad : Pad + BadgeSize + BadgeGap;
-
             for (int i = 0; i < _verbs.Count; i++)
             {
-                RectTransform box = UiKit.Box("Verb_" + i, _card, textX, VerbY(i), textWidth, VerbHeight);
+                Row row = new Row();
 
-                TMP_Text text = UiKit.Text("Text", box, 17f, SecondaryColor, Font, Persian);
-                text.alignment = Align;
-                text.text = (i + 1) + ". " + target.VerbLabel(_verbs[i]);
+                row.Rect = UiKit.Box("Row_" + i, _card, 10f, 0f, Width - 20f, RowHeight);
 
-                _verbRows.Add(text);
+                row.Background = row.Rect.gameObject.AddComponent<Image>();
+                row.Background.sprite = UiKit.RoundedRect;
+                row.Background.type = Image.Type.Sliced;
+                row.Background.color = new Color(1f, 1f, 1f, 0f);
+                row.Background.raycastTarget = false;
+
+                float arrowX = Persian ? Width - 20f - 26f : 10f;
+                float labelX = Persian ? 10f : 34f;
+                float labelWidth = Width - 20f - labelX - 36f;
+
+                RectTransform labelBox = UiKit.Box("Label", row.Rect, labelX, 0f, labelWidth, RowHeight);
+
+                row.Label = UiKit.Text("Text", labelBox, 20f, RowIdleText, Font, Persian);
+                row.Label.alignment = Align;
+                row.Label.text = target.VerbLabel(_verbs[i]);
+
+                RectTransform arrowBox = UiKit.Box("Arrow", row.Rect, arrowX, (RowHeight - 16f) * 0.5f, 16f, 16f);
+
+                row.Arrow = arrowBox.gameObject.AddComponent<Image>();
+                row.Arrow.sprite = HudArt.Icon(HudArt.Icon.ArrowLeft, 48, RowActiveText);
+                row.Arrow.raycastTarget = false;
+                row.Arrow.gameObject.SetActive(false);
+
+                _rows.Add(row);
             }
-
-            Layout();
-            HighlightVerbs(_lastVerb < 0 ? 0 : _lastVerb);
         }
 
-        private static float VerbY(int index) => VerbTop + index * VerbHeight;
-
-        /// <summary>کار انتخاب‌شده روشن و بقیه خاموش؛ بدون بازسازی متن.</summary>
-        private void HighlightVerbs(int selected)
+        /// <summary>ردیف انتخاب‌شده کرم روشن با متن تیره و فلش؛ بقیه فقط متن.</summary>
+        private void Highlight(int selected)
         {
-            for (int i = 0; i < _verbRows.Count; i++)
+            for (int i = 0; i < _rows.Count; i++)
             {
                 bool active = i == selected;
 
-                _verbRows[i].color = active ? AccentColor : SecondaryColor;
-                _verbRows[i].fontStyle = active ? FontStyles.Bold : FontStyles.Normal;
+                _rows[i].Background.color = active ? RowActiveFill : new Color(1f, 1f, 1f, 0f);
+                _rows[i].Label.color = active ? RowActiveText : RowIdleText;
+                _rows[i].Label.fontStyle = active ? FontStyles.Bold : FontStyles.Normal;
+                _rows[i].Arrow.gameObject.SetActive(active);
             }
         }
 
-        /// <summary>هر تعداد کار، چیدمان عمودی از نو حساب می‌شود؛ یک قاعده برای هر حالت.</summary>
+        /// <summary>قد کارت با تعداد کارها حساب می‌شود؛ فوتر همیشه ته آن می‌نشیند.</summary>
         private void Layout()
         {
             int rows = Mathf.Max(1, _verbs.Count);
 
-            float titleY = VerbTop + rows * VerbHeight + 2f;
-            float subtitleY = titleY + 30f;
-            float hintY = subtitleY + 20f;
+            for (int i = 0; i < _rows.Count; i++)
+            {
+                float y = HeaderHeight + i * (RowHeight + RowGap);
+                _rows[i].Rect.anchoredPosition = new Vector2(10f, -y);
+            }
 
-            _titleBox.anchoredPosition = new Vector2(_titleBox.anchoredPosition.x, -titleY);
-            _subtitleBox.anchoredPosition = new Vector2(_subtitleBox.anchoredPosition.x, -subtitleY);
-            _hintBox.anchoredPosition = new Vector2(_hintBox.anchoredPosition.x, -hintY);
+            float rowsBottom = HeaderHeight + rows * RowHeight + (rows - 1) * RowGap;
+            float footerTop = rowsBottom + 12f;
+            float height = footerTop + FooterHeight;
 
-            float height = hintY + 16f + 10f;
+            _footer.anchoredPosition = new Vector2(0f, -footerTop);
 
             _card.sizeDelta = new Vector2(Width, height);
+
+            ApplyPanel(Mathf.CeilToInt(height));
+
             _strip.anchoredPosition = new Vector2(0f, height + StripGap);
             _root.sizeDelta = new Vector2(Width, height + StripGap + PillHeight);
         }
 
-        /// <summary>راهنمای پایین کارت: با چند کار، کلیدهای عددی؛ با چند هدف، چرخ موس.</summary>
-        private void ApplyHint()
+        /// <summary>
+        /// بافت پنل با قد تازه؛ یک بار در هر اندازه ساخته و کش می‌شود.
+        /// گرادیان و حاشیه داخل خود بافت است تا گوشه‌ی گرد بیرون نزند.
+        /// </summary>
+        private void ApplyPanel(int height)
         {
-            bool manyVerbs = _verbs.Count > 1;
+            int width = Mathf.CeilToInt(Width);
 
-            _hintText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, manyVerbs ? "hud.verbs" : "hud.scroll");
-            _hintBox.gameObject.SetActive(manyVerbs || _lastMulti);
+            _panelImage.sprite = HudArt.Panel("hud.card." + height, width, height, Corner,
+                PanelTop, PanelBottom, PanelEdge, 1.2f);
+
+            if (_footerImage.sprite == null)
+            {
+                _footerImage.sprite = HudArt.Panel("hud.footer", width, Mathf.CeilToInt(FooterHeight), Corner,
+                    FooterColor, FooterColor, PanelEdge, 1f, false, true);
+            }
         }
 
-        /// <summary>آیکون واقعی کلید اگر در Resources باشد؛ وگرنه حرف.</summary>
-        private void SetKey(string key)
+        /// <summary>کلید انتخاب در فوتر: E روی کیبورد، X روی دسته.</summary>
+        private void SetSelectKey(bool gamepad)
         {
+            string key = gamepad ? "X" : "E";
+
             Sprite sprite = UiKit.KeyIcon(key);
 
-            if (sprite != null)
-            {
-                if (_keyIcon == null)
-                {
-                    RectTransform rect = UiKit.Node("KeyIcon", _keyText.transform.parent);
-                    rect.anchorMin = new Vector2(0.5f, 0.5f);
-                    rect.anchorMax = new Vector2(0.5f, 0.5f);
-                    rect.sizeDelta = new Vector2(26f, 26f);
+            _selectBadge.sprite = sprite;
+            _selectBadge.color = sprite != null ? Color.white : RowActiveFill;
+            _selectBadge.preserveAspect = sprite != null;
 
-                    Image image = rect.gameObject.AddComponent<Image>();
-                    image.raycastTarget = false;
-
-                    _keyIcon = rect.gameObject;
-                }
-
-                _keyIcon.GetComponent<Image>().sprite = sprite;
-
-                _keyIcon.SetActive(true);
-                _keyText.gameObject.SetActive(false);
-                return;
-            }
-
-            if (_keyIcon != null) _keyIcon.SetActive(false);
-
-            _keyText.gameObject.SetActive(true);
-            _keyText.text = key;
+            _selectLetter.text = key;
+            _selectLetter.gameObject.SetActive(sprite == null);
         }
 
         /* ============================================================
@@ -381,7 +408,6 @@ namespace TehranNoir.UI
             {
                 _lastMulti = multi;
                 _strip.gameObject.SetActive(multi);
-                ApplyHint();
             }
 
             if (multi) RebuildStripIfNeeded(list);
@@ -390,8 +416,8 @@ namespace TehranNoir.UI
             {
                 bool active = i == selected;
 
-                _pills[i].Background.color = active ? PillActiveColor : PillIdleColor;
-                _pills[i].Label.color = active ? PrimaryColor : SecondaryColor;
+                _pills[i].Background.color = active ? PillActive : PillIdle;
+                _pills[i].Label.color = active ? RowActiveText : RowIdleText;
             }
         }
 
@@ -432,9 +458,13 @@ namespace TehranNoir.UI
 
                 RectTransform rect = UiKit.Box("Pill_" + i, _strip, 0f, 0f, 120f, PillHeight);
 
-                Image background = Rounded(rect, PillIdleColor);
+                Image background = rect.gameObject.AddComponent<Image>();
+                background.sprite = UiKit.RoundedRect;
+                background.type = Image.Type.Sliced;
+                background.color = PillIdle;
+                background.raycastTarget = false;
 
-                TMP_Text label = UiKit.Text("Text", rect, 16f, SecondaryColor, Font, Persian);
+                TMP_Text label = UiKit.Text("Text", rect, 16f, RowIdleText, Font, Persian);
                 label.alignment = TextAlignmentOptions.Center;
                 label.text = Shorten(target.Title, MaxPillChars);
                 label.ForceMeshUpdate();
@@ -501,11 +531,10 @@ namespace TehranNoir.UI
 
         private void Build()
         {
+            _rows.Clear();
             _pills.Clear();
             _stripTargets.Clear();
-            _verbRows.Clear();
             _verbs.Clear();
-            _keyIcon = null;
             _lastMulti = false;
             _lastVerb = -1;
 
@@ -516,7 +545,7 @@ namespace TehranNoir.UI
             _root.anchorMax = new Vector2(1f, 0f);
             _root.pivot = new Vector2(1f, 0f);
             _root.anchoredPosition = new Vector2(-MarginX, MarginY);
-            _root.sizeDelta = new Vector2(Width, CardHeight + StripGap + PillHeight);
+            _root.sizeDelta = new Vector2(Width, 240f);
 
             _group = _root.gameObject.AddComponent<CanvasGroup>();
             _group.blocksRaycasts = false;
@@ -534,7 +563,7 @@ namespace TehranNoir.UI
             _strip.anchorMin = new Vector2(0f, 0f);
             _strip.anchorMax = new Vector2(0f, 0f);
             _strip.pivot = new Vector2(0f, 0f);
-            _strip.anchoredPosition = new Vector2(0f, CardHeight + StripGap);
+            _strip.anchoredPosition = new Vector2(0f, 240f + StripGap);
             _strip.sizeDelta = new Vector2(Width, PillHeight);
             _strip.gameObject.SetActive(false);
 
@@ -543,10 +572,13 @@ namespace TehranNoir.UI
             _card.anchorMax = new Vector2(0f, 0f);
             _card.pivot = new Vector2(0f, 0f);
             _card.anchoredPosition = Vector2.zero;
-            _card.sizeDelta = new Vector2(Width, CardHeight);
+            _card.sizeDelta = new Vector2(Width, 240f);
 
-            BuildCard();
-            BuildTexts();
+            BuildPanel();
+            BuildHeader();
+            BuildFooter();
+
+            ApplyPanel(240);
         }
 
         /// <summary>
@@ -572,60 +604,107 @@ namespace TehranNoir.UI
             return canvasObject;
         }
 
-        private void BuildCard()
+        private void BuildPanel()
         {
-            Image background = _card.gameObject.AddComponent<Image>();
-            background.color = CardColor;
-            background.raycastTarget = false;
+            RectTransform panel = UiKit.Node("Panel", _card);
+            UiKit.Stretch(panel);
 
-            // خط باریک بالا: تنها عنصر تزئینی کارت
-            RectTransform accent = UiKit.Box("Accent", _card, 0f, 0f, Width, 2f);
-            Image accentImage = accent.gameObject.AddComponent<Image>();
-            accentImage.color = new Color(AccentColor.r, AccentColor.g, AccentColor.b, 0.85f);
-            accentImage.raycastTarget = false;
-
-            float badgeX = Persian ? Width - Pad - BadgeSize : Pad;
-
-            RectTransform badge = UiKit.Box("KeyBadge", _card, badgeX, 12f, BadgeSize, BadgeSize);
-            Rounded(badge, RaisedColor);
-
-            _keyText = UiKit.Text("Key", badge, 19f, PrimaryColor, Font, false);
-            _keyText.alignment = TextAlignmentOptions.Center;
-            _keyText.text = "E";
+            _panelImage = panel.gameObject.AddComponent<Image>();
+            _panelImage.raycastTarget = false;
+            _panelImage.type = Image.Type.Simple;
         }
 
-        private void BuildTexts()
+        private void BuildHeader()
         {
-            float textWidth = Width - Pad * 2f - BadgeSize - BadgeGap;
-            float textX = Persian ? Pad : Pad + BadgeSize + BadgeGap;
+            float iconX = Persian ? Width - Pad - 34f : Pad;
 
-            _titleBox = UiKit.Box("Title", _card, textX, 40f, textWidth, 30f);
-            _titleText = UiKit.Text("Text", _titleBox, 24f, PrimaryColor, Font, Persian);
+            RectTransform iconBox = UiKit.Box("HeaderIcon", _card, iconX, 14f, 34f, 34f);
+
+            Image icon = iconBox.gameObject.AddComponent<Image>();
+            icon.sprite = HudArt.Icon(HudArt.Icon.Chat, 64, TitleColor);
+            icon.raycastTarget = false;
+            icon.color = new Color(1f, 1f, 1f, 0.85f);
+
+            float textWidth = Width - Pad * 2f - 34f - 10f;
+
+            RectTransform titleBox = UiKit.Box("Title", _card, Pad, 12f, textWidth, 32f);
+
+            _titleText = UiKit.Text("Text", titleBox, 25f, TitleColor, Font, Persian);
             _titleText.alignment = Align;
+            _titleText.fontStyle = FontStyles.Bold;
 
-            _subtitleBox = UiKit.Box("Subtitle", _card, textX, 70f, textWidth, 20f);
-            _subtitleText = UiKit.Text("Text", _subtitleBox, 15f, SecondaryColor, Font, Persian);
-            _subtitleText.alignment = Align;
+            RectTransform roleBox = UiKit.Box("Role", _card, Pad, 42f, textWidth, 24f);
 
-            _hintBox = UiKit.Box("Hint", _card, textX, 90f, textWidth, 16f);
-            _hintText = UiKit.Text("Text", _hintBox, 12f, MutedColor, Font, Persian);
-            _hintText.alignment = Align;
+            _roleText = UiKit.Text("Text", roleBox, 18f, RoleColor, Font, Persian);
+            _roleText.alignment = Align;
 
-            _hintText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "hud.scroll");
-            _hintBox.gameObject.SetActive(false);
+            RectTransform rule = UiKit.Box("Rule", _card, Pad, 66f, Width - Pad * 2f, 1f);
 
-            Layout();
+            Image ruleImage = rule.gameObject.AddComponent<Image>();
+            ruleImage.color = RuleColor;
+            ruleImage.raycastTarget = false;
         }
 
-        private static Image Rounded(RectTransform rect, Color color)
+        private void BuildFooter()
         {
-            Image image = rect.gameObject.AddComponent<Image>();
-            image.sprite = UiKit.RoundedRect;
-            image.type = Image.Type.Sliced;
-            image.color = color;
-            image.raycastTarget = false;
+            _footer = UiKit.Box("Footer", _card, 0f, 0f, Width, FooterHeight);
 
-            return image;
+            _footerImage = _footer.gameObject.AddComponent<Image>();
+            _footerImage.raycastTarget = false;
+
+            // در فارسی: «انتخاب» و کلیدش سمت راست، «بستن» و Esc سمت چپ
+            float badgeY = (FooterHeight - 26f) * 0.5f;
+
+            float selectBadgeX = Width - Pad - 26f;
+            float closeBadgeX = Pad;
+
+            RectTransform selectBadgeBox = UiKit.Box("SelectKey", _footer, selectBadgeX, badgeY, 26f, 26f);
+
+            _selectBadge = selectBadgeBox.gameObject.AddComponent<Image>();
+            _selectBadge.raycastTarget = false;
+            _selectBadge.preserveAspect = true;
+
+            _selectLetter = UiKit.Text("Letter", selectBadgeBox, 15f, RowActiveText, Font, false);
+            _selectLetter.alignment = TextAlignmentOptions.Center;
+
+            RectTransform closeBadgeBox = UiKit.Box("CloseKey", _footer, closeBadgeX, badgeY, 26f, 26f);
+
+            Image closeBadge = closeBadgeBox.gameObject.AddComponent<Image>();
+            closeBadge.sprite = UiKit.KeyIcon("Esc");
+            closeBadge.raycastTarget = false;
+            closeBadge.preserveAspect = true;
+            closeBadge.color = closeBadge.sprite != null ? Color.white : RowActiveFill;
+
+            if (closeBadge.sprite == null)
+            {
+                TMP_Text letter = UiKit.Text("Letter", closeBadgeBox, 13f, RowActiveText, Font, false);
+                letter.alignment = TextAlignmentOptions.Center;
+                letter.text = "Esc";
+            }
+
+            float selectLabelX = Width * 0.5f + 12f;
+            float selectLabelWidth = selectBadgeX - 10f - selectLabelX;
+
+            RectTransform selectLabelBox = UiKit.Box("Select", _footer, selectLabelX, 0f, selectLabelWidth, FooterHeight);
+
+            _selectText = UiKit.Text("Text", selectLabelBox, 17f, FooterText, Font, Persian);
+            _selectText.alignment = Align;
+            _selectText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "hud.select");
+
+            float closeLabelX = closeBadgeX + 26f + 10f;
+            float closeLabelWidth = Width * 0.5f - 12f - closeLabelX;
+
+            RectTransform closeLabelBox = UiKit.Box("Close", _footer, closeLabelX, 0f, closeLabelWidth, FooterHeight);
+
+            _closeText = UiKit.Text("Text", closeLabelBox, 17f, FooterText, Font, Persian);
+            _closeText.alignment = TextAlignmentOptions.MidlineLeft;
+            _closeText.text = Settings.Loc.Get(Settings.Loc.Channel.Menu, "pause.close");
+
+            RectTransform divider = UiKit.Box("Divider", _footer, Width * 0.5f, 16f, 1f, 22f);
+
+            Image dividerImage = divider.gameObject.AddComponent<Image>();
+            dividerImage.color = new Color(0.93f, 0.90f, 0.85f, 0.18f);
+            dividerImage.raycastTarget = false;
         }
     }
 }

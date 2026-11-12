@@ -188,8 +188,9 @@ namespace TehranNoir.UI
             content.localScale = Vector3.one * Mathf.LerpUnclamped(hiddenScale, 1f, eased);
             content.anchoredPosition = _restPosition + Direction * (slidePixels * (1f - eased));
 
-            // آلفا کمی زودتر از مقیاس کامل می‌شود تا محو شدن، حرکت را تیز نشان ندهد
-            group.alpha = Mathf.Clamp01(_progress * 1.25f);
+            // آلفا فقط در انتهای حرکت کم می‌شود: پنل باید «جمع شود و برود»، نه اینکه محو شود.
+            // تا ۴۰٪ آخرِ بسته شدن، کاملاً روشن است.
+            group.alpha = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(_progress / 0.4f));
         }
 
         private Vector2 Direction

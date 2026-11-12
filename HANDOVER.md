@@ -696,3 +696,18 @@ git push origin HEAD:arena/4796527a-tehran-noir-2026-10-18-18-59-0
 هنگام باز بودن کارت تعامل، کمان کنار می‌رود (`hideWhileCardShown`).
 
 مستند: `docs/27-panel-motion.md`.
+
+## ۲۴. ظاهر تازه‌ی HUD (جلسه‌ی ۱۴)
+
+| فایل | نقش |
+| --- | --- |
+| `Scripts/UI/HudArt.cs` | پنل گرادیانی، دیسک، شش آیکون خطی — همه در زمان اجرا، کش‌شده |
+| `Scripts/UI/InteractionHUD.cs` | کارت کرم: سرصفحه، ردیف‌ها، فوتر تیره |
+| `Scripts/UI/StatRingHud.cs` | دیسک تیره + کمان‌های محوشونده + سه قطعه + برگه |
+| `Scripts/UI/ArcGraphic.cs` | `SetFade(degrees)` با آلفای رأس |
+
+`PanelMotion` از این پس محو نمی‌کند: آلفا تا ۴۰٪ آخرِ بسته شدن روی ۱ است.
+
+پالت: کرم `#CCB89B` تا `#735E4A`، حاشیه `#D1BAA0`، فوتر `#12100F`، دیسک `#0B0908`.
+مستند: `docs/28-hud-redesign.md`.
+

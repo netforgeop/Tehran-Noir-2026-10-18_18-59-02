@@ -27,6 +27,9 @@ namespace TehranNoir.UI
         [Tooltip("هر چند درجه یک رأس؛ کمتر = نرم‌تر، گران‌تر")]
         [SerializeField] private float degreesPerSegment = 2.5f;
 
+        [Tooltip("چند درجه از هر سر کمان محو شود؛ صفر = بدون محو")]
+        [SerializeField] private float fadeDegrees = 0f;
+
         public float Radius { get { return radius; } }
 
         /// <summary>زاویه‌ی شروع و پایان. اگر شروع از پایان بزرگ‌تر باشد، ساعت‌گرد کشیده می‌شود.</summary>
@@ -36,6 +39,17 @@ namespace TehranNoir.UI
 
             startAngle = start;
             endAngle = end;
+            SetVerticesDirty();
+        }
+
+        /// <summary>محو شدن تدریجی دو سر کمان؛ با آلفای رأس، نه ماسک.</summary>
+        public void SetFade(float degrees)
+        {
+            degrees = Mathf.Max(0f, degrees);
+
+            if (Mathf.Approximately(fadeDegrees, degrees)) return;
+
+            fadeDegrees = degrees;
             SetVerticesDirty();
         }
 
@@ -75,8 +89,10 @@ namespace TehranNoir.UI
                 float angle = Mathf.Deg2Rad * (startAngle + sweep * i / segments);
                 Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
 
-                vh.AddVert(direction * inner, color, Vector2.zero);
-                vh.AddVert(direction * outer, color, Vector2.zero);
+                Color tint = Tint(segments == 0 ? 0f : i / (float)segments, sweep);
+
+                vh.AddVert(direction * inner, tint, Vector2.zero);
+                vh.AddVert(direction * outer, tint, Vector2.zero);
             }
 
             for (int i = 0; i < segments; i++)
@@ -90,12 +106,34 @@ namespace TehranNoir.UI
             // کمان کامل ۳۶۰ درجه دو سرِ روی‌هم‌افتاده دارد؛ سر گرد آن دو بار رنگ می‌شود و لکه می‌اندازد
             if (!roundCaps || Mathf.Abs(sweep) >= 359.5f) return;
 
-            AddCap(vh, startAngle);
-            AddCap(vh, endAngle);
+            AddCap(vh, startAngle, Tint(0f, sweep));
+            AddCap(vh, endAngle, Tint(1f, sweep));
+        }
+
+        /// <summary>آلفای هر رأس بر اساس فاصله‌اش از دو سر کمان.</summary>
+        private Color Tint(float t, float sweep)
+        {
+            Color tint = color;
+
+            if (fadeDegrees <= 0.01f) return tint;
+
+            float span = Mathf.Abs(sweep);
+
+            if (span < 1f) return tint;
+
+            float fade = Mathf.Clamp01(fadeDegrees / span);
+
+            if (fade <= 0f) return tint;
+
+            float edge = Mathf.Min(t, 1f - t) / fade;
+
+            tint.a *= Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(edge));
+
+            return tint;
         }
 
         /// <summary>سر گرد = یک دایره‌ی پر به شعاع نصف ضخامت، وسط ضخامت، روی همان زاویه.</summary>
-        private void AddCap(VertexHelper vh, float angle)
+        private void AddCap(VertexHelper vh, float angle, Color tint)
         {
             float radians = Mathf.Deg2Rad * angle;
             Vector2 center = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)) * radius;
@@ -105,14 +143,14 @@ namespace TehranNoir.UI
 
             int first = vh.currentVertCount;
 
-            vh.AddVert(center, color, Vector2.zero);
+            vh.AddVert(center, tint, Vector2.zero);
 
             for (int i = 0; i <= capSegments; i++)
             {
                 float t = Mathf.PI * 2f * i / capSegments;
                 Vector2 point = center + new Vector2(Mathf.Cos(t), Mathf.Sin(t)) * capRadius;
 
-                vh.AddVert(point, color, Vector2.zero);
+                vh.AddVert(point, tint, Vector2.zero);
             }
 
             for (int i = 0; i < capSegments; i++)

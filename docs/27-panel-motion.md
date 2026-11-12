@@ -26,6 +26,7 @@
 | `openSeconds` | ۰٫۲۰ | ۰٫۲۲ |
 | `closeSeconds` | ۰٫۱۴ | ۰٫۱۶ |
 | `hiddenScale` | ۰٫۹۴ | ۰٫۹۰ |
+| آلفا | تا ۴۰٪ آخرِ بسته شدن روی ۱ | همان |
 | `overshoot` | ۰٫۰۷ | ۰٫۰۷ |
 | `slidePixels` | ۱۶ | ۲۶ |
 | `slideFrom` | Right | Right |

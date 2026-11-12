@@ -78,6 +78,7 @@ action.enter = Enter
 action.drive = Drive
 action.give = Give
 action.place = Place
+hud.select = Select
 hud.scroll = Scroll: next target
 hud.verbs = Keys 1-3: choose action
 doc.close = Esc or E: close

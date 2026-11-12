@@ -11,23 +11,27 @@ using TehranNoir.World;
 namespace TehranNoir.UI
 {
     /// <summary>
-    /// گیج دایره‌ای سمت راست صفحه.
+    /// گیج دایره‌ای سمت راست صفحه، در سه حالت:
     ///
-    ///   دیسک تیره — پشت همه چیز، با یک رینگ نازک خاکستری دور آن.
-    ///   کمان بیرونی چپ — جان (سرخ) + زره (آبی). هر دو روی یک مقیاس ۲۰۰ هستند،
-    ///                    پس جان ۱۰۰ و زره ۵۰ یعنی ۷۵٪ کمان پر، و یک‌سومش آبی.
-    ///   کمان درونی چپ — استقامت (زرد). زیر صفر همان کمان قرمز می‌شود و از پایین بالا می‌آید.
-    ///   سه قطعه‌ی لبه‌ی راست — سه ویژگیِ برگه. ویژگیِ فعال کرم، بقیه خاکستری.
-    ///   برگه‌ی پشت دیسک — سه ردیف: آیکون، نام، مقدار.
+    ///   آرام — پایین-راست. فقط دیسک و سه کمان: جان/زره، استقامت، شرافت.
+    ///   برگه — هر ویژگیِ پنج‌گانه که عوض شود، برگه از زیر دیسک بیرون می‌آید،
+    ///           دیسک به راست-وسط می‌رود و کمان شرافت جایش را به سه قطعه می‌دهد.
+    ///           بیست‌وپنج ثانیه بعد همان مسیر برمی‌گردد و ردیف اول دوباره شرافت است.
+    ///   کارت — وقتی کارت تعامل باز است، گیج بالا می‌رود تا کارت پایینش جا شود.
     ///
     /// هیچ عددی از خودش نگه نمی‌دارد: همه از CharacterStats و WorldState می‌آید.
     /// مثل بقیه‌ی HUD، هنگام دیالوگ/سند/منوی توقف کنار می‌رود.
+    ///
+    /// چیدمان سه لایه است و هر لایه یک کار دارد:
+    ///   Root     — لنگر راست-وسط؛ PanelMotion فقط آلفای آن را می‌چرخاند.
+    ///   Place    — جابه‌جایی بین حالت‌ها؛ تنها چیزی که این کلاس هر فریم می‌نویسد.
+    ///   Content  — مقیاس و سُرِ ورود/خروج؛ کم‌رنگی بی‌حرکتی هم روی آن است.
+    /// اگر جابه‌جایی و مقیاس روی یک گره بودند، تغییر مقیاس، مکان را هم می‌کشید.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StatRingHud : MonoBehaviour
     {
         /* ---------- چیدمان (واحد کانواس ۱۹۲۰×۱۰۸۰) ---------- */
-        private const float CenterRightOffset = 360f;
         private const float RootSize = 460f;
 
         private const float DiscSize = 330f;
@@ -48,14 +52,34 @@ namespace TehranNoir.UI
         private const float LeftEnd = 300f;
         private const float LeftSweep = LeftEnd - LeftStart;
 
+        private const float RightStart = -40f;
+        private const float RightEnd = 40f;
+        private const float RightSweep = RightEnd - RightStart;
+
         /// <summary>مرکز سه قطعه‌ی لبه‌ی راست، بالای افق و پایین آن.</summary>
         private static readonly float[] SegmentCenter = { 15f, 0f, -15f };
 
         private const float SheetX = 142f;
+        private const float SheetHiddenX = -40f;
         private const float SheetWidth = 190f;
         private const float SheetHeight = 196f;
         private const float SheetRowHeight = 46f;
         private const float SheetRowTop = 26f;
+
+        /* ---------- جای‌گیری، نسبت به لنگر راست-وسط صفحه ---------- */
+        /// <summary>آرام: پایین-راست.</summary>
+        private static readonly Vector2 IdleAnchor = new Vector2(-215f, -290f);
+
+        /// <summary>آرام با برگه: به چپ می‌رود تا برگه سمت راستش باز شود.</summary>
+        private static readonly Vector2 IdleSheetAnchor = new Vector2(-360f, 0f);
+
+        /// <summary>کارت تعامل باز است: راست-وسطِ کمی بالا، تا کارت زیرش جا شود.</summary>
+        private static readonly Vector2 CardAnchor = new Vector2(-268f, 60f);
+
+        private static readonly Vector2 CardSheetAnchor = new Vector2(-348f, 60f);
+
+        /// <summary>سرعت رسیدن به جای تازه؛ هرچه بیشتر، سریع‌تر.</summary>
+        private const float MoveSpeed = 9f;
 
         /* ---------- رنگ‌ها ---------- */
         private static readonly Color HealthColor = new Color(0.72f, 0.20f, 0.16f, 1f);
@@ -73,23 +97,27 @@ namespace TehranNoir.UI
         private static readonly Color Dim = new Color(0.44f, 0.42f, 0.38f, 1f);
 
         [Header("رفتار")]
-        [Tooltip("چند ثانیه بعد از آخرین تغییر، کمان کم‌رنگ می‌شود")]
+        [Tooltip("چند ثانیه بعد از آخرین تغییر، کمان پررنگ می‌ماند")]
         [SerializeField] private float activeSeconds = 3.5f;
 
-        [SerializeField, Range(0f, 1f)] private float idleAlpha = 0.45f;
+        [Tooltip("کم‌رنگی در حالت بی‌حرکتی")]
+        [SerializeField, Range(0f, 1f)] private float idleAlpha = 0.55f;
 
-        [Tooltip("چند ثانیه یک ویژگیِ تازه‌عوض‌شده جای شرافت را بگیرد")]
+        [Tooltip("وقتی برگه یا کارت باز است، حداقل این اندازه پررنگ باش")]
+        [SerializeField, Range(0f, 1f)] private float focusedAlpha = 0.85f;
+
+        [Tooltip("چند ثانیه یک ویژگیِ تازه‌عوض‌شده برگه را باز نگه دارد")]
         [SerializeField] private float focusSeconds = 25f;
 
         [Tooltip("سرعت کم‌رنگ و پررنگ شدن در حالت بی‌حرکتی")]
         [SerializeField] private float fadeSpeed = 6f;
 
-        [Tooltip("وقتی کارت تعامل باز است، کمان کنار برود")]
-        [SerializeField] private bool hideWhileCardShown = true;
-
         [Header("حرکت")]
         [SerializeField, Min(0.02f)] private float openSeconds = 0.22f;
         [SerializeField, Min(0.02f)] private float closeSeconds = 0.16f;
+
+        [Tooltip("چند ثانیه برگه باز یا بسته شود")]
+        [SerializeField, Min(0.02f)] private float sheetSeconds = 0.24f;
 
         [Tooltip("اندازه در حالت بسته")]
         [SerializeField, Range(0.5f, 1f)] private float hiddenScale = 0.9f;
@@ -99,9 +127,14 @@ namespace TehranNoir.UI
         private CanvasGroup _idle;
         private PanelMotion _motion;
 
+        private RectTransform _place;
+        private RectTransform _sheetRect;
+        private CanvasGroup _sheetGroup;
+
         private ArcGraphic _health;
         private ArcGraphic _armor;
         private ArcGraphic _stamina;
+        private ArcGraphic _honor;
         private ArcGraphic _pulse;
 
         private readonly ArcGraphic[] _segments = new ArcGraphic[3];
@@ -120,6 +153,8 @@ namespace TehranNoir.UI
         private float _activeUntil;
         private float _pulsePhase;
         private float _idleAlpha = 1f;
+        private float _sheet;
+        private Vector2 _position;
         private int _sheetSignature = int.MinValue;
         private bool _persian;
 
@@ -165,10 +200,10 @@ namespace TehranNoir.UI
 
             UpdateVitals();
             UpdateStamina();
-            UpdateFocus(now);
+            UpdateTraits(now);
+            UpdateSheetText();
             UpdatePulse();
-            UpdateSheet();
-            UpdatePresence();
+            UpdatePlacement(now);
         }
 
         /* ============================================================
@@ -221,12 +256,17 @@ namespace TehranNoir.UI
         }
 
         /* ============================================================
-           برگه‌ی ویژگی‌ها
+           ویژگی‌ها و برگه
            ============================================================ */
 
         private static readonly StatId[] SheetTrio = { StatId.Honor, StatId.Charisma, StatId.Fame };
 
-        private void UpdateFocus(float now)
+        /// <summary>
+        /// هر ویژگیِ پنج‌گانه که عوض شود، برگه باز می‌شود و ۲۵ ثانیه باز می‌ماند.
+        /// باز و بسته شدن با یک عدد (_sheet) اداره می‌شود؛ مکان دیسک، مکان برگه و
+        /// روشنایی کمان‌ها همه از همان یک عدد می‌آیند، پس هرگز ناهم‌زمان نیستند.
+        /// </summary>
+        private void UpdateTraits(float now)
         {
             for (int i = 0; i < CharacterStats.Traits.Length; i++)
             {
@@ -240,11 +280,19 @@ namespace TehranNoir.UI
                 }
             }
 
-            if (now >= _focusUntil) _focus = StatId.Honor;
-
             _seeded = true;
 
-            UpdateSegments();
+            bool open = now < _focusUntil;
+
+            _sheet = Mathf.MoveTowards(_sheet, open ? 1f : 0f,
+                Time.unscaledDeltaTime / Mathf.Max(0.05f, sheetSeconds));
+
+            // ردیف اول فقط وقتی برمی‌گردد که برگه کامل بسته باشد؛
+            // وگرنه وسط جمع شدن، محتوا عوض می‌شد و چشم می‌دید.
+            if (!open && _sheet <= 0.001f) _focus = StatId.Honor;
+
+            FillSheetIds();
+            UpdateArcs();
         }
 
         /// <summary>سه ردیف: ویژگیِ فعال بالا، دو تای دیگر زیرش.</summary>
@@ -264,10 +312,16 @@ namespace TehranNoir.UI
             while (next < 3) _sheetIds[next++] = StatId.Honor;
         }
 
-        /// <summary>سه قطعه‌ی لبه‌ی راست؛ بلندی هر کدام از مقدار ویژگی می‌آید.</summary>
-        private void UpdateSegments()
+        /// <summary>
+        /// آرام: یک کمان شرافت. باز: همان کمان جایش را به سه قطعه می‌دهد.
+        /// هر دو با همان _sheet روشن و خاموش می‌شوند، پس گذار نرم است.
+        /// </summary>
+        private void UpdateArcs()
         {
-            FillSheetIds();
+            float honorShare = Mathf.Clamp01(CharacterStats.GetFloat(StatId.Honor) / 100f);
+
+            _honor.SetAngles(RightStart, RightStart + honorShare * RightSweep);
+            _honor.color = new Color(Cream.r, Cream.g, Cream.b, 1f - _sheet);
 
             for (int i = 0; i < _segments.Length; i++)
             {
@@ -275,27 +329,39 @@ namespace TehranNoir.UI
 
                 StatId id = _sheetIds[i];
                 float share = Mathf.Clamp01(CharacterStats.GetFloat(id) / 100f);
-
                 float half = 3f + 8f * share;
 
-                _segments[i].color = i == 0 ? Cream : Grey;
+                Color color = i == 0 ? Cream : Grey;
+
                 _segments[i].SetAngles(SegmentCenter[i] - half, SegmentCenter[i] + half);
+                _segments[i].color = new Color(color.r, color.g, color.b, _sheet);
             }
+        }
+
+        /// <summary>
+        /// مکان و شفافیت برگه. در حالت بسته، برگه کامل زیر دیسک است —
+        /// برای همین باز شدن «بیرون آمدن از زیر دیسک» دیده می‌شود.
+        /// </summary>
+        private void UpdateSheetTransform()
+        {
+            if (_sheetRect == null) return;
+
+            _sheetRect.anchoredPosition = new Vector2(Mathf.Lerp(SheetHiddenX, SheetX, _sheet), 0f);
+            _sheetRect.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f, _sheet);
+
+            if (_sheetGroup != null) _sheetGroup.alpha = _sheet;
         }
 
         /// <summary>
         /// فقط با تغییر مقدار یا ویژگی، متن بازنویسی می‌شود؛
         /// نوشتن هر فریم در TMP یعنی بازسازی مش هر فریم.
         /// </summary>
-        private void UpdateSheet()
+        private void UpdateSheetText()
         {
-            FillSheetIds();
+            int signature = 17;
 
-            int honor = CharacterStats.Get(StatId.Honor);
-            int charisma = CharacterStats.Get(StatId.Charisma);
-            int fame = CharacterStats.Get(StatId.Fame);
-
-            int signature = (int)_focus * 1000000 + honor * 10000 + charisma * 100 + fame;
+            for (int i = 0; i < _sheetIds.Length; i++)
+                signature = signature * 31 + (int)_sheetIds[i] * 1000 + CharacterStats.Get(_sheetIds[i]);
 
             if (signature == _sheetSignature) return;
 
@@ -372,7 +438,7 @@ namespace TehranNoir.UI
         }
 
         /* ============================================================
-           تغییرها و حضور
+           جای‌گیری و حضور
            ============================================================ */
 
         /// <summary>اگر مقدار عوض شده باشد true و زمان «فعال ماندن» تمدید می‌شود.</summary>
@@ -390,18 +456,33 @@ namespace TehranNoir.UI
         }
 
         /// <summary>
-        /// دو چیز جدا: «بودن» گیج (انیمیشن ورود و خروج) و «پررنگی» آن (بی‌حرکتی).
-        /// اگر هر دو روی یک CanvasGroup بودند، کم‌رنگ شدن، حرکت را خنثی می‌کرد.
+        /// سه کار در یک جا: مکان (آرام / برگه / کارت)، روشنایی، و بودن/نبودن.
+        /// مکان با Lerp نمایی جابه‌جا می‌شود؛ مستقل از نرخ فریم و بدون پرش.
         /// </summary>
-        private void UpdatePresence()
+        private void UpdatePlacement(float now)
         {
+            bool cardShown = InteractionHUD.IsShown;
+
+            Vector2 idle = cardShown ? CardAnchor : IdleAnchor;
+            Vector2 opened = cardShown ? CardSheetAnchor : IdleSheetAnchor;
+
+            Vector2 rest = Vector2.Lerp(idle, opened, _sheet);
+
+            _position = Vector2.Lerp(_position, rest, 1f - Mathf.Exp(-MoveSpeed * Time.unscaledDeltaTime));
+
+            if (_place != null) _place.anchoredPosition = _position;
+
+            UpdateSheetTransform();
+
+            // منوی توقف، سند و دیالوگ گیج را کامل می‌برند
             bool blocked = DialogueUI.Current != null || DocumentView.IsOpen || PauseMenuUI.IsOpen;
 
-            bool visible = !blocked && !(hideWhileCardShown && InteractionHUD.IsShown);
+            _motion.SetVisible(!blocked);
 
-            _motion.SetVisible(visible);
+            float target = idleAlpha;
 
-            float target = Time.time < _activeUntil ? 1f : idleAlpha;
+            if (now < _activeUntil) target = 1f;
+            else if (cardShown || _sheet > 0.01f) target = Mathf.Max(idleAlpha, focusedAlpha);
 
             _idleAlpha = Mathf.MoveTowards(_idleAlpha, target, fadeSpeed * Time.unscaledDeltaTime);
 
@@ -433,19 +514,22 @@ namespace TehranNoir.UI
             root.anchorMax = new Vector2(1f, 0.5f);
             root.pivot = new Vector2(0.5f, 0.5f);
             root.sizeDelta = new Vector2(RootSize, RootSize);
-            root.anchoredPosition = new Vector2(-CenterRightOffset, 0f);
+            root.anchoredPosition = Vector2.zero;
 
             _group = root.gameObject.AddComponent<CanvasGroup>();
             _group.blocksRaycasts = false;
             _group.interactable = false;
 
-            _motion = root.gameObject.AddComponent<PanelMotion>();
-            _motion.Configure(root, _group, hiddenScale, 26f, PanelMotion.Edge.Right,
-                openSeconds, closeSeconds);
-            _motion.SetRestPosition(new Vector2(-CenterRightOffset, 0f));
+            _place = UiKit.Node("Place", root);
+            _place.anchorMin = new Vector2(0.5f, 0.5f);
+            _place.anchorMax = new Vector2(0.5f, 0.5f);
+            _place.pivot = new Vector2(0.5f, 0.5f);
+            _place.sizeDelta = new Vector2(RootSize, RootSize);
+            _place.anchoredPosition = IdleAnchor;
 
-            // بدنه: هر چیزی که با بی‌حرکتی کم‌رنگ می‌شود. مقیاس و ورود/خروج روی ریشه است.
-            RectTransform body = UiKit.Node("Body", root);
+            _position = IdleAnchor;
+
+            RectTransform body = UiKit.Node("Content", _place);
             body.anchorMin = new Vector2(0.5f, 0.5f);
             body.anchorMax = new Vector2(0.5f, 0.5f);
             body.pivot = new Vector2(0.5f, 0.5f);
@@ -456,6 +540,17 @@ namespace TehranNoir.UI
             _idle.blocksRaycasts = false;
             _idle.interactable = false;
             _idle.alpha = 1f;
+
+            // مقیاس و سُرِ ورود/خروج روی گره‌ی درونی است، نه ریشه؛
+            // وگرنه مقیاس‌شدن، مکان را هم از لنگر می‌کشید.
+            _motion = root.gameObject.AddComponent<PanelMotion>();
+            _motion.Configure(body, _group, hiddenScale, 30f, PanelMotion.Edge.Right,
+                openSeconds, closeSeconds);
+            _motion.SetRestPosition(Vector2.zero);
+
+            // Awakeِ PanelMotion پیش از Configure روی ریشه اجرا شده؛ اثرش را پاک می‌کنیم
+            root.localScale = Vector3.one;
+            root.anchoredPosition = Vector2.zero;
 
             _font = FindFont();
 
@@ -498,6 +593,10 @@ namespace TehranNoir.UI
             _armor = MakeArc(parent, "Armor", OuterRadius, OuterThickness, ArmorColor);
             _stamina = MakeArc(parent, "Stamina", InnerRadius, InnerThickness, StaminaColor);
 
+            // حالت آرام: یک کمان کامل شرافت، جای سه قطعه
+            _honor = MakeArc(parent, "Honor", SegmentRadius, SegmentThickness, Cream);
+            _honor.SetFade(14f);
+
             _health.SetFade(FadeDegrees);
             _armor.SetFade(FadeDegrees);
             _stamina.SetFade(FadeDegrees);
@@ -516,11 +615,17 @@ namespace TehranNoir.UI
         private void BuildSheet(RectTransform parent)
         {
             RectTransform sheet = UiKit.Node("Sheet", parent);
+            _sheetRect = sheet;
             sheet.anchorMin = new Vector2(0.5f, 0.5f);
             sheet.anchorMax = new Vector2(0.5f, 0.5f);
             sheet.pivot = new Vector2(0f, 0.5f);
-            sheet.anchoredPosition = new Vector2(SheetX, 0f);
+            sheet.anchoredPosition = new Vector2(SheetHiddenX, 0f);
             sheet.sizeDelta = new Vector2(SheetWidth, SheetHeight);
+
+            _sheetGroup = sheet.gameObject.AddComponent<CanvasGroup>();
+            _sheetGroup.blocksRaycasts = false;
+            _sheetGroup.interactable = false;
+            _sheetGroup.alpha = 0f;
 
             Image background = sheet.gameObject.AddComponent<Image>();
             background.sprite = HudArt.Panel("hud.sheet", Mathf.CeilToInt(SheetWidth), Mathf.CeilToInt(SheetHeight),

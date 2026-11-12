@@ -42,8 +42,11 @@ namespace TehranNoir.UI
         private static readonly Color PanelBottom = new Color(0.45f, 0.37f, 0.29f, 0.95f);
         private static readonly Color PanelEdge = new Color(0.82f, 0.73f, 0.63f, 0.60f);
         private static readonly Color FooterColor = new Color(0.07f, 0.06f, 0.055f, 0.96f);
-        private static readonly Color TitleColor = new Color(0.97f, 0.94f, 0.89f, 1f);
-        private static readonly Color RoleColor = new Color(0.78f, 0.71f, 0.61f, 1f);
+        /// <summary>عنوان و آیکون سرصفحه: تیره، چون بالای پنل کرم روشن است.</summary>
+        private static readonly Color HeaderInk = new Color(0.13f, 0.11f, 0.09f, 1f);
+
+        /// <summary>نقش زیر عنوان: قهوه‌ای تیره، هنوز خوانا روی کرم.</summary>
+        private static readonly Color HeaderMuted = new Color(0.33f, 0.27f, 0.21f, 1f);
         private static readonly Color RowIdleText = new Color(0.95f, 0.91f, 0.85f, 1f);
         private static readonly Color RowActiveText = new Color(0.10f, 0.09f, 0.07f, 1f);
         private static readonly Color RowActiveFill = new Color(0.92f, 0.88f, 0.81f, 0.95f);
@@ -623,19 +626,19 @@ namespace TehranNoir.UI
             Image icon = iconBox.gameObject.AddComponent<Image>();
             icon.sprite = HudArt.Icon(HudArt.Glyph.Chat, 64, Color.white);
             icon.raycastTarget = false;
-            icon.color = new Color(TitleColor.r, TitleColor.g, TitleColor.b, 0.85f);
+            icon.color = new Color(HeaderInk.r, HeaderInk.g, HeaderInk.b, 0.85f);
 
             float textWidth = Width - Pad * 2f - 34f - 10f;
 
             RectTransform titleBox = UiKit.Box("Title", _card, Pad, 12f, textWidth, 32f);
 
-            _titleText = UiKit.Text("Text", titleBox, 25f, TitleColor, Font, Persian);
+            _titleText = UiKit.Text("Text", titleBox, 25f, HeaderInk, Font, Persian);
             _titleText.alignment = Align;
             _titleText.fontStyle = FontStyles.Bold;
 
             RectTransform roleBox = UiKit.Box("Role", _card, Pad, 42f, textWidth, 24f);
 
-            _roleText = UiKit.Text("Text", roleBox, 18f, RoleColor, Font, Persian);
+            _roleText = UiKit.Text("Text", roleBox, 18f, HeaderMuted, Font, Persian);
             _roleText.alignment = Align;
 
             RectTransform rule = UiKit.Box("Rule", _card, Pad, 66f, Width - Pad * 2f, 1f);

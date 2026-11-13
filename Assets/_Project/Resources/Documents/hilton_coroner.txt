@@ -1,0 +1,24 @@
+# برگه‌ی پزشک قانونی — اتاق ۸۱۴
+# خواندنش `flag.hilton.ev.coroner` را روشن می‌کند (از دیالوگ گروهبان).
+# ------------------------------
+
+[template] note
+[seal] false
+[hand] true
+
+پزشکی قانونی — تهران | Forensic medicine — Tehran
+معاینه‌ی مقدماتی | Preliminary examination
+
+نام: ویکتور سوکولوف | Name: Viktor Sokolov
+سن: ۴۵ | Age: 45
+محل: اتاق ۸۱۴، هتل هیلتون | Place: Room 814, Hilton Hotel
+ساعت معاینه: ۷:۰۵ | Examination: 07:05
+
+جراحت: یک ضربه به شقیقه‌ی چپ | Injury: single blow, left temple
+ابزار: جسم سنگین با لبه‌ی صاف | Instrument: heavy object, straight edge
+دفاع: اثری نیست | Defence wounds: none
+زمان مرگ: بین ۲۲:۳۰ و ۲۳:۲۰ | Time of death: between 22:30 and 23:20
+
+یادداشت: جمجمه از یک نقطه شکسته. ضربه‌ی دوم نیست. | Note: the skull is broken at one point. There is no second blow.
+
+امضا: دکتر امیری | Signed: Dr. Amiri

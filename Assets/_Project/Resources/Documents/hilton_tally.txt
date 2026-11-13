@@ -1,0 +1,15 @@
+# حساب دست‌نویس سوکولوف — روی میز اتاق ۸۱۴
+# خواندنش `flag.hilton.ev.tally` را روشن می‌کند.
+# ------------------------------
+
+[template] note
+[seal] false
+[hand] true
+
+۲۲۰۰ | 2200
+۲۰۰۰ | 2000
+۲۰۰ | 200
+
+دایره دور ۲۰۰ | The 200 is circled
+
+صبح — پیش از خروج | Morning — before leaving

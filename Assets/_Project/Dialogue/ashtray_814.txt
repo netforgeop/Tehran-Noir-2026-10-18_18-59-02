@@ -1,0 +1,34 @@
+# ---------------------------------------------------------------
+# سینی سیگار برنجی — کف اتاق ۸۱۴
+# تنها «مدرک فیزیکی» پرونده؛ بقیه کاغذند.
+#
+# چرا دیالوگ و نه آیتم؟ چون در این موتور هر چیزِ دیدنی یک تعامل است و
+# هر تعامل یک فایل. سینی نه به کوله می‌رود نه به بایگانی؛ فقط دیده
+# می‌شود و یک پرچم می‌نویسد.
+#
+# پرچم:
+#   flag.hilton.ev.ashtray   سینی را برداشتی و لبه‌ی خم‌شده را دیدی
+# ---------------------------------------------------------------
+
+[person] نادر
+[name] نادر | Nader
+[role] کارآگاه | Detective
+[cast] نادر
+
+[node] start
+[if] flag.hilton.ev.ashtray == true -> again
+[say] نادر | (سینی را از کنار جسد برمی‌دارد.) | (He lifts the tray from beside the body.)
+[say] نادر | برنجی. سنگین. | Brass. Heavy.
+[say] نادر | یک گوشه‌ش خم شده، مثل چیزی که به استخوان خورده. | One corner is bent, like something that met bone.
+[say] نادر | (زیر نور می‌گیردش.) | (He holds it to the light.)
+[say] نادر | روی لبه‌ی خم‌شده، یک تار مو. کوتاه. | On the bent edge, one hair. Short.
+[say] نادر | و خاکستر روی میز شب، نه روی سینی. | And ash on the nightstand, not on the tray.
+[say] نادر | (سینی را روی میز می‌گذارد.) | (He sets the tray on the table.)
+[say] نادر | یک ضربه. همین. | One blow. That's all.
+[do] flag.hilton.ev.ashtray = true
+[end]
+
+[node] again
+[say] نادر | (دوباره لبه‌ی خم‌شده را نگاه می‌کند.) | (He looks at the bent corner again.)
+[say] نادر | سنگین‌تر از آنی است که به نظر می‌رسد. | Heavier than it looks.
+[end]

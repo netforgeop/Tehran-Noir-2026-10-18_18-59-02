@@ -38,4 +38,8 @@ for scene in Assets/_Project/Scenes/*.unity; do
     python3 tools/scenecheck.py "$scene" || status=1
 done
 
+echo
+echo "۹) مسیر دیالوگ‌ها (گره‌ی بی‌پایان / گره‌ی بدون ورودی)"
+python3 tools/walkcheck.py || status=1
+
 exit $status

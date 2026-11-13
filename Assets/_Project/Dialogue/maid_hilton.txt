@@ -1,0 +1,95 @@
+# ---------------------------------------------------------------
+# نرگس — خدمتکار طبقه‌ی هشتم
+# او جسد را پیدا کرد؛ و کلید را داد، به کسی که نباید.
+#
+# پرچم‌ها:
+#   flag.hilton.maid.talked   یک بار حرف زده‌ای
+#   flag.hilton.maid.key      اعتراف کرد کلید را به رحیمی داده
+#   flag.hilton.maid.hostile  با تهدید از او حرف کشیدی
+#   rel.maid                  رابطه
+# ---------------------------------------------------------------
+
+[person] نرگس
+[name] نرگس | Narges
+[role] خدمتکار طبقه | Floor maid
+[cast] نرگس
+[cast] نادر
+
+[node] start
+[if] flag.hilton.maid.key == true -> after
+[if] flag.hilton.maid.talked == true -> again
+[do] flag.hilton.maid.talked = true
+[say] نرگس | (چادرش را روی سینه‌اش گرفته.) | (She holds her chador against her chest.)
+[say] نادر | شما پیدایش کردید؟ | You found him?
+[say] نرگس | ساعت شش و بیست. | Six twenty.
+[say] نادر | در باز بود؟ | Was the door open?
+[say] نرگس | نیمه‌باز. | Ajar.
+[say] نادر | کلید زدید؟ | Did you use your key?
+[say] نرگس | ... | ...
+[say] نرگس | کلیدم همراهم بود. لازم نشد. | I had my key. Didn't need it.
+[say] نادر | این طبقه چند کلید داره؟ | How many keys does this floor have?
+[say] نرگس | یکی دست من. یکی دست مدیر طبقه. | One with me. One with the floor manager.
+[say] نادر | دیشب کسی از شما کلید خواست؟ | Did anyone ask you for the key last night?
+[say] نرگس | (به راهرو نگاه می‌کند.) | (She looks down the corridor.)
+[say] نرگس | من فقط نظافت می‌کنم، آقا. | I only clean, sir.
+[opt] این طبقه دوازده اتاق داره. یکی‌شون مرده. | This floor has twelve rooms. One of them is dead. -> press
+[opt] اگر کسی کلید گرفته، تقصیر شما نیست. | If someone took the key, that's not your fault. -> gentle
+[opt] فعلاً همین. | That's all for now. -> leave
+
+[node] press
+[say] نرگس | ... | ...
+[say] نرگس | آقای رحیمی. | Mr. Rahimi.
+[say] نرگس | ساعت ده و نیم. گفت کلید گم شده. | Half past ten. He said a key was lost.
+[say] نادر | گم شده بود؟ | Was it lost?
+[say] نرگس | کلید دست خودم بود، آقا. | The key was in my hand, sir.
+[say] نادر | پس چرا دادید؟ | Then why did you give it?
+[say] نرگس | چون اون مدیر طبقه‌ست. | Because he's the floor manager.
+[say] نرگس | من سه ماهه این‌جام. | I've been here three months.
+[say] نرگس | (صدایش پایین می‌آید.) | (Her voice drops.)
+[say] نرگس | به کسی نگید من گفتم. | Don't tell anyone I said it.
+[do] flag.hilton.maid.key = true
+[do] flag.hilton.maid.hostile = true
+[do] rel.maid - 1
+[go] ashtray
+
+[node] gentle
+[say] نادر | اگر کسی کلید گرفته، تقصیر شما نیست. | If someone took the key, that's not your fault.
+[say] نرگس | (سرش را بلند می‌کند.) | (She looks up.)
+[say] نرگس | آقای رحیمی گفت کلید گم شده. | Mr. Rahimi said a key was lost.
+[say] نادر | کِی؟ | When?
+[say] نرگس | ده و نیم. سرِ راهرو. | Half past ten. In the corridor.
+[say] نادر | کلید گم شده بود؟ | Was the key lost?
+[say] نرگس | نه آقا. من همون لحظه دستم بود. | No, sir. It was in my hand that moment.
+[say] نادر | و دادید. | And you gave it.
+[say] نرگس | دادم. | I gave it.
+[say] نرگس | اتاق چهارده رو ساعت هشت شب تمیز کردم. | I cleaned room eight fourteen at eight.
+[say] نرگس | سینی سیگار سرِ میز شب بود. برنجی. | The ashtray was on the nightstand. Brass.
+[say] نرگس | تمیزش کردم. | I cleaned it.
+[do] flag.hilton.maid.key = true
+[do] rel.maid + 1
+[go] ashtray
+
+[node] ashtray
+[say] نادر | سینی سیگار هنوز تو اتاقه؟ | Is the ashtray still in the room?
+[say] نرگس | روی زمین بود. کنار دستش. | It was on the floor. By his hand.
+[say] نرگس | من دست نزدم. | I didn't touch it.
+[say] نادر | خوب کردید. | Good.
+[end]
+
+[node] again
+[say] نرگس | آقا، من باید اتاق‌ها رو تمیز کنم. | Sir, I have rooms to clean.
+[opt] درباره‌ی کلید بیشتر بگو. | Tell me more about the key. -> press
+[opt] برید. | Go on. -> leave
+
+[node] leave
+[say] نرگس | (گوشه‌ی چادرش را می‌کشد و می‌رود.) | (She pulls her chador straight and goes.)
+[end]
+
+[node] after
+[if] flag.hilton.maid.hostile == true -> after_hostile
+[say] نرگس | اگر بازم چیزی لازم داشتید، من تو راهروام. | If you need anything else, I'm in the corridor.
+[end]
+
+[node] after_hostile
+[say] نرگس | (بدون این‌که بایستد، رد می‌شود.) | (She passes without stopping.)
+[end]

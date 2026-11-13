@@ -12,13 +12,18 @@
 #   [when]  شرط فعال بودن این قدم
 #
 # ترتیب قدم‌ها مهم است: اولین قدمی که شرطش برقرار باشد، قدم فعلی است.
+#
+# نکته: شرط شروعِ «اولین روز» عمداً `place.office` است و نه `true`. با
+# `true`، این کار در هتل و چای‌خانه هم در گوشه‌ی صفحه می‌آمد و بازیکن را
+# دنبال رضایی می‌فرستاد که در آن صحنه نبود. شناسه‌ی هر صحنه را
+# `SceneMarker` در شروع همان صحنه می‌نویسد.
 # ------------------------------
 
 [quest] first_day
 [name] اولین روز | First day
 [type] main
 [summary] رضا در دفتر منتظر توست. | Reza is waiting for you at the office.
-[start] true
+[start] place.office == true
 [done] met.reza == true
 
 [step] talk

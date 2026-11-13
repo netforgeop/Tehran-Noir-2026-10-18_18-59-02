@@ -171,6 +171,22 @@ class Builder:
 
         return body
 
+    def transform_id(self, go_or_transform):
+        """شناسه‌ی Transform یک GameObject، یا خودش اگر از قبل Transform باشد."""
+        doc = self.by_id.get(go_or_transform)
+
+        if doc is not None and doc["cls"] == "4":
+            return go_or_transform
+
+        for candidate in self.docs:
+            if candidate["cls"] != "4":
+                continue
+            if re.search(r"m_GameObject: \{fileID: " + go_or_transform + r"\}",
+                         candidate["body"]):
+                return candidate["id"]
+
+        return "0"
+
     def box(self, name, position, scale, material, parent, rotation=None):
         return self.clone(self.wall, name, position, scale, material, parent, rotation)
 
@@ -217,6 +233,93 @@ def rebuild_children(docs):
 
 
 # ---------------------------------------------------------------- تغییر صحنه
+
+def set_environment(docs, sky_color, intensity=1.0, fog=False):
+    """نور محیط صحنه را از «آسمان» به «رنگ ثابت» عوض می‌کند.
+
+    چرا؟ صحنه‌های داخلی ما سقف ندارند و پنجره‌شان هم واقعی نیست. با ambient
+    از آسمان، شبِ بیرون یعنی اتاقِ سیاه: هرچه نور نقطه‌ای اضافه کنی، گوشه‌ها
+    باز هم می‌میرند. رنگ ثابت، کف و دیوار را می‌خواند و نورهای نقطه‌ای کارِ
+    سایه و گرمی را می‌کنند.
+    """
+    for doc in docs:
+        if doc["cls"] != "104":
+            continue
+
+        body = doc["body"]
+        body = re.sub(r"m_AmbientMode: \d+", "m_AmbientMode: 3", body, count=1)
+        body = re.sub(r"m_AmbientSkyColor: \{[^}]*\}",
+                      "m_AmbientSkyColor: " + sky_color, body, count=1)
+        body = re.sub(r"m_AmbientIntensity: [0-9.]+",
+                      "m_AmbientIntensity: " + str(intensity), body, count=1)
+
+        if fog:
+            body = re.sub(r"m_Fog: \d+", "m_Fog: 1", body, count=1)
+            body = re.sub(r"m_FogDensity: [0-9.]+", "m_FogDensity: 0.012", body, count=1)
+            body = re.sub(r"m_FogColor: \{[^}]*\}",
+                          "m_FogColor: " + sky_color, body, count=1)
+
+        doc["body"] = body
+
+
+def component_object(builder, parent, name, script_guid, class_identifier, fields):
+    """یک GameObject خالی با یک MonoBehaviour و فیلدهای داده‌شده.
+
+    `fields` رشته‌ی YAML خام است، بدون تورفتگی. برای کامپوننت‌های کوچکی مثل
+    `SceneMarker` که فقط یک شناسه می‌خواهند.
+    """
+    go, transform, mono = builder.take(3)
+
+    builder.add("1", go,
+                "GameObject:\n"
+                "  m_ObjectHideFlags: 0\n"
+                "  m_CorrespondingSourceObject: {fileID: 0}\n"
+                "  m_PrefabInstance: {fileID: 0}\n"
+                "  m_PrefabAsset: {fileID: 0}\n"
+                "  serializedVersion: 6\n"
+                "  m_Component:\n"
+                "  - component: {fileID: " + transform + "}\n"
+                "  - component: {fileID: " + mono + "}\n"
+                "  m_Layer: 0\n"
+                "  m_Name: " + name + "\n"
+                "  m_TagString: Untagged\n"
+                "  m_Icon: {fileID: 0}\n"
+                "  m_NavMeshLayer: 0\n"
+                "  m_StaticEditorFlags: 0\n"
+                "  m_IsActive: 1\n\n")
+
+    builder.add("4", transform,
+                "Transform:\n"
+                "  m_ObjectHideFlags: 0\n"
+                "  m_CorrespondingSourceObject: {fileID: 0}\n"
+                "  m_PrefabInstance: {fileID: 0}\n"
+                "  m_PrefabAsset: {fileID: 0}\n"
+                "  m_GameObject: {fileID: " + go + "}\n"
+                "  serializedVersion: 2\n"
+                "  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}\n"
+                "  m_LocalPosition: {x: 0, y: 0, z: 0}\n"
+                "  m_LocalScale: {x: 1, y: 1, z: 1}\n"
+                "  m_ConstrainProportionsScale: 0\n"
+                "  m_Children: []\n"
+                "  m_Father: {fileID: " + builder.transform_id(parent) + "}\n"
+                "  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}\n\n")
+
+    builder.add("114", mono,
+                "MonoBehaviour:\n"
+                "  m_ObjectHideFlags: 0\n"
+                "  m_CorrespondingSourceObject: {fileID: 0}\n"
+                "  m_PrefabInstance: {fileID: 0}\n"
+                "  m_PrefabAsset: {fileID: 0}\n"
+                "  m_GameObject: {fileID: " + go + "}\n"
+                "  m_Enabled: 1\n"
+                "  m_EditorHideFlags: 0\n"
+                "  m_Script: {fileID: 11500000, guid: " + script_guid + ", type: 3}\n"
+                "  m_Name: \n"
+                "  m_EditorClassIdentifier: Assembly-CSharp::" + class_identifier + "\n"
+                + fields + "\n")
+
+    return go, transform
+
 
 def ensure_folder_meta(folder):
     meta = folder + ".meta"

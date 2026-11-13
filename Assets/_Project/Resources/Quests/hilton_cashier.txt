@@ -10,7 +10,7 @@
 
 [quest] hilton_cashier
 [name] حساب باز | The Open Account
-[type] main
+[type] side
 [summary] صورت‌حساب تاجر روسی با دفتر صندوق هتل هم‌خوانی ندارد. | The Russian trader's bill does not match the hotel's cash book.
 [start] flag.hilton.cashier.started == true
 [done] flag.hilton.cashier.closed == true

@@ -1,0 +1,21 @@
+# دفتر کلید — پذیرش هتل
+# خواندنش `flag.hilton.ev.key_register` را روشن می‌کند.
+# ------------------------------
+
+[template] ledger
+[seal] false
+[hand] true
+
+[agency] هتل هیلتون تهران | Tehran Hilton Hotel
+[office] پذیرش — دفتر کلید | Reception — key register
+[number] ۸۱۴ | 814
+[date] ۱۳۵۲/۰۵/۱۳ | 13 Mordad 1352
+[title] صدور کلیدهای شب | Keys issued, night shift
+[stamp] پذیرش | RECEPTION
+
+[columns] ساعت | Time؛ اتاق | Room؛ کلید | Key؛ تحویل‌گیرنده | Issued to
+
+[row] ۲۰:۱۰ | 20:10؛ ۸۱۴ | 814؛ اصلی | master؛ خدمتکار طبقه — نرگس | Floor maid — Narges
+[row] ۲۲:۴۰ | 22:40؛ ۸۱۴ | 814؛ اصلی | master؛ مدیریت طبقه — رحیمی | Floor management — Rahimi
+
+[footnote] کلید اصلی هر طبقه دو نسخه دارد: یکی نزد خدمتکار، یکی نزد مدیر طبقه. | Each floor has two master keys: one with the maid, one with the floor manager.

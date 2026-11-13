@@ -1,0 +1,73 @@
+# ---------------------------------------------------------------
+# آقای تهرانی — اتاق ۸۱۶، همسایه‌ی دیواری
+# شاهدِ نصفه. چیزی که شنیده درست است؛ ساعتی که می‌گوید نه.
+#
+# پرچم‌ها:
+#   flag.hilton.neighbor.talked  یک بار حرف زده‌ای
+#   flag.hilton.neighbor.voice   صدای دو مرد را تأیید کرد
+#   flag.hilton.neighbor.time    ساعتِ رادیو را گفت
+# ---------------------------------------------------------------
+
+[person] تهرانی
+[name] آقای تهرانی | Mr. Tehrani
+[role] مهمان اتاق ۸۱۶ | Guest, room 816
+[cast] تهرانی
+[cast] نادر
+
+[node] start
+[if] flag.hilton.neighbor.voice == true -> again
+[if] flag.hilton.neighbor.talked == true -> again
+[do] flag.hilton.neighbor.talked = true
+[say] تهرانی | شما هم از اون‌هایید که می‌پرسن. | You're one of the ones who asks.
+[say] نادر | دیشب چیزی شنیدید؟ | Did you hear anything last night?
+[say] تهرانی | من تا دیر وقت بیدار بودم. | I was up late.
+[say] تهرانی | رادیو، اخبار، بعدش موسیقی. | Radio, the news, then music.
+[say] نادر | از اتاق بغلی؟ | From next door?
+[say] تهرانی | دو نفر حرف می‌زدن. | Two men were talking.
+[say] تهرانی | یکی فارسی رو با لکنت حرف می‌زد. | One spoke Persian with a stutter.
+[say] نادر | درباره‌ی چی؟ | About what?
+[say] تهرانی | صداشون پایین بود. ولی دعوا نبود. | Their voices were low. But it wasn't a fight.
+[say] نادر | مطمئنید؟ | Are you sure?
+[say] تهرانی | آقا، من سی ساله تجارتم. دعوا رو از حرف معمولی تشخیص می‌دم. | Sir, thirty years in business. I know an argument from a conversation.
+[say] تهرانی | یه جمله شنیدم. | I heard one sentence.
+[say] تهرانی | «فردا صبح حساب می‌کنیم.» | "We'll settle it tomorrow morning."
+[say] نادر | چه ساعتی؟ | What time?
+[say] تهرانی | قبل از اخبار یازده. | Before the eleven news.
+[do] flag.hilton.neighbor.voice = true
+[opt] مطمئنید یازده بود؟ | Are you sure it was eleven? -> clock
+[opt] کس دیگه‌ای رو دیدید؟ | Did you see anyone else? -> seen
+[opt] کافیه. | Enough. -> leave
+
+[node] clock
+[say] تهرانی | ساعت اتاقم شش دقیقه جلوئه. | My room clock runs six minutes fast.
+[say] تهرانی | من همیشه با رادیو تنظیمش می‌کنم. | I always set it by the radio.
+[say] نادر | یعنی چند دقیقه به یازده. | So a few minutes to eleven.
+[say] تهرانی | بله. | Yes.
+[say] تهرانی | (لبخند می‌زند.) | (He smiles.)
+[say] تهرانی | این را از من نپرسید که ساعت چند بود. پرسیدید یازده بود یا نه. | You didn't ask me what time it was. You asked if it was eleven.
+[do] flag.hilton.neighbor.time = true
+[go] leave
+
+[node] seen
+[say] تهرانی | یه مرد از راهرو رد شد. کت‌پوش. | A man passed in the corridor. Suit.
+[say] نادر | چهره‌ش؟ | His face?
+[say] تهرانی | من در رو نیمه‌باز کرده بودم، نه بیشتر. | I had the door open a crack, no more.
+[say] تهرانی | از پشت دیدمش. | I saw him from behind.
+[say] نادر | کدوم طرف رفت؟ | Which way did he go?
+[say] تهرانی | سمت آسانسور. | Toward the lift.
+[go] leave
+
+[node] again
+[say] تهرانی | باز شما. | You again.
+[opt] همون جمله رو دوباره بگید. | Say that sentence again. -> repeat
+[opt] بعداً می‌آم. | I'll come back. -> leave
+
+[node] repeat
+[say] تهرانی | «فردا صبح حساب می‌کنیم.» | "We'll settle it tomorrow morning."
+[say] تهرانی | بعدش درِ اتاق باز و بسته شد. | Then the room door opened and closed.
+[say] تهرانی | من دیگه گوش ندادم. | I stopped listening.
+[go] leave
+
+[node] leave
+[say] تهرانی | (رادیوی اتاقش را روشن می‌کند.) | (He turns on his room radio.)
+[end]

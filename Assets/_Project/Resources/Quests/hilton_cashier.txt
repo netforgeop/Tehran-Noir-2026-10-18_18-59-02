@@ -1,0 +1,28 @@
+# کار «حساب باز» — تحویل اول مأموریت هتل
+# ------------------------------
+# کار با اولین گفت‌وگو با صندوق‌دار باز می‌شود، ولی خواندن رسید هم آن را
+# باز می‌کند: ممکن است بازیکن اول کاغذ روی پیشخوان را ببیند.
+#
+# شرط پایان، بسته شدن حلقه است نه گرفتن حقیقت: اگر بازیکن با فشار پیش برود،
+# حلقه بسته می‌شود و کار تمام است؛ اگر «فعلاً کافی است» را بزند، کار باز
+# می‌ماند و قدمش هنوز «دفتر صندوق را ببین» است.
+# ------------------------------
+
+[quest] hilton_cashier
+[name] حساب باز | The Open Account
+[type] main
+[summary] صورت‌حساب تاجر روسی با دفتر صندوق هتل هم‌خوانی ندارد. | The Russian trader's bill does not match the hotel's cash book.
+[start] flag.hilton.cashier.started == true
+[done] flag.hilton.cashier.closed == true
+
+[step] slip
+[text] رسید ۱۸۶ را روی پیشخوان صندوق بخوان | Read receipt 186 on the cashier's counter
+[when] flag.hilton.ev.bill != true
+
+[step] confront
+[text] اختلاف رسید و دفتر صندوق را با صندوق‌دار مطرح کن | Put the discrepancy to the cashier
+[when] flag.hilton.ev.bill == true and flag.hilton.cashier.truth != true
+
+[step] any
+[text] با صندوق‌دار حرف بزن | Talk to the cashier
+[when] true

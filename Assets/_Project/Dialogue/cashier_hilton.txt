@@ -1,0 +1,137 @@
+# ---------------------------------------------------------------
+# صندوق‌دار هتل هیلتون — تحویل اول راهروی هتل
+#
+# پرچم‌ها:
+#   flag.hilton.cashier.started        حلقه باز شده
+#   flag.hilton.cashier.claim_payment  ادعای «نقدی حساب کرد»
+#   flag.hilton.cashier.claim_sighting ادعای «از پشت پیشخوان دیدمش»
+#   flag.hilton.cashier.truth          حقیقت را گرفته‌ای
+#   flag.hilton.cashier.payer          راه «قول»: پرداخت‌کننده یک مرد ناشناس
+#   flag.hilton.cashier.alteration     راه «فشار»: اعتراف به تغییر ردیف
+#   flag.hilton.cashier.closed         حلقه بسته شد
+#   flag.hilton.ev.bill                رسید ۱۸۶ خوانده شد
+#   flag.hilton.ev.ledger              دفتر صندوق خوانده شد
+#   rel.cashier                        رابطه‌ی شخصی
+#
+# قاعده: صندوق‌دار دروغ نمی‌گوید، اما چیزهایی را که نمی‌پرسند نمی‌گوید.
+# دو راه هر دو حقیقت می‌دهند؛ فقط یکی از آن‌ها مدرک کتبی به دست می‌دهد.
+# ---------------------------------------------------------------
+
+[person] نادر
+[name] نادر | Nader
+[role] کارآگاه | Detective
+[cast] نادر
+[cast] صندوق-دار
+
+[node] start
+[do] flag.hilton.cashier.started = true
+[if] flag.hilton.cashier.truth == true -> finished
+[if] flag.hilton.ev.bill == true -> evidence
+[say] صندوق-دار | بفرمایید آقا. | Yes, sir?
+[say] نادر | صورت‌حساب آقای سوکولوف. | Mr. Sokolov's bill.
+[say] صندوق-دار | اتاق هشتصد و چهارده؟ | Room eight fourteen?
+[say] نادر | بله. | Yes.
+[say] صندوق-دار | صورت‌حسابش بسته شده. | His account is settled.
+[say] نادر | چه ساعتی؟ | What time?
+[say] صندوق-دار | نه و ده دقیقه. خودش اومد پایین. | Nine ten. He came down himself.
+[opt] پول رو نقد داد؟ | Did he pay in cash? -> payment
+[opt] خودت دیدیش؟ | Did you see him? -> sighting
+[opt] فعلاً کافیه. | That's enough for now. -> leave
+
+[node] payment
+[do] flag.hilton.cashier.claim_payment = true
+[say] صندوق-دار | بله. نقدی حساب کرد. | Yes. Paid in cash.
+[say] نادر | رسیدش کجاست؟ | Where's the receipt?
+[say] صندوق-دار | توی بایگانی حساب‌ها. | In the accounts archive.
+[say] نادر | خودت ثبت کردی؟ | Did you enter it yourself?
+[say] صندوق-دار | بله آقا. | Yes, sir.
+[opt] دفتر صندوق رو می‌خوام. | I want the cash book. -> demand_ledger
+[opt] باشه. | All right. -> leave
+
+[node] demand_ledger
+[say] صندوق-دار | دفتر صندوق روی پیشخوانه. | The cash book is on the counter.
+[say] صندوق-دار | دفتر حساب‌ها دست من نیست. توی بایگانیه. | The accounts ledger isn't mine. It's in the archive.
+[say] نادر | پس رسید ۱۸۶ کجاست؟ | Then where's receipt 186?
+[say] صندوق-دار | ... | ...
+[say] صندوق-دار | همون‌جاست که گفتم، آقا. | Where I said, sir.
+[end]
+
+[node] sighting
+[do] flag.hilton.cashier.claim_sighting = true
+[say] صندوق-دار | از پشت پیشخوان دیدمش. | I saw him from behind the counter.
+[say] نادر | تنها بود؟ | Was he alone?
+[say] صندوق-دار | اون موقع، بله. | At that moment, yes.
+[say] نادر | مطمئنی؟ | Are you sure?
+[say] صندوق-دار | آقا، من مسئول صندوقم. نگهبان نیستم. | Sir, I'm responsible for the till. I'm not a guard.
+[opt] حرفت رو نگه دار. | Keep your answer. -> leave
+[opt] فعلاً کافیه. | That's enough for now. -> leave
+
+[node] leave
+[say] صندوق-دار | هر وقت کاری داشتید، در خدمتم. | Whenever you need anything, sir.
+[end]
+
+# ---------------------------------------------------------------
+# با رسید در دست
+# ---------------------------------------------------------------
+
+[node] evidence
+[do] flag.hilton.cashier.started = true
+[if] flag.hilton.cashier.claim_payment == true
+[say] صندوق-دار | شما پرسیدید نقدی بود یا نه. گفتم نقدی. | You asked if it was cash. I said cash.
+[if] flag.hilton.cashier.claim_sighting == true
+[say] صندوق-دار | و گفتم از پشت پیشخوان دیدمش. | And I said I saw him from the counter.
+[else]
+[say] نادر | (رسید را روی پیشخوان می‌گذارد.) | (He puts the receipt on the counter.)
+[say] نادر | شماره‌ی این رسید توی دفتر صندوق هم هست. | This receipt number is in the cash book too.
+[say] صندوق-دار | ... | ...
+[say] صندوق-دار | بله. | Yes.
+[say] نادر | ولی این یکی نقدیه. اون یکی به حساب اتاق خورده. | But this one is cash. The other is charged to the room.
+[say] صندوق-دار | اشتباه ثبت شده. | It was entered incorrectly.
+[say] نادر | چه کسی اصلاحش کرده؟ | Who corrected it?
+[say] صندوق-دار | خودم. | I did.
+[read] Documents/hilton_cash_ledger
+[do] flag.hilton.ev.ledger = true
+[opt] اسمت رو توی گزارش نمی‌آرم. | Your name won't go in my report. -> protect
+[opt] این اختلاف رو به افسر گزارش می‌کنم. | I'll report this to the officer. -> pressure
+[opt] فعلاً کافیه. | That's enough for now. -> leave_evidence
+
+[node] protect
+[do] flag.hilton.cashier.truth = true
+[do] flag.hilton.cashier.payer = true
+[do] rel.cashier + 1
+[say] صندوق-دار | ساعت یازده و چهل بود. | It was eleven forty.
+[say] نادر | چه کسی پول داد؟ | Who paid?
+[say] صندوق-دار | یه مرد. صورتش رو درست ندیدم. | A man. I didn't get a proper look at his face.
+[say] نادر | برای اتاق سوکولوف؟ | For Sokolov's room?
+[say] صندوق-دار | بله. دو نوشیدنی. پانصد ریال. | Yes. Two drinks. Five hundred rials.
+[say] نادر | چرا نقدی ثبتش نکردی؟ | Why didn't you record it as cash?
+[say] صندوق-دار | گفت به حساب اتاق بزنم. | He told me to charge it to the room.
+[say] نادر | خود سوکولوف بود؟ | Was it Sokolov himself?
+[say] صندوق-دار | نه. دستش رو دیدم. صورتش رو نه. | No. I saw his hand. Not his face.
+[go] close
+
+[node] pressure
+[do] flag.hilton.cashier.truth = true
+[do] flag.hilton.cashier.alteration = true
+[do] rel.cashier - 1
+[say] صندوق-دار | من این ردیف رو عوض کردم. | I changed that entry.
+[say] نادر | به دستور چه کسی؟ | On whose orders?
+[say] صندوق-دار | از دفتر مدیریت تلفن کردن. | They called from the management office.
+[say] نادر | چی گفتن؟ | What did they say?
+[say] صندوق-دار | گفتن پرداخت رو به حساب اتاق منتقل کنم. | They told me to transfer the payment to the room account.
+[say] نادر | مرد رو دیدی؟ | Did you see the man?
+[say] صندوق-دار | صورتش رو نه. پول رو شمردم. | Not his face. I counted the money.
+[go] close
+
+[node] leave_evidence
+[say] صندوق-دار | من بیشتر از این چیزی ندارم، آقا. | I have nothing more, sir.
+[end]
+
+[node] close
+[do] flag.hilton.cashier.closed = true
+[say] صندوق-دار | دیگه اسم من رو وسط نکشید آقا. | Don't involve my name again, sir.
+[end]
+
+[node] finished
+[say] صندوق-دار | حسابی هست که هنوز باز مونده. | There's still an account open.
+[end]

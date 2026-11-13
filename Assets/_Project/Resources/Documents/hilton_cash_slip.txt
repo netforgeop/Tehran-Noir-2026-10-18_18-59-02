@@ -1,0 +1,20 @@
+# رسید صندوق هتل — یک تکه‌کاغذ کاربن‌دار از دفتر صندوق
+# خواندنش `flag.hilton.ev.bill` را روشن می‌کند.
+# ------------------------------
+
+[template] note
+[seal] false
+[hand] false
+
+هتل هیلتون تهران | Tehran Hilton Hotel
+
+شماره رسید: ۱۸۶ | Receipt No: 186
+تاریخ: ۱۳۵۲/۰۵/۱۳ | Date: 1973/08/04
+ساعت: ۲۳:۴۰ | Time: 23:40
+اتاق: ۸۱۴ | Room: 814
+
+شرح: دو نوشیدنی | Description: Two drinks
+مبلغ: ۵۰۰ ریال | Amount: 500 Rials
+نحوه پرداخت: نقدی | Payment: Cash
+
+امضای تحویل‌گیرنده: ثبت نشده | Receiver signature: Not recorded

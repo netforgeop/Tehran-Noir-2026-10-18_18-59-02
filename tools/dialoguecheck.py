@@ -42,6 +42,15 @@ def check_file(path, problems):
     links = []
     issues = []
 
+    # نگهبان باز روی انتخاب‌ها: انتخاب زیر [if] تا وقتی [else] نیامده پنهان
+    # می‌شود. اگر همه‌ی انتخاب‌های یک گره همین‌طور باشند، بازیکن هیچ‌وقت
+    # نمی‌بیندشان و دیالوگ بی‌صدا تمام می‌شود — همان باگ بی‌صدایی که ابزار
+    # برای گرفتنش نوشته شد.
+    guarded_options = {}
+    plain_options = {}
+    open_guard = False
+    current_node = None
+
     with io.open(path, encoding="utf-8") as handle:
         for number, raw in enumerate(handle, 1):
             line = raw.strip()
@@ -68,12 +77,25 @@ def check_file(path, problems):
                     issues.append((number, "گره‌ی تکراری: " + rest))
                 else:
                     nodes.append(rest)
+                    current_node = rest
+                    open_guard = False
+                    guarded_options[rest] = 0
+                    plain_options[rest] = 0
 
             elif tag == "say":
                 if rest.count("|") < 2:
                     issues.append((number, "say بدون سه بخش: " + rest))
 
+            elif tag == "else":
+                open_guard = False
+
             elif tag == "opt":
+                if current_node is not None:
+                    if open_guard:
+                        guarded_options[current_node] += 1
+                    else:
+                        plain_options[current_node] += 1
+
                 if ARROW not in rest:
                     issues.append((number, "opt بدون " + ARROW))
                     continue
@@ -87,8 +109,12 @@ def check_file(path, problems):
                     issues.append((number, "opt با مقصد خالی"))
 
             elif tag == "if":
+                # دو شکل مجاز است: نگهبان `[if] شرط` و پرش `[if] شرط -> مقصد`.
                 if ARROW not in rest:
-                    issues.append((number, "if بدون " + ARROW))
+                    if not rest:
+                        issues.append((number, "if بدون شرط"))
+                    else:
+                        open_guard = True
                     continue
 
                 condition, target = split_target(rest)
@@ -108,6 +134,12 @@ def check_file(path, problems):
             elif tag == "do":
                 if "=" not in rest and not re.match(r"^[A-Za-z0-9_.]+\s*[+-]\s*\S+$", rest):
                     issues.append((number, "do بدون عملگر: " + rest))
+
+    for node in nodes:
+        if guarded_options.get(node) and not plain_options.get(node):
+            problems.append((name, 0,
+                             "همه‌ی انتخاب‌های گره «" + node +
+                             "» داخل نگهبان‌اند؛ ممکن است هیچ‌وقت دیده نشوند"))
 
     for number, message in issues:
         problems.append((name, number, message))

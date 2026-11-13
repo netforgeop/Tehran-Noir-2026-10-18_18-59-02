@@ -1,0 +1,21 @@
+# کار «شاهد آخر» — مأموریت چای‌خانه
+# ------------------------------
+# کار با اولین گفت‌وگو با مسعود باز می‌شود، نه از اول: در صحنه‌های دیگر
+# (دفتر، بایگانی) هنوز کسی به این چای‌خانه نرفته و نباید در فهرست کارها بیاید.
+# برای همین `= 1` است و نه `>= 1`؛ متغیر نانوشته با `==` نادرست است.
+# ------------------------------
+
+[quest] witness
+[name] شاهد آخر | The last witness
+[type] main
+[summary] پادوی چای‌خانه‌ی سعادت شب سیزدهم چیزی دیده و از ترس نمی‌گوید. | The boy at the Saadat tea-house saw something on the thirteenth, and he is too afraid to say it.
+[start] flag.quest.witness == 1
+[done] flag.quest.witness == 2
+
+[step] slip
+[text] قبض‌های شب سیزدهم را بگرد | Go through the slips from the thirteenth
+[when] flag.clue.chit != true
+
+[step] talk
+[text] مسعود را به حرف بکشان | Get Masoud to talk
+[when] true

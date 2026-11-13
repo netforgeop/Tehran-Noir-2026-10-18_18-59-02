@@ -1,0 +1,161 @@
+@name = English
+@rtl = false
+
+lang.fa = Persian
+lang.en = English
+
+menu.title = HOME
+menu.sandbox = SANDBOX TEST
+menu.options = OPTIONS
+menu.quit = QUIT
+
+# --- Pause menu ---
+pause.tab.system = Settings
+pause.tab.map = Map
+pause.tab.codex = Notebook
+pause.tab.cases = Cases
+pause.tab.character = Character
+char.name = Nader
+char.role = Detective
+char.section.summary = Summary
+char.section.items = Items
+char.section.jobs = Jobs
+char.section.cases = Cases
+char.date.unknown = Date unknown
+pause.resume = Resume Game
+pause.settings = Settings
+pause.mainmenu = Quit to Main Menu
+pause.quit = Exit Game
+pause.close = Close
+pause.switch = Switch tab
+char.items.empty = Your pockets are empty
+char.items.none = Nothing in this category
+char.items.all = All
+char.items.docs = Documents
+char.items.keys = Keys
+char.items.misc = Other
+char.items.kind.document = Document
+char.items.kind.key = Key
+char.items.kind.item = Item
+char.items.sort.name = Sort: name
+char.items.sort.count = Sort: count
+char.items.page = Page
+pause.soon = This section is coming in a later step.
+pause.section = Switch section
+
+# --- Jobs and cases ---
+cases.jobs.empty = No job in progress.
+cases.docs.empty = You have not read any paper yet.
+cases.kind.letter = Letter
+cases.kind.note = Note
+cases.kind.ledger = Ledger
+cases.read = Press the confirm key to read it again.
+
+# --- Reputation ---
+rep.header = As others see you:
+rep.label.normal = Ordinary
+rep.label.loyal = Loyal
+rep.label.traitor = Betrayer
+rep.label.upright = Upright
+rep.label.disgraced = Disgraced
+
+# --- Settings page ---
+settings.apply = Apply changes
+settings.apply.pending = Not applied
+settings.apply.done = Up to date
+settings.applied = Applied
+settings.back = Back
+settings.audio = Audio
+settings.video = Video
+settings.graphics = Graphics
+settings.language = Language
+
+settings.master = Master volume
+settings.music = Music
+settings.fx = Effects
+settings.dialogue = Dialogue
+
+settings.resolution = Resolution
+settings.fullscreen = Display mode
+settings.fps = Frame limit
+settings.vsync = V-Sync
+
+settings.quality = Overall quality
+settings.texture = Texture quality
+settings.aa = Anti-aliasing
+settings.shadows = Shadows
+
+settings.lang.master = Overall language
+settings.lang.menu = Menu language
+settings.lang.subtitles = Subtitle language
+
+# --- Values ---
+settings.on = On
+settings.off = Off
+settings.mixed = Mixed
+settings.fps.unlimited = Unlimited
+settings.windowed = Windowed
+settings.borderless = Borderless
+settings.exclusive = Fullscreen
+settings.texture.full = Full
+settings.texture.half = Half
+settings.texture.quarter = Quarter
+settings.shadows.off = Off
+settings.shadows.hard = Hard
+settings.shadows.all = All
+
+# --- Interaction ---
+action.use = Use
+action.open = Open
+action.close = Close
+action.talk = Talk
+action.take = Take
+action.read = Read
+action.enter = Enter
+action.drive = Drive
+action.give = Give
+action.place = Place
+hud.select = Select
+hud.scroll = Scroll: next target
+hud.verbs = Keys 1-3: choose action
+doc.close = Esc or E: close
+quest.main = Main
+quest.side = Side
+
+# --- Items: verbs and reasons ---
+item.verb.use = Use
+item.verb.examine = Examine
+item.verb.read = Read
+item.verb.open = Open
+item.verb.close = Close
+item.verb.equip = Equip
+item.verb.unequip = Unequip
+item.verb.drop = Drop
+item.verb.consume = Consume
+item.verb.reload = Reload
+item.verb.unlock = Unlock
+item.verb.give = Give
+item.verb.store = Store
+item.reason.invalid = That cannot be done.
+item.reason.world = The world is not ready.
+item.reason.definition = This item is not defined.
+item.reason.condition = Not yet.
+item.reason.not_allowed = This item cannot do that.
+item.reason.target = This key does not fit that lock.
+item.reason.full = No room.
+item.reason.container = Container not found.
+item.reason.not_droppable = This item cannot be dropped.
+item.reason.no_merge = These two do not stack.
+item.container.player = Pockets
+item.container.pockets = Small pockets
+item.container.equipped = Equipped
+item.container.world = Ground
+item.container.mission = Mission storage
+item.container.archive = Archive
+item.container.reza = Reza's desk
+char.items.kind.weapon = Weapon
+char.items.kind.ammo = Ammunition
+char.items.kind.evidence = Evidence
+char.items.kind.consumable = Consumable
+char.items.kind.tool = Tool
+char.items.kind.quest = Quest item

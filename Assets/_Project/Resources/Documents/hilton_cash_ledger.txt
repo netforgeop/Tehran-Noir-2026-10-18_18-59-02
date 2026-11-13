@@ -1,0 +1,27 @@
+# دفتر صندوق — شب سیزدهم مرداد ۱۳۵۲
+# ------------------------------
+# ردیف سوم فقط وقتی دیده می‌شود که صندوق‌دار زیر فشار اعتراف کرده باشد.
+# تا آن لحظه، دفتر همان چیزی است که او می‌خواهد: یک ردیف تمیز.
+# ------------------------------
+
+[template] ledger
+[seal] false
+[hand] true
+
+[agency] هتل هیلتون تهران | Tehran Hilton Hotel
+[office] دفتر صندوق — پیشخوان پذیرش | Cashier's desk — Reception
+[number] ۱۸۶ | 186
+[date] ۱۳۵۲/۰۵/۱۳ | 13 Mordad 1352
+[title] ثبت دریافتی‌های شب | Night receipts
+[stamp] صندوق | CASHIER
+
+[columns] تاریخ | Date؛ ساعت | Time؛ شماره | No.؛ شرح | Description؛ ثبت‌کننده | Clerk
+
+[row] ۱۳۵۲/۰۵/۱۳ | 1352/05/13؛ ۲۱:۱۰ | 21:10؛ ۱۷۹ | 179؛ تسویه صورت‌حساب اتاق ۸۱۴، نقدی | Room 814 account settled, cash؛ ص.ک. | S.K.
+[row] ۱۳۵۲/۰۵/۱۳ | 1352/05/13؛ ۲۳:۴۰ | 23:40؛ ۱۸۶ | 186؛ دو نوشیدنی، اتاق ۸۱۴، ۵۰۰ ریال، به حساب اتاق | Two drinks, room 814, 500 rials, charged to room؛ ص.ک. | S.K.
+
+[when] flag.hilton.cashier.alteration == true
+[row] ۱۳۵۲/۰۵/۱۳ | 1352/05/13؛ ۲۳:۵۰ | 23:50؛ اصلاح | Correction؛ انتقال پرداخت نقدی به حساب اتاق، به دستور تلفنی دفتر مدیریت | Cash payment moved to the room account, on telephone instruction from the management office؛ تأیید صندوق‌دار | Cashier confirmed
+[always]
+
+[footnote] هر اصلاح با حروف اول ثبت‌کننده و تأیید مدیر شیفت نوشته می‌شود. | Every correction carries the clerk's initials and the shift manager's approval.

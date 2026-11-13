@@ -1,0 +1,161 @@
+@name = فارسی
+@rtl = true
+
+lang.fa = فارسی
+lang.en = انگلیسی
+
+menu.title = خانه
+menu.sandbox = تست سندباکس
+menu.options = تنظیمات
+menu.quit = خروج
+
+# --- منوی توقف ---
+pause.tab.system = تنظیمات
+pause.tab.map = نقشه
+pause.tab.codex = دفترچه
+pause.tab.cases = پرونده‌ها
+pause.tab.character = کاراکتر
+char.name = نادر
+char.role = کارآگاه
+char.section.summary = خلاصه
+char.section.items = وسایل
+char.section.jobs = کارها
+char.section.cases = پرونده‌ها
+char.date.unknown = تاریخ نامشخص
+pause.resume = ادامه بازی
+pause.settings = تنظیمات
+pause.mainmenu = بازگشت به منوی اصلی
+pause.quit = خروج از بازی
+pause.close = بستن
+pause.switch = تعویض تب
+char.items.empty = جیبت خالی است
+char.items.none = چیزی در این دسته نیست
+char.items.all = همه
+char.items.docs = اسناد
+char.items.keys = کلیدها
+char.items.misc = بقیه
+char.items.kind.document = سند
+char.items.kind.key = کلید
+char.items.kind.item = وسیله
+char.items.sort.name = ترتیب: نام
+char.items.sort.count = ترتیب: تعداد
+char.items.page = صفحه
+pause.soon = این بخش در مرحله‌ی بعد ساخته می‌شود.
+pause.section = تعویض بخش
+
+# --- کارها و پرونده‌ها ---
+cases.jobs.empty = کاری در جریان نیست.
+cases.docs.empty = هنوز سندی نخوانده‌ای.
+cases.kind.letter = نامه
+cases.kind.note = یادداشت
+cases.kind.ledger = دفتر
+cases.read = برای بازخوانی، کلید تایید را بزن.
+
+# --- آبرو ---
+rep.header = از نگاه بقیه:
+rep.label.normal = معمولی
+rep.label.loyal = وفادار
+rep.label.traitor = خیانت‌کار
+rep.label.upright = درستکار
+rep.label.disgraced = بدنام
+
+# --- صفحه‌ی تنظیمات ---
+settings.apply = اعمال تغییرات
+settings.apply.pending = اعمال‌نشده
+settings.apply.done = بدون تغییر
+settings.applied = اعمال شد
+settings.back = بازگشت
+settings.audio = صدا
+settings.video = تصویر
+settings.graphics = گرافیک
+settings.language = زبان
+
+settings.master = صدای کل
+settings.music = موسیقی
+settings.fx = افکت‌ها
+settings.dialogue = دیالوگ
+
+settings.resolution = رزولوشن
+settings.fullscreen = حالت نمایش
+settings.fps = محدودیت فریم
+settings.vsync = همگام‌سازی عمودی
+
+settings.quality = کیفیت کلی
+settings.texture = کیفیت بافت
+settings.aa = آنتی‌آلیاسینگ
+settings.shadows = سایه‌ها
+
+settings.lang.master = زبان کل
+settings.lang.menu = زبان منو
+settings.lang.subtitles = زیرنویس دیالوگ
+
+# --- مقادیر ---
+settings.on = روشن
+settings.off = خاموش
+settings.mixed = ترکیبی
+settings.fps.unlimited = نامحدود
+settings.windowed = پنجره
+settings.borderless = بدون قاب
+settings.exclusive = تمام‌صفحه
+settings.texture.full = کامل
+settings.texture.half = نصف
+settings.texture.quarter = یک‌چهارم
+settings.shadows.off = خاموش
+settings.shadows.hard = سخت
+settings.shadows.all = کامل
+
+# --- تعامل ---
+action.use = استفاده
+action.open = باز کردن
+action.close = بستن
+action.talk = صحبت
+action.take = برداشتن
+action.read = خواندن
+action.enter = سوار شدن
+action.drive = رانندگی
+action.give = دادن
+action.place = گذاشتن
+hud.select = انتخاب
+hud.scroll = چرخ موس: هدف بعدی
+hud.verbs = کلید ۱ تا ۳: انتخاب کار
+doc.close = برای بستن Esc یا E
+quest.main = اصلی
+quest.side = جانبی
+
+# --- آیتم: فعل‌ها و دلیل‌ها ---
+item.verb.use = استفاده
+item.verb.examine = بررسی
+item.verb.read = خواندن
+item.verb.open = باز کردن
+item.verb.close = بستن
+item.verb.equip = تجهیز
+item.verb.unequip = جدا کردن
+item.verb.drop = انداختن
+item.verb.consume = مصرف
+item.verb.reload = پر کردن
+item.verb.unlock = باز کردن قفل
+item.verb.give = دادن
+item.verb.store = گذاشتن
+item.reason.invalid = این کار ممکن نیست.
+item.reason.world = دنیای بازی آماده نیست.
+item.reason.definition = این آیتم تعریف نشده است.
+item.reason.condition = هنوز وقتش نیست.
+item.reason.not_allowed = این آیتم چنین کاری نمی‌کند.
+item.reason.target = این کلید به این قفل نمی‌خورد.
+item.reason.full = جا نیست.
+item.reason.container = ظرف پیدا نشد.
+item.reason.not_droppable = این آیتم را نمی‌شود انداخت.
+item.reason.no_merge = این دو با هم جمع نمی‌شوند.
+item.container.player = جیب
+item.container.pockets = جیب‌های کوچک
+item.container.equipped = equipped
+item.container.world = زمین
+item.container.mission = انبار مأموریت
+item.container.archive = بایگانی
+item.container.reza = میز رضا
+char.items.kind.weapon = سلاح
+char.items.kind.ammo = مهمات
+char.items.kind.evidence = شاهد
+char.items.kind.consumable = مصرفی
+char.items.kind.tool = ابزار
+char.items.kind.quest = مأموریت

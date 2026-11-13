@@ -1,0 +1,41 @@
+# محمود — خدمه‌ی ساختمان، راهروی بایگانی
+# کارش راهنمایی و حال‌وهوای ساختمان است؛ و یک اشاره به سرگرد یزدانی
+
+[person] mahmoud
+[name] محمود | Mahmoud
+[role] خدمه‌ی ساختمان | Building porter
+[cast] mahmoud
+
+[node] start
+[if] flag.quest.file == 3 -> after
+[if] met.mahmoud == true -> again
+[say] mahmoud | راهرو سردتر از اتاقه. عادت می‌کنی. | The corridor is colder than the office. You get used to it.
+[say] mahmoud | بایگانی ته راهروئه. خانم فرهادی تا ساعت دو اون‌جاست. | The archive is at the end. Mrs. Farhadi is there until two.
+[do] met.mahmoud = true
+[go] say_more
+
+[node] say_more
+[opt] سرگرد یزدانی رو می‌شناسی؟ | Do you know Major Yazdani? -> yazdani
+[opt] بعداً. | Later. -> leave
+
+[node] yazdani
+[say] mahmoud | شب می‌آد. پرونده می‌بره، پرونده می‌آره. | He comes at night. Takes files, brings files.
+[say] mahmoud | من فقط چراغ‌ها رو خاموش می‌کنم. | I only turn off the lights.
+[end]
+
+[node] leave
+[say] mahmoud | مواظب مهرها باش. | Watch the seals.
+[end]
+
+[node] again
+[if] flag.clue.log == true -> clue
+[say] mahmoud | بایگانی ته راهروئه. | The archive is at the end.
+[end]
+
+[node] clue
+[say] mahmoud | دفتر رو خوندی؟ پس می‌دونی چرا شب می‌آد. | You read the log? Then you know why he comes at night.
+[end]
+
+[node] after
+[say] mahmoud | ثبت شد؟ پس دیگه کاری با من نداری. | Logged? Then you have no business with me.
+[end]

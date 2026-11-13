@@ -1,0 +1,13 @@
+# یادداشت دست‌نویس — نمونه‌ی قالب «note»
+# بدون نشان، بدون سرصفحه، بدون مهر: فقط یک تکه‌کاغذ.
+# ------------------------------
+
+[template] note
+[seal] false
+[hand] true
+
+«شریفی خودش را نکشت.» | "Sharifi did not kill himself."
+
+«تا وقتی این پرونده باز است، هیچ‌کس امن نیست.» | "While this file stays open, no one is safe."
+
+امضا: یزدانی — بدون تاریخ | Signed: Yazdani — undated

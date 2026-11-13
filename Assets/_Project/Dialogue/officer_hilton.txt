@@ -1,0 +1,111 @@
+# ---------------------------------------------------------------
+# گروهبان مرادی — پشت نوار صحنه، جلوی درِ ۸۱۴
+# مأموریت «اتاق ۸۱۴» — بریفینگ و گزارش پایانی
+#
+# پرچم‌ها:
+#   flag.hilton.briefed        بریفینگ را گرفتی
+#   flag.hilton.ev.coroner     برگه‌ی پزشک قانونی را خواندی
+#   flag.hilton.case.solved    رحیمی اعتراف کرد
+#   flag.hilton.case.weak      رحیمی را بدون مدرک متهم کردی
+#   flag.hilton.case.reported  گزارش را دادی
+# ---------------------------------------------------------------
+
+[person] مرادی
+[name] گروهبان مرادی | Sergeant Moradi
+[role] مأمور صحنه | Officer on scene
+[cast] مرادی
+[cast] نادر
+
+[node] start
+[if] flag.hilton.case.reported == true -> after_all
+[if] flag.hilton.briefed == true -> again
+[say] مرادی | نادر. چهار ساعتِ بیداری و یک جسد. | Nader. Four hours awake and a body.
+[say] مرادی | اتاق هشتصد و چهارده. خدمتکار ساعت شش و بیست دقیقه پیداش کرد. | Room eight fourteen. The maid found him at six twenty.
+[say] نادر | کی بوده؟ | Who is he?
+[say] مرادی | ویکتور سوکولوف. روس. تاجر. | Viktor Sokolov. Russian. A trader.
+[say] مرادی | چهل‌وپنج ساله. یازدهم اومد. | Forty-five. Arrived on the eleventh.
+[say] نادر | علت مرگ؟ | Cause of death?
+[say] مرادی | ضربه. یکی. به شقیقه‌ی چپ. | One blow. Left temple.
+[say] نادر | ابزار؟ | Weapon?
+[say] مرادی | سنگین. لبه‌ی صاف. | Heavy. Straight edge.
+[say] مرادی | پزشک می‌گه بین ده و نیم تا یازده و بیست. | The doctor says between half past ten and twenty past eleven.
+[say] نادر | در اتاق؟ | Door?
+[say] مرادی | نیمه‌باز. خدمتکار با کلید اومد، کلید لازم نشد. | Ajar. The maid came with the key. She didn't need it.
+[say] نادر | مدیر طبقه چی می‌گه؟ | What does the floor manager say?
+[say] مرادی | می‌گه تا نصف‌شب پشت میزش بوده. | Says he was at his desk until midnight.
+[say] مرادی | (برگه‌ای از جیبش درمی‌آورد.) | (He takes a slip from his pocket.)
+[read] Documents/hilton_coroner
+[do] flag.hilton.ev.coroner = true
+[do] flag.hilton.briefed = true
+[say] مرادی | این مال تو. کاری نکن که مجبور شم توضیح بدم چرا دادمش. | This is yours. Don't make me explain why I gave it to you.
+[opt] اتاق رو می‌بینم. | Let me see the room. -> go_room
+[opt] کسی صدایی شنیده؟ | Did anyone hear anything? -> neighbor_hint
+
+[node] neighbor_hint
+[say] مرادی | اتاق هشتصد و شانزده. یه مرد ایرانی. | Room eight sixteen. An Iranian man.
+[say] مرادی | می‌گه تا دیر وقت بیدار بوده. | Says he was up late.
+[say] مرادی | من باور نکردم. تو هم نکن. | I didn't believe him. You shouldn't either.
+[go] go_room
+
+[node] go_room
+[say] مرادی | دست به چیزی نزن تا عکس نگیرن. | Don't touch anything until they've photographed it.
+[say] مرادی | نوار رو برای تو برمی‌دارم. برای بقیه نه. | I'll lift the tape for you. For nobody else.
+[end]
+
+[node] again
+[if] flag.hilton.case.solved == true -> report
+[if] flag.hilton.case.weak == true -> report
+[say] مرادی | هر چی پیدا کردی، از من رد نکن. | Whatever you find, don't route it through me.
+[say] مرادی | تو گزارش بنویس، من امضا می‌کنم. | You write the report, I'll sign it.
+[opt] مدیر طبقه رو ببینم. | I want to see the floor manager. -> manager_hint
+[opt] رحیمی. فکر می‌کنم کار او بوده. | Rahimi. I think it was him. -> report
+[opt] هنوز چیزی نیست. | Nothing yet. -> leave
+
+[node] manager_hint
+[say] مرادی | رحیمی. اتاقش سرِ راهروست. | Rahimi. His station is at the end of the corridor.
+[say] مرادی | مرد مرتبیه. زیاد حرف می‌زنه. | A tidy man. Talks a lot.
+[say] مرادی | حرف زیاد یعنی یه جایی خالی می‌کنه. | Too much talk means somewhere he's lying.
+[end]
+
+[node] leave
+[say] مرادی | (به راهرو نگاه می‌کند.) | (He looks down the corridor.)
+[say] مرادی | نادر. این ساختمون شاهد زیاد داره. مدرک کم. | Nader. This building has plenty of witnesses. Few documents.
+[end]
+
+# ---------------------------------------------------------------
+# گزارش پایانی
+# ---------------------------------------------------------------
+
+[node] report
+[say] مرادی | گزارش؟ | The report?
+[if] flag.hilton.case.solved == true
+[say] نادر | رحیمی. کلید ۸۱۴ رو ساعت بیست و دو و چهل گرفته. | Rahimi. He took the 814 key at twenty-two forty.
+[say] نادر | پزشک قانونی می‌گه تا بیست و سه و بیست مرده بوده. | The coroner puts him dead by twenty-three twenty.
+[say] نادر | پس اون پرداخت بیست و سه و چهل، خودِ رحیمی بوده. | So that twenty-three forty payment was Rahimi himself.
+[say] مرادی | خودش گفت؟ | Did he say it?
+[say] نادر | گفت. | He did.
+[say] مرادی | (امضا می‌کند، بدون این‌که برگرداند.) | (He signs, without looking up.)
+[say] مرادی | خوب. برو بخواب. | Good. Go and sleep.
+[go] file_report
+[else]
+[say] نادر | رحیمی. | Rahimi.
+[say] مرادی | مدرک؟ | Evidence?
+[say] نادر | ... | ...
+[say] مرادی | (قلم را زمین می‌گذارد.) | (He puts the pen down.)
+[say] مرادی | بدون کلید و بدون ساعت، وکیلش تا ظهر آزادش می‌کنه. | Without the key and without the time, his lawyer walks him out by noon.
+[say] مرادی | این را می‌نویسم «پرونده باز». | I'll write this as an open case.
+[do] flag.hilton.case.weak = true
+[go] file_report
+[end]
+
+[node] file_report
+[read] Documents/hilton_report
+[do] flag.hilton.case.reported = true
+[say] مرادی | (برگه را در پوشه می‌گذارد.) | (He slides the sheet into the folder.)
+[say] مرادی | چای لابی خوبه. تلخ، ولی خوبه. | The lobby tea is good. Bitter, but good.
+[end]
+
+[node] after_all
+[say] مرادی | پوشه رفت. | The folder's gone up.
+[say] مرادی | تو هم برو. | You too.
+[end]

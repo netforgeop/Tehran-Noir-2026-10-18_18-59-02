@@ -1,0 +1,258 @@
+# ---------------------------------------------------------------
+# رحیمی — مسئول طبقه‌ی هشتم
+# هسته‌ی مأموریت: هر بار که دروغ می‌گوید، یک مدرک جلوش بگذار.
+#
+# پرچم‌ها:
+#   flag.hilton.manager.met          حرف زده‌اید
+#   flag.hilton.manager.claim_alibi  ادعا: «خودش صورت‌حساب داد»
+#   flag.hilton.manager.claim_never  ادعا: «بعد از ده نرفتم بالا»
+#   flag.hilton.manager.bill_shown   دفتر صندوق را نشانش دادی
+#   flag.hilton.manager.key_shown    کلید ۸۱۴ را نشانش دادی
+#   flag.hilton.manager.time_shown   ساعت مرگ را نشانش دادی
+#   flag.hilton.manager.money_shown  دفتر حساب سوکولوف را نشانش دادی
+#   flag.hilton.case.solved          اعتراف کرد
+#   rel.manager                      رابطه
+#
+# قاعده: او با یک مدرک نمی‌شکند. با دو تا، بله. و هر بار که شکست،
+# داستانش یک قدم عقب‌تر می‌رود — دقیقاً مثل بازجویی‌های پرونده‌ی رضا.
+# ---------------------------------------------------------------
+
+[person] رحیمی
+[name] رحیمی | Rahimi
+[role] مسئول طبقه | Floor manager
+[cast] رحیمی
+[cast] نادر
+
+[node] start
+[if] flag.hilton.case.solved == true -> after_solved
+[if] flag.hilton.manager.key_shown == true -> cornered
+[if] flag.hilton.manager.met == true -> reask
+[do] flag.hilton.manager.met = true
+[say] رحیمی | آه، آقای کارآگاه. | Ah, detective.
+[say] رحیمی | چه شب بدی. برای همه. | What a night. For everyone.
+[say] نادر | اتاق ۸۱۴. | Room eight fourteen.
+[say] رحیمی | طبقه‌ی من. بله. | My floor. Yes.
+[say] رحیمی | (دست‌هایش را روی میز می‌گذارد.) | (He puts his hands flat on the desk.)
+[say] رحیمی | هر کمکی لازم باشه. | Anything you need.
+[opt] دیشب کجا بودید؟ | Where were you last night? -> alibi
+[opt] با سوکولوف حرف زده بودید؟ | Had you spoken with Sokolov? -> motive
+[opt] بعد از ساعت ده رفتید بالا؟ | Did you go up after ten? -> never
+[opt] فعلاً کافیه. | That's enough for now. -> leave
+
+# ---------------------------------------------------------------- ادعای اول
+
+[node] alibi
+[do] flag.hilton.manager.claim_alibi = true
+[say] رحیمی | همین‌جا. تا نصف‌شب. | Right here. Until midnight.
+[say] نادر | تا نصف‌شب. | Until midnight.
+[say] رحیمی | ساعت یازده و چهل، صورت‌حسابش رو داد. | At eleven forty he settled his bill.
+[say] نادر | خودش اومد پایین؟ | He came down himself?
+[say] رحیمی | صندوق‌دار هم دیدش. | The cashier saw him too.
+[say] رحیمی | دو نوشیدنی. به حساب اتاق. | Two drinks. On the room.
+[say] نادر | به حساب اتاقی که صاحبش مرده. | On the account of a man who was dead.
+[say] رحیمی | ... | ...
+[say] رحیمی | این حرف شماست، آقا. من فقط دفتر رو می‌خونم. | That's your word, sir. I only read the book.
+[if] flag.hilton.ev.coroner == true
+[opt] (برگه‌ی پزشک قانونی) این ساعت مرگ رو می‌گه. | (Coroner's slip) This gives the time of death. -> time_at_alibi
+[else]
+[if] flag.hilton.ev.ledger == true and flag.hilton.manager.bill_shown != true
+[opt] (دفتر صندوق) این پرداخت ثبت نشده. | (Cash book) This payment isn't recorded as cash. -> ledger_at_alibi
+[else]
+[opt] بریم سراغ چیز دیگه. | Let's move on. -> start
+
+[node] time_at_alibi
+[say] نادر | (برگه را روی میز می‌گذارد.) | (He lays the slip on the desk.)
+[say] نادر | بین بیست و دو و سی، تا بیست و سه و بیست. | Between twenty-two thirty and twenty-three twenty.
+[say] رحیمی | (برگه را نمی‌گیرد، فقط نگاهش می‌کند.) | (He doesn't take it. He only looks.)
+[say] رحیمی | این می‌گه کی زده. نمی‌گه کی مُرده. | This says when he was struck. Not when he died.
+[say] نادر | یک ساعت فرق. | An hour's difference.
+[say] رحیمی | پزشک‌ها هم اشتباه می‌کنن، آقا. | Doctors make mistakes too, sir.
+[say] رحیمی | (برای اولین بار، به جای صورت نادر، به دست‌هایش نگاه می‌کند.) | (For the first time, he looks at Nader's hands instead of his face.)
+[say] رحیمی | (بلند می‌شود.) | (He stands.)
+[say] رحیمی | من بعد از ده شب نرفتم بالا. | I did not go up after ten.
+[go] never
+
+[node] ledger_at_alibi
+[do] flag.hilton.manager.bill_shown = true
+[say] نادر | (دفتر را باز می‌کند.) | (He opens the book.)
+[say] نادر | بیست و یک و ده. «تسویه صورت‌حساب اتاق ۸۱۴. نقدی.» | Twenty-one ten. "Room 814 account settled. Cash."
+[say] نادر | بیست و سه و چهل. «دو نوشیدنی، به حساب اتاق.» | Twenty-three forty. "Two drinks, charged to the room."
+[say] نادر | این پرداخت نیست. این بدهی است. | This isn't a payment. It's a debt.
+[say] رحیمی | (به دفتر نگاه می‌کند، بعد به نادر.) | (He looks at the book, then at Nader.)
+[say] رحیمی | صندوق‌دار اشتباه نوشته. | The cashier wrote it wrong.
+[say] نادر | دو جای مختلف، یک اشتباه؟ | Two different places, one mistake?
+[say] رحیمی | (بلند می‌شود.) | (He stands.)
+[say] رحیمی | من بعد از ده شب نرفتم بالا. | I did not go up after ten.
+[say] نادر | همین الان گفتی تا نصف‌شب همین‌جا بودی. | Just now you said you were here until midnight.
+[say] رحیمی | همین‌جا بودم. پایین. | I was here. Downstairs.
+[go] never
+
+# ---------------------------------------------------------------- انگیزه
+
+[node] motive
+[say] رحیمی | سلام و علیک. تاجر بود، من مدیر طبقه. | Pleasantries. He was a trader, I'm the floor manager.
+[say] رحیمی | هر شب دو کلمه. | Two words a night.
+[say] نادر | دو کلمه درباره‌ی چی؟ | Two words about what?
+[say] رحیمی | گمرک. بار. همان چیزهایی که تاجرها درباره‌ش حرف می‌زنن. | Customs. Cargo. The things traders talk about.
+[if] flag.hilton.ev.tally == true
+[opt] (دفتر حساب سوکولوف) این دست‌خط خودشه. | (Sokolov's tally) His own hand. -> tally_at_motive
+[else]
+[opt] باشه. | All right. -> start
+
+[node] tally_at_motive
+[say] نادر | (برگه را باز می‌کند و جلوش می‌گذارد.) | (He opens the sheet and puts it in front of him.)
+[say] نادر | دو هزار و دویست. دو هزار. دویست کم. | Two thousand two hundred. Two thousand. Two hundred short.
+[say] رحیمی | ... | ...
+[say] رحیمی | حساب مهمان‌ها دست من نیست. | Guest accounts aren't mine.
+[say] نادر | صندوق هم همین را می‌گه؟ | Does the cashier say the same?
+[say] رحیمی | (مکث می‌کند.) | (He pauses.)
+[say] رحیمی | من دفتر حساب نمی‌نویسم. | I don't write the ledger.
+[do] flag.hilton.manager.money_shown = true
+[go] start
+
+# ---------------------------------------------------------------- ادعای دوم
+
+[node] never
+[do] flag.hilton.manager.claim_never = true
+[say] رحیمی | بعد از ده؟ نه. | After ten? No.
+[say] رحیمی | یک بار روز اول رفتم. برای خوش‌آمد. | Once on the first day. To welcome him.
+[say] نادر | کی؟ | When?
+[say] رحیمی | یازدهم. ساعت پنج. | The eleventh. Five o'clock.
+[if] flag.hilton.ev.key_register == true
+[opt] (دفتر کلید) کلید ۸۱۴ ساعت بیست و دو و چهل صادر شده. | (Key register) Key 814 was issued at 22:40. -> key_presented
+[else]
+[opt] باشه. | All right. -> start
+
+[node] key_presented
+[do] flag.hilton.manager.key_shown = true
+[say] نادر | (دفتر را باز می‌کند.) | (He opens the book.)
+[say] نادر | بیست و دو و چهل. کلید ۸۱۴. «مدیریت طبقه». | Twenty-two forty. Key eight fourteen. "Floor management".
+[say] رحیمی | (دستش را از روی میز برنمی‌دارد.) | (He doesn't lift his hand from the desk.)
+[say] رحیمی | مهمان شکایت کرد که کلیدش کار نمی‌کنه. | The guest complained his key didn't work.
+[say] نادر | کلید شکایت نمی‌کنه. صاحبش می‌کنه. | A key doesn't complain. Its owner does.
+[say] رحیمی | ... | ...
+[say] رحیمی | باشه. رفتم بالا. | Fine. I went up.
+[go] cornered
+
+# ---------------------------------------------------------------- گوشه
+
+[node] cornered
+[if] flag.hilton.case.solved == true -> after_solved
+[say] رحیمی | رفتم بالا. یازده. | I went up. Eleven.
+[say] رحیمی | در رو باز کردم. زنده بود. | I opened the door. He was alive.
+[say] رحیمی | چند کلمه حرف زدیم. اومدم پایین. | We said a few words. I came down.
+[say] نادر | چند کلمه درباره‌ی چی؟ | A few words about what?
+[say] رحیمی | پول. | Money.
+[say] رحیمی | (سرش را تکان می‌دهد.) | (He shakes his head.)
+[say] رحیمی | همه‌ی مهمون‌ها درباره‌ی پول حرف می‌زنن. | Every guest talks about money.
+[if] flag.hilton.manager.time_shown == false and flag.hilton.ev.coroner == true
+[opt] (برگه‌ی پزشک قانونی) ساعت یازده زنده نبود. | (Coroner's slip) He wasn't alive at eleven. -> time_at_cornered
+[else]
+[if] flag.hilton.manager.money_shown == false and flag.hilton.ev.tally == true
+[opt] (دفتر حساب سوکولوف) دویست کم بود. | (Sokolov's tally) Two hundred short. -> money_at_cornered
+[else]
+[if] flag.hilton.manager.time_shown == true and flag.hilton.manager.money_shown == true
+[opt] هر دو تا را دیدی. حرف بزن. | You've seen both. Talk. -> confession
+[else]
+[if] flag.hilton.ev.ashtray == true
+[opt] (سینی سیگار برنجی) این از اتاق ۸۱۴ است. | (Brass ashtray) This is from room 814. -> weapon
+[else]
+[if] flag.hilton.case.solved == true
+[opt] تمام. | Finished. -> confession
+[else]
+[opt] دروغ می‌گی. | You're lying. -> bluff
+[opt] هنوز کافی نیست. | Not enough yet. -> leave
+
+[node] time_at_cornered
+[do] flag.hilton.manager.time_shown = true
+[say] نادر | (برگه را می‌گذارد.) | (He sets the slip down.)
+[say] نادر | بیست و سه و بیست. تا این ساعت مرده بوده. | Twenty-three twenty. Dead by then.
+[say] رحیمی | ساعت من عقب بود. | My watch was slow.
+[say] نادر | یک ساعت عقب؟ | An hour slow?
+[say] رحیمی | ... | ...
+[say] رحیمی | (به برگه نگاه می‌کند، بعد به در.) | (He looks at the slip, then at the door.)
+[say] رحیمی | من که نگفتم ساعت من درست بود. | I never said my watch was right.
+[if] flag.hilton.manager.money_shown == true
+[opt] پس دویست دلار رو کی برداشت؟ | Then who took the two hundred? -> confession
+[else]
+[if] flag.hilton.ev.tally == true
+[opt] (دفتر حساب سوکولوف) دویست کم بود. | (Sokolov's tally) Two hundred short. -> money_at_cornered
+[else]
+[opt] چیز دیگه‌ای هست؟ | Is there anything else? -> cornered
+
+[node] money_at_cornered
+[do] flag.hilton.manager.money_shown = true
+[say] نادر | (برگه را باز می‌کند.) | (He unfolds the sheet.)
+[say] نادر | دویست دلار. خودش نوشته. با تاریخ. | Two hundred dollars. His own hand. Dated.
+[say] رحیمی | ... | ...
+[say] رحیمی | برگردوندمش. | I put it back.
+[say] نادر | کِی؟ | When?
+[say] رحیمی | (مکث.) | (A pause.)
+[say] رحیمی | همون شب. | That night.
+[if] flag.hilton.manager.time_shown == true
+[opt] پس ساعت یازده، مرده بود. | So at eleven, he was already dead. -> confession
+[else]
+[if] flag.hilton.ev.coroner == true
+[opt] (برگه‌ی پزشک قانونی) ساعت مرگ. | (Coroner's slip) Time of death. -> time_at_cornered
+[else]
+[opt] چیز دیگه‌ای هست؟ | Is there anything else? -> cornered
+
+[node] weapon
+[say] نادر | (سینی را روی میز می‌گذارد.) | (He puts the tray on the desk.)
+[say] نادر | برنجی. یک کیلو و دویست. گوشه‌ش خم شده. | Brass. One and a fifth kilos. The corner's bent.
+[say] رحیمی | (به سینی نگاه نمی‌کند.) | (He doesn't look at the tray.)
+[say] رحیمی | اتاق پر از این‌هاست. | The hotel is full of them.
+[say] نادر | این یکی از اتاق ۸۱۴ است. و تو دفتر کلید، دو تا کلید براش صادر شده. | This one is from 814. And the key book lists two keys for it.
+[say] رحیمی | ... | ...
+[say] رحیمی | من بهش دست نزدم. | I didn't touch him.
+[go] cornered
+
+# ---------------------------------------------------------------- اعتراف
+
+[node] confession
+[do] flag.hilton.case.solved = true
+[say] نادر | ساعت یازده، مرده بود. کلید دست تو بود. | At eleven he was dead. You had the key.
+[say] رحیمی | ... | ...
+[say] رحیمی | (مدتی طولانی به میز نگاه می‌کند.) | (He looks at the desk for a long time.)
+[say] رحیمی | اون گفت صبح می‌ره اداره. | He said he'd go to the bureau in the morning.
+[say] نادر | و تو صبر نکردی. | And you didn't wait.
+[say] رحیمی | برگردوندم. همه‌ش رو. | I brought it back. All of it.
+[say] رحیمی | اون گفت دویست دلار هم نمی‌ارزه که آدم کارش رو از دست بده. | He said two hundred dollars wasn't worth a man losing his job.
+[say] نادر | بعد چی شد؟ | Then what happened?
+[say] رحیمی | (ساکت می‌ماند.) | (He stays silent.)
+[say] رحیمی | بعد من دستم رفت سمت میز شب. | Then my hand went to the nightstand.
+[say] نادر | ... | ...
+[say] رحیمی | یک ضربه. | One blow.
+[say] رحیمی | بعدش رفتم پایین و براش نوشیدنی حساب کردم. | Then I went down and put drinks on his account.
+[say] نادر | چرا؟ | Why?
+[say] رحیمی | که ساعت یازده و چهل زنده باشه. | So he'd be alive at eleven forty.
+[say] رحیمی | (بلند می‌شود، آرام.) | (He stands, slowly.)
+[say] رحیمی | کارت تمومه، آقا؟ | Are you done, sir?
+[end]
+
+[node] bluff
+[do] rel.manager - 1
+[say] نادر | دروغ می‌گی. | You're lying.
+[say] رحیمی | (لبخند نمی‌زند.) | (He doesn't smile.)
+[say] رحیمی | اگر مدرک دارید، بگید. اگر نه، من کار دارم. | If you have proof, say it. If not, I have work.
+[go] cornered
+
+[node] leave
+[say] رحیمی | (دوباره دفتر را باز می‌کند.) | (He opens the ledger again.)
+[say] رحیمی | هر وقت خواستید. | Whenever you like.
+[end]
+
+[node] reask
+[if] flag.hilton.manager.key_shown == true -> cornered
+[say] رحیمی | باز شما. | You again.
+[opt] دیشب کجا بودید؟ | Where were you last night? -> alibi
+[opt] با سوکولوف حرف زده بودید؟ | Had you spoken with Sokolov? -> motive
+[if] flag.hilton.ev.key_register == true
+[opt] (دفتر کلید) کلید ۸۱۴ دست تو بود. | (Key register) You had the key to 814. -> key_presented
+[else]
+[opt] فعلاً کافیه. | That's enough. -> leave
+
+[node] after_solved
+[say] رحیمی | (نگاهش به میز است.) | (He is looking at the desk.)
+[say] رحیمی | من دیگه چیزی ندارم بگم. | I have nothing more to say.
+[end]

@@ -8,10 +8,11 @@ namespace TehranNoir.Dialogue
     {
         public static readonly string[] Scalars =
         {
-            "time", "weather", "energy", "fear", "sanity", "trust", "playerAge"
+            "time", "weather", "energy", "fear", "sanity", "trust", "playerAge",
+            "season", "year", "month", "day", "hour"
         };
 
-        public static readonly string[] Prefixes = { "rel.", "met.", "present.", "flag." };
+        public static readonly string[] Prefixes = { "rel.", "met.", "present.", "flag.", "known.", "stat.", "item." };
 
         private readonly Dictionary<string, DialogueValue> _values = new Dictionary<string, DialogueValue>();
 
@@ -35,6 +36,20 @@ namespace TehranNoir.Dialogue
                     name.StartsWith(Prefixes[i], StringComparison.Ordinal)) return true;
 
             return false;
+        }
+
+        /// <summary>
+        /// همه‌ی نام‌های موجود، بدون کپی. اگر وسط گشتن چیزی اضافه می‌شود،
+        /// اول در یک لیست کپی کن (پنل تست همین کار را می‌کند).
+        /// </summary>
+        public IEnumerable<string> Names
+        {
+            get { return _values.Keys; }
+        }
+
+        public int Count
+        {
+            get { return _values.Count; }
         }
 
         public bool Has(string name)

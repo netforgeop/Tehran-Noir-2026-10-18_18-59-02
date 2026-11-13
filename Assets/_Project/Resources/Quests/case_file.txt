@@ -1,0 +1,55 @@
+# کارها — پرونده‌ی محرمانه
+# ------------------------------
+# نحو همان نحو دیالوگ است:
+#   [quest] شناسه
+#   [name]  فارسی | English
+#   [type]  main | side
+#   [summary] فارسی | English
+#   [start] شرط شروع   (یک بار که برقرار شد، کار باز می‌ماند)
+#   [done]  شرط پایان
+#   [step]  شناسه‌ی قدم
+#   [text]  فارسی | English   — جمله‌ای که «همین حالا چه کار کنم» را می‌گوید
+#   [when]  شرط فعال بودن این قدم
+#
+# ترتیب قدم‌ها مهم است: اولین قدمی که شرطش برقرار باشد، قدم فعلی است.
+#
+# نکته: شرط شروعِ «اولین روز» عمداً `place.office` است و نه `true`. با
+# `true`، این کار در هتل و چای‌خانه هم در گوشه‌ی صفحه می‌آمد و بازیکن را
+# دنبال رضایی می‌فرستاد که در آن صحنه نبود. شناسه‌ی هر صحنه را
+# `SceneMarker` در شروع همان صحنه می‌نویسد.
+# ------------------------------
+
+[quest] first_day
+[name] اولین روز | First day
+[type] main
+[summary] رضا در دفتر منتظر توست. | Reza is waiting for you at the office.
+[start] place.office == true
+[done] met.reza == true
+
+[step] talk
+[text] با رضا در دفتر صحبت کن | Talk to Reza at the office
+[when] true
+
+
+[quest] case_file
+[name] پرونده‌ی محرمانه | The sealed file
+[type] main
+[summary] پرونده‌ای مهروموم‌شده باید به بایگانی برسد. | A sealed file has to reach the archive.
+[start] flag.quest.file == 1
+[done] flag.quest.file == 4
+
+[step] report
+[text] با رضا درباره‌ی پرونده حرف بزن | Talk to Reza about the file
+[when] flag.quest.file == 2
+
+[step] logged
+[text] به رضا خبر بده که ثبت شد | Tell Reza it is logged
+[when] flag.quest.file == 3
+
+[step] deliver
+[text] پرونده را به بایگانی برسان | Take the file to the archive
+[when] item.file.sealed >= 1
+
+[step] pickup
+[text] پرونده را از میز رضا بردار | Pick the file up from Reza's desk
+[when] true

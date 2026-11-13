@@ -1,0 +1,16 @@
+# محتوای پرونده‌ی مهر و موم‌شده
+# این فایل به DialogueStarter روی خودِ پرونده وصل می‌شود؛ با «باز کردن» پخش می‌شود.
+# هیچ [do] ندارد: ثبت «باز شد» کار خود FileInteractable است.
+
+[person] file
+[name] پرونده محرمانه | Confidential file
+[role] مهر و موم‌شده | Sealed
+[cast] file
+
+[node] read
+[say] file | صورت‌جلسه‌ی بازجویی. ۱۴ مرداد ۱۳۵۲. | Interrogation record. 5 August 1973.
+[say] file | متهم: کریم شریفی، بیست‌وشش ساله، راننده. | Suspect: Karim Sharifi, twenty-six, driver.
+[say] file | بازداشت در خیابان ری، ساعت دو بامداد. | Arrested on Rey Street, two in the morning.
+[say] file | علت مرگ: نامشخص. پرونده بسته شد. | Cause of death: undetermined. Case closed.
+[say] file | امضا: سرگرد یزدانی. | Signed: Major Yazdani.
+[end]

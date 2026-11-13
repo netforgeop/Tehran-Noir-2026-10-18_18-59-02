@@ -1,0 +1,235 @@
+# ---------------------------------------------------------------
+# مسعود — پادوی چای‌خانه‌ی سعادت، خیابان ری
+# مأموریت «شاهد آخر» — شب سیزدهم مرداد ۱۳۵۲، یک شب پیش از پرونده‌ی مهروموم‌شده
+#
+# پرچم‌ها:
+#   flag.quest.witness      0 شروع نشده · 1 در جریان · 2 تمام
+#   flag.witness.talked     یک بار حرف زده‌ای
+#   flag.clue.chit          قبض شب سیزدهم را خوانده‌ای
+#   flag.witness.truth      حقیقت را گرفته‌ای، هر طور که گرفته باشی
+#   flag.witness.deal       با بلیت کویت خریده‌ای‌اش
+#   flag.witness.threat     تهدیدش کرده‌ای
+#   flag.witness.protect    قول حمایت داده‌ای
+#   known.witness.name      اسم مرد خاکستری‌پوش را داری
+#   known.masoud.threat     می‌داند تهدیدش کردی
+#
+# قاعده‌ی نوشتن: مسعود از ترس حرف نمی‌زند، نه از خباثت. هیچ‌کس این‌جا
+# اطلاعات را مجانی نمی‌دهد، و هر چیزی که می‌دهد یک تکه کم دارد — جز وقتی
+# که راه خروجش را بخری. جمله‌ی کوتاه، جزئیات مشخص، بدون توضیح اضافه.
+# ---------------------------------------------------------------
+
+[person] مسعود
+[name] مسعود | Masoud
+[role] پادوی چای‌خانه | Tea-house boy
+[cast] مسعود
+[cast] نادر
+
+[node] start
+[if] flag.witness.truth == true -> after
+[if] flag.clue.chit == true -> chit
+[if] flag.witness.talked == true -> again
+[do] flag.quest.witness = 1
+[say] مسعود | بفرمایید. چای؟ | Welcome. Tea?
+[say] مسعود | هوا گرفته. چای با قند خوبه. | Weather's turning. Tea with sugar is good.
+[say] نادر | کریم شریفی. | Karim Sharifi.
+[say] مسعود | ... | ...
+[say] مسعود | من اسم کسی رو نگه نمی‌دارم، آقا. | I don't keep names, sir.
+[say] مسعود | این‌جا روزی صد نفر می‌آد و می‌ره. | A hundred people come and go here every day.
+[opt] شب سیزدهم این‌جا بود؟ | Was he here on the thirteenth? -> night
+[opt] چقدر می‌گیری حرف بزنی؟ | How much do you take to talk? -> price
+[opt] یک چای. با قند. | One tea. With sugar. -> sit
+
+[node] night
+[say] مسعود | شب سیزدهم... | The thirteenth...
+[say] مسعود | ما ساعت ده می‌بندیم. | We close at ten.
+[say] نادر | ده. | Ten.
+[say] مسعود | ده. | Ten.
+[say] مسعود | چای‌خونه هم قانون داره، آقا. | A tea-house has rules too, sir.
+[go] brush
+
+[node] price
+[say] مسعود | پول؟ | Money?
+[say] مسعود | من از پونزده سالگی این‌جام. | I've been here since I was fifteen.
+[say] مسعود | تا حالا کسی از من چیزی نخریده. | Nobody's ever bought anything from me.
+[say] مسعود | یعنی... نخریدن. | I mean... they haven't.
+[go] brush
+
+[node] sit
+[say] مسعود | دو قند. | Two sugars.
+[say] مسعود | شریفی همیشه همین‌جا می‌نشست. میز چهار. | Sharifi always sat here. Table four.
+[say] مسعود | پشت به دیوار. می‌گفت از بچگی عادتشه. | Back to the wall. Said it was a childhood habit.
+[say] نادر | عادت خوبی بود. | Good habit.
+[say] مسعود | اون شب هم پشت به دیوار نشست. | That night he sat with his back to the wall too.
+[go] brush
+
+[node] brush
+[say] مسعود | آقا، من زن و بچه ندارم. | Sir, no wife, no kids.
+[say] مسعود | ولی مادرم پیر شده. | But my mother's gotten old.
+[say] مسعود | قبض‌های شب رو صبح می‌ریزم دور. | I throw the night's slips out in the morning.
+[say] مسعود | اون شب... نریختم. | That night... I didn't.
+[say] مسعود | برو. مشتری می‌آد. | Go. Customer coming.
+[do] flag.witness.talked = true
+[end]
+
+# ---------------------------------------------------------------
+# بازگشت بدون قبض
+# ---------------------------------------------------------------
+
+[node] again
+[say] مسعود | باز شما. | You again.
+[say] مسعود | چای می‌خوری یا جواب می‌خوای؟ | You here for tea or for an answer?
+[opt] همون شب رو بگو. | Tell me about that night. -> again_no
+[opt] این قبض‌ها کجا می‌رن؟ | Where do the slips go? -> again_hint
+[opt] بعداً می‌آم. | I'll come back later. -> again_later
+
+[node] again_no
+[say] مسعود | گفتم. ده بستیم. | I told you. We closed at ten.
+[say] مسعود | شما هم مثل اون یکی‌اید. | You're like the other one.
+[say] نادر | کدوم یکی؟ | Which one?
+[say] مسعود | ... | ...
+[say] مسعود | هیچی. | Nothing.
+[end]
+
+[node] again_hint
+[say] مسعود | سیخ قبض کنار صندوقه. | The spike's by the register.
+[say] مسعود | هر شب پرش می‌کنم. | I fill it every night.
+[say] مسعود | (به سیخ نگاه نمی‌کند.) | (He doesn't look at the spike.)
+[end]
+
+[node] again_later
+[say] مسعود | چای‌تون سرد نشه. | Don't let your tea go cold.
+[end]
+
+# ---------------------------------------------------------------
+# با قبض در دست
+# ---------------------------------------------------------------
+
+[node] chit
+[do] flag.quest.witness = 1
+[say] نادر | (قبض را روی پیشخوان می‌گذارد.) | (He puts the slip on the counter.)
+[say] مسعود | ... | ...
+[say] مسعود | این رو از کجا آوردی؟ | Where did you get this?
+[say] مسعود | من قبض نگه نمی‌دارم. | I don't keep the slips.
+[say] نادر | این یکی رو نگه داشتی. | You kept this one.
+[say] مسعود | (دستش می‌لرزد. لیوان را می‌گذارد.) | (His hand shakes. He sets the glass down.)
+[say] مسعود | اون شب دو نفر بودن. شریفی و یکی که قهوه خورد. | There were two that night. Sharifi, and the one who drank coffee.
+[say] مسعود | حسابش رو من دادم. | I paid for it.
+[opt] یه راه خروج. بلیت کویت. | A way out. A ticket to Kuwait. -> deal
+[opt] حرف نزنی، تو می‌شی متهم. | Don't talk, and you're the suspect. -> threat
+[opt] بیا اداره. شهادت بده. من پشتتم. | Come to the bureau. Testify. I'll stand behind you. -> protect
+[opt] فعلاً هیچی. | Nothing for now. -> leave
+
+[node] deal
+[say] نادر | یه راه خروج. بلیت کویت. | A way out. A ticket to Kuwait.
+[say] مسعود | با پول کی؟ | With whose money?
+[say] نادر | با پول من. | Mine.
+[say] مسعود | شما؟ | You?
+[say] نادر | چهار ماه دیگه پولش رو جور می‌کنم. | I'll have the money in four months.
+[say] مسعود | (به دست‌های نادر نگاه می‌کند.) | (He looks at Nader's hands.)
+[say] مسعود | شما هم دستتون خالیه. | Your hands are empty too.
+[say] نادر | ولی من می‌تونم برم. تو نمی‌تونی. | But I can leave. You can't.
+[say] مسعود | ... | ...
+[say] مسعود | اون شب یه مرد اومد. کت خاکستری. | That night a man came. Grey suit.
+[say] مسعود | سرگرد بود. هر پنجشنبه می‌آمد. | He was a major. Came every Thursday.
+[say] مسعود | اسمش یزدانیه. | His name is Yazdani.
+[say] مسعود | سر یه پرونده بحثشون شد. آروم، ولی بحث شد. | They argued over a file. Quietly, but they argued.
+[say] مسعود | سرگرد اول رفت. یازده و بیست. | The major left first. Eleven twenty.
+[say] مسعود | شریفی موند. تنها. | Sharifi stayed. Alone.
+[say] مسعود | یازده و چهل‌وپنج رفت. | He left at eleven forty-five.
+[say] نادر | از کدوم در؟ | Which door?
+[say] مسعود | در آشپزخونه. به پس‌کوچه. | The kitchen door. Onto the back alley.
+[say] مسعود | صبح، ساعت شیش، پیداش کردم. | In the morning, six o'clock, I found him.
+[say] مسعود | پس‌کوچه. پشت بشکه‌ها. | The alley. Behind the barrels.
+[say] مسعود | تو دفترش نبود. | He wasn't in his office.
+[say] نادر | گزارش می‌گه دفترش. | The report says his office.
+[say] مسعود | گزارش رو من ننوشتم، آقا. | I didn't write the report, sir.
+[say] مسعود | گروهبان اومد. برگه‌ی دفتر رو برد. | A sergeant came. Took the register page.
+[say] مسعود | دویست تومن داد. گفت این‌جا ده بسته شده. | Gave me two hundred. Said we closed at ten.
+[say] مسعود | من هم گفتم ده. | So I said ten.
+[say] نادر | ... | ...
+[say] مسعود | اگه بلیت جور شد، دیگه هیچ‌وقت ده نمی‌گم. | If the ticket comes through, I'll never say ten again.
+[do] flag.witness.deal = true
+[do] flag.witness.truth = true
+[do] known.witness.name = true
+[do] flag.quest.witness = 2
+[end]
+
+[node] threat
+[say] نادر | حرف نزنی، تو می‌شی متهم. | Don't talk, and you're the suspect.
+[say] مسعود | من؟ من فقط چای می‌ریزم. | Me? I only pour tea.
+[say] نادر | همین کافیه. | That's enough.
+[say] مسعود | ... | ...
+[say] مسعود | صبح پیداش کردم. پس‌کوچه. | I found him in the morning. The alley.
+[say] مسعود | یازده و چهل‌وپنج از در آشپزخونه رفت. | He left through the kitchen door at eleven forty-five.
+[say] نادر | تنها بود؟ | Was he alone?
+[say] مسعود | تنها نبود. | He wasn't alone.
+[say] نادر | کی بود؟ | Who was it?
+[say] مسعود | نمی‌دونم. | I don't know.
+[say] نادر | دروغ می‌گی. | You're lying.
+[say] مسعود | اسمش رو نمی‌دونم. | I don't know his name.
+[say] مسعود | (به سیخ قبض نگاه می‌کند، بعد به زمین.) | (He looks at the spike, then at the floor.)
+[say] مسعود | آقا، من ماه دیگه می‌خوام برم. | Sir, I'm leaving next month.
+[say] مسعود | این‌جا به من چیزی نمی‌گن. | They don't tell me anything here.
+[say] نادر | ... | ...
+[do] flag.witness.threat = true
+[do] flag.witness.truth = true
+[do] known.masoud.threat = true
+[do] flag.quest.witness = 2
+[end]
+
+[node] protect
+[say] نادر | بیا اداره. شهادت بده. من پشتتم. | Come to the bureau. Testify. I'll stand behind you.
+[say] مسعود | اداره؟ | The bureau?
+[say] نادر | اداره. | The bureau.
+[say] مسعود | ... | ...
+[say] مسعود | من از اداره می‌ترسم، آقا. | I'm afraid of the bureau, sir.
+[say] نادر | من هم. | So am I.
+[say] مسعود | (سرش را بلند می‌کند.) | (He looks up.)
+[say] مسعود | صبح پیداش کردم. پس‌کوچه. | I found him in the morning. The alley.
+[say] مسعود | از در آشپزخونه رفت. یازده و چهل‌وپنج. | He left by the kitchen door. Eleven forty-five.
+[say] نادر | تنها بود؟ | Was he alone?
+[say] مسعود | تنها نبود. | He wasn't alone.
+[say] نادر | کی؟ | Who?
+[say] مسعود | من شهادت می‌دم که تنها نبود. بقیه‌ش رو از من نپرس. | I'll testify he wasn't alone. Don't ask me the rest.
+[say] نادر | باشه. | All right.
+[say] مسعود | یه چیز دیگه. | One more thing.
+[say] مسعود | فردا شب، ساعت نه، در آشپزخونه بازه. | Tomorrow night, nine o'clock, the kitchen door's open.
+[say] مسعود | اون که قهوه خورد، از اون در رفت. | The one who drank coffee left through that door.
+[do] flag.witness.protect = true
+[do] flag.witness.truth = true
+[do] flag.quest.witness = 2
+[end]
+
+[node] leave
+[say] نادر | فعلاً هیچی. | Nothing for now.
+[say] مسعود | آقا. | Sir.
+[say] مسعود | قبض‌ها صبح می‌رن. | The slips go in the morning.
+[say] مسعود | تا صبح... | Until morning...
+[end]
+
+# ---------------------------------------------------------------
+# بعد از گرفتن حقیقت — هر راه، یک پایان کوچک
+# ---------------------------------------------------------------
+
+[node] after
+[if] flag.witness.deal == true -> after_deal
+[if] flag.witness.threat == true -> after_threat
+[if] flag.witness.protect == true -> after_protect
+[go] after_deal
+
+[node] after_deal
+[say] مسعود | بلیت گرفتی، آقا؟ | Did you get the ticket, sir?
+[say] نادر | چهار ماه. | Four months.
+[say] مسعود | چهار ماه. | Four months.
+[say] مسعود | چای مهمون من. | Tea's on me.
+[end]
+
+[node] after_threat
+[say] مسعود | (سرش را بلند نمی‌کند.) | (He doesn't look up.)
+[say] مسعود | چای می‌خوای؟ | Do you want tea?
+[end]
+
+[node] after_protect
+[say] مسعود | فردا شب. ساعت نه. | Tomorrow night. Nine.
+[say] مسعود | در آشپزخونه. | The kitchen door.
+[end]

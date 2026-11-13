@@ -1,0 +1,108 @@
+# خانم فرهادی — بایگان
+# مسیر بایگانی: تحویل پرونده، ثبت، و دیدن مهر شکسته
+#
+# flag.quest.file:  0 نگرفته · 1 دست نادر · 2 تحویل به رضا · 3 در بایگانی · 4 تمام
+# flag.delivery:    personal | desk | archive
+# flag.archive.logged: در دفتر ثبت شد
+# known.farhadi.seal: خانم فرهادی مهر شکسته را دید
+#
+# تحویل واقعی: [do] item.give.file.sealed = archive
+#   پرونده از جیب بازیکن بیرون می‌رود و همان نمونه در ظرف «بایگانی» می‌نشیند.
+#   شرط داشتنش هم از خود آیتم می‌آید: [if] item.file.sealed >= 1
+
+[person] farhadi
+[name] خانم فرهادی | Mrs. Farhadi
+[role] بایگان | Archivist
+[cast] farhadi
+
+[node] start
+[if] flag.quest.file == 3 -> after
+[if] item.file.sealed >= 1 -> handover
+[say] farhadi | بایگانی. چیزی لازم داری؟ | Archive. Need something?
+[opt] دنبال پرونده‌ی ۱۳۵۲ هستم. | I am looking for the 1352 file. -> clue
+[opt] فقط سر می‌زنم. | Just looking around. -> look
+[end]
+
+[node] clue
+[say] farhadi | ۱۳۵۲؟ قفسه‌ی شرقی. دفتر ثبت هم روی میزه. | 1352? East shelf. The logbook is on the counter.
+[say] farhadi | هر چیزی که ثبت نشده، وجود نداره. | Anything not logged does not exist.
+[end]
+
+[node] look
+[say] farhadi | دست به چیزی نزن. مهرها به هم می‌ریزن. | Do not touch anything. The seals get mixed up.
+[end]
+
+[node] handover
+[say] farhadi | بده. | Give it here.
+[say] farhadi | پرونده‌ی مهر و موم‌شده... شماره‌اش رو بگو. | A sealed file... give me the number.
+[if] flag.file.opened == true -> broken
+[do] item.give.file.sealed = archive
+[do] flag.quest.file = 3
+[do] flag.delivery = archive
+[do] flag.file.taken = false
+[do] flag.archive.logged = true
+[say] farhadi | مهر سالمه. ثبت شد. | The seal is intact. Logged.
+[say] farhadi | دفتر ثبت روی میزه؛ اگر شماره‌ای می‌خوای، خودت ببین. | The logbook is on the counter if you need a number.
+[end]
+
+[node] broken
+[do] item.give.file.sealed = archive
+[do] flag.quest.file = 3
+[do] flag.delivery = archive
+[do] flag.file.taken = false
+[do] flag.archive.logged = true
+[do] known.farhadi.seal = true
+[say] farhadi | این مهر شکسته. | This seal is broken.
+[say] farhadi | من باید این رو توی دفتر بنویسم. با اسم تو. | I have to write this in the log. With your name.
+[opt] خودم بازش کردم. | I opened it myself. -> seal_truth
+[opt] از قبل باز بود. | It was already open. -> seal_already
+[opt] دست نزدم. | I never touched it. -> seal_none
+[opt] یادم نیست. | I do not remember. -> seal_unknown
+
+[node] seal_truth
+[do] flag.claim.seal = opened
+[do] flag.claim.told = true
+[do] flag.claim.settled = true
+[say] farhadi | خوب. لااقل انکار نکردی. | Good. At least you did not deny it.
+[say] farhadi | می‌نویسم: مهر شکسته، تحویل با اقرار. | I will write: seal broken, handed over with a confession.
+[end]
+
+[node] seal_already
+[do] flag.claim.seal = already
+[do] flag.claim.told = true
+[do] flag.claim.settled = false
+[do] flag.lie.seal = true
+[say] farhadi | از قبل؟ پرونده‌ی ۱۳۵۲ هم همین‌طور شروع شد. | Already? The 1352 file started the same way.
+[say] farhadi | باشه. می‌نویسم «مهر شکسته، ادعای باز شدن قبلی». | Fine. I will write "seal broken, claim of prior opening".
+[end]
+
+[node] seal_none
+[do] flag.claim.seal = none
+[do] flag.claim.told = true
+[do] flag.claim.settled = true
+[do] flag.lie.seal = true
+[say] farhadi | مهر شکسته و تو می‌گی دست نزدی. | The seal is broken and you say you never touched it.
+[say] farhadi | من فقط می‌نویسم. داوری با من نیست. | I only write. Judging is not my job.
+[end]
+
+[node] seal_unknown
+[do] flag.claim.seal = unknown
+[do] flag.claim.told = true
+[do] flag.claim.settled = true
+[say] farhadi | «یادم نیست» هم یک جواب است. می‌نویسم. | "I do not remember" is an answer too. I will write it.
+[end]
+
+[node] after
+[if] flag.clue.box == true -> after_box
+[if] flag.archive.logged == true -> logged
+[go] logged
+
+[node] logged
+[say] farhadi | ثبت شد. برو. | It is logged. Go.
+[say] farhadi | اگر اسمی توی دفتر دیدی، از من نپرس. | If you see a name in the log, do not ask me.
+[end]
+
+[node] after_box
+[say] farhadi | جعبه رو هم که برداشتی. | You took the box too.
+[say] farhadi | کاری به کار من نداشته باش. | Keep me out of this.
+[end]

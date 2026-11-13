@@ -93,6 +93,12 @@ namespace TehranNoir.Dialogue
     {
     }
 
+    /// [read] Documents/file_sealed — باز کردن یک سند کاغذی روی صفحه
+    public sealed class ReadItem : DialogueItem
+    {
+        public string Path = string.Empty;
+    }
+
     /// [do] rel.reza +5
     public sealed class EffectItem : DialogueItem
     {

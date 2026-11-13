@@ -1,0 +1,60 @@
+# دفتر ثبت بایگانی ۰۱۲ — قالب «دفتر» (ledger)
+# ------------------------------
+# این سند یک برگه‌ی جدول‌دار است: سرصفحه‌ی چاپی، سرستون‌ها، و ردیف‌های دست‌نویس.
+#
+# تگ‌ها: template=ledger / agency / office / number / date / title / columns /
+#        footnote / hand / emblem / seal
+# ردیف:  [row] خانه۱؛ خانه۲؛ خانه۳ ...
+#   خانه‌ها با «؛» جدا می‌شوند و هر خانه «فارسی | English» است.
+#   «|» فقط برای جدا کردن دو زبان است، نه برای خانه‌ها.
+# شرط:   [when] شرط        ردیف‌های بعدی فقط وقتی دیده می‌شوند که شرط برقرار باشد
+#        [always]          پایان شرط
+#
+# ردیف نادر راد عمداً شرط دارد: تا پرونده به بایگانی نرسد، اسمی از او در دفتر نیست.
+# وضعیت مهر هم همان چیزی است که نادر گفته، نه لزوماً واقعیت.
+#
+# چرا == و نه >= ؟ چون متغیر تعریف‌نشده در موتور شرط، با نام خودش مقایسه می‌شود.
+#   flag.quest.file >= 3   با متغیر تعریف‌نشده  → مقایسه‌ی متنی «f» با «3» → درست
+#   flag.quest.file == 3   با متغیر تعریف‌نشده  → نادرست
+# پس برای شرط‌هایی که «هنوز هیچ‌چیز ثبت نشده» باید نادرست باشند، همیشه == بنویس.
+# ------------------------------
+
+[template] ledger
+[emblem] true
+[seal] false
+[hand] true
+
+[agency] سازمان اطلاعات و امنیت کشور | SAVAK
+[office] بایگانی مرکزی — دفتر ثبت اسناد ۰۱۲ | Central Archive — Register 012
+[number] ۰۱۲/د | 012/D
+[date] ۱۴ مرداد ۱۳۵۲ | 5 August 1973
+[title] اسناد ثبت‌شده — بایگانی ۰۱۲ | Registered documents — Archive 012
+
+[columns] تاریخ | Date؛ شماره | No.؛ موضوع | Subject؛ تحویل‌دهنده | Delivered by؛ وضعیت مهر | Seal
+
+[row] ۱۳۵۲/۰۲/۰۳ | 1352/02/03؛ ۱۰۸ | 108؛ پرونده‌ی اسماعیل رستمی | Esmaeil Rostami case؛ سرگرد یزدانی | Major Yazdani؛ مهر شکسته | seal broken
+[row] ۱۳۵۲/۰۳/۱۱ | 1352/03/11؛ ۱۱۴ | 114؛ پرونده‌ی کریم شریفی | Karim Sharifi case؛ سرگرد یزدانی | Major Yazdani؛ مهر سالم | seal intact
+[row] ۱۳۵۲/۰۴/۰۲ | 1352/04/02؛ ۱۱۸ | 118؛ صورت‌جلسه‌ی بازجویی دوم | Second interrogation record؛ سرگرد یزدانی | Major Yazdani؛ مهر سالم | seal intact
+[row] ۱۳۵۲/۰۴/۱۹ | 1352/04/19؛ ۱۲۱ | 121؛ نامه‌ی اداره‌ی دوم | Second Bureau letter؛ خانم فرهادی | Mrs. Farhadi؛ مهر سالم | seal intact
+
+[when] (flag.quest.file == 3 or flag.quest.file == 4) and flag.file.opened != true
+[row] ۱۳۵۲/۰۵/۱۴ | 1352/05/14؛ ۱۲۵/ب | 125/B؛ پرونده‌ی بایگانی ۱۳۵۲ | 1352 archive file؛ نادر راد | Nader Rad؛ مهر سالم | seal intact
+[always]
+
+[when] (flag.quest.file == 3 or flag.quest.file == 4) and flag.claim.seal == opened
+[row] ۱۳۵۲/۰۵/۱۴ | 1352/05/14؛ ۱۲۵/ب | 125/B؛ پرونده‌ی بایگانی ۱۳۵۲ | 1352 archive file؛ نادر راد | Nader Rad؛ مهر شکسته — با اقرار | seal broken — confessed
+[always]
+
+[when] (flag.quest.file == 3 or flag.quest.file == 4) and flag.claim.seal == already
+[row] ۱۳۵۲/۰۵/۱۴ | 1352/05/14؛ ۱۲۵/ب | 125/B؛ پرونده‌ی بایگانی ۱۳۵۲ | 1352 archive file؛ نادر راد | Nader Rad؛ مهر شکسته — ادعای باز شدن قبلی | seal broken — claims prior opening
+[always]
+
+[when] (flag.quest.file == 3 or flag.quest.file == 4) and flag.claim.seal == none
+[row] ۱۳۵۲/۰۵/۱۴ | 1352/05/14؛ ۱۲۵/ب | 125/B؛ پرونده‌ی بایگانی ۱۳۵۲ | 1352 archive file؛ نادر راد | Nader Rad؛ مهر شکسته — منکر | seal broken — denied
+[always]
+
+[when] (flag.quest.file == 3 or flag.quest.file == 4) and flag.claim.seal == unknown
+[row] ۱۳۵۲/۰۵/۱۴ | 1352/05/14؛ ۱۲۵/ب | 125/B؛ پرونده‌ی بایگانی ۱۳۵۲ | 1352 archive file؛ نادر راد | Nader Rad؛ مهر شکسته — نامعلوم | seal broken — unknown
+[always]
+
+[footnote] تبصره: سند بدون مهر سالم ثبت نمی‌شود. مهر شکسته در ستون وضعیت نوشته و به رئیس بایگانی خبر داده می‌شود. | Note: a file is registered only with an intact seal. A broken seal is noted in the Seal column and reported to the archive chief.

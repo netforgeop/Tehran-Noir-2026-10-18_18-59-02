@@ -1,0 +1,37 @@
+# گزارش پایانی پرونده — اتاق ۸۱۴
+# این سند بعد از بستن پرونده باز می‌شود و خودش را با نتیجه تطبیق می‌دهد.
+# ------------------------------
+
+[template] letter
+[seal] false
+[hand] true
+[emblem] true
+
+[agency] شهربانی کل کشور | Imperial Iranian Police
+[office] اداره‌ی اطلاعات — شعبه‌ی سوم | Intelligence Bureau — Third Branch
+[number] ۸۱۴/۵۲ | 814/52
+[date] ۱۴ مرداد ۱۳۵۲ | 5 August 1973
+[title] گزارش مرگ مشکوک | Report of a suspicious death
+[stamp] تکمیل شد | COMPLETED
+
+مقتول: ویکتور سوکولوف، ۴۵ ساله، تبعه‌ی روسیه، اتاق ۸۱۴. | Victim: Viktor Sokolov, 45, Russian national, room 814.
+محل کشف: همان اتاق. ساعت ۶:۲۰ بامداد. | Found: same room, 06:20.
+علت مرگ: ضربه‌ی واحد به شقیقه‌ی چپ. | Cause of death: single blow to the left temple.
+
+[when] flag.hilton.case.solved == true
+متهم: رحیمی، مسئول طبقه‌ی هشتم. اعتراف کرد. | Suspect: Rahimi, eighth-floor manager. Confessed.
+انگیزه: دویست دلار برداشت‌شده از حساب مقتول. | Motive: two hundred dollars taken from the victim's account.
+دسترسی: کلید اصلی ۸۱۴، صادرشده ساعت ۲۲:۴۰. | Access: master key 814, issued at 22:40.
+پوشش دروغین: پرداخت ساعت ۲۳:۴۰ برای زنده نشان دادن مقتول. | False trail: the 23:40 payment, to make the victim look alive.
+وضعیت: پرونده بسته شد. | Status: case closed.
+[always]
+
+[when] flag.hilton.case.weak == true
+متهم: رحیمی، مسئول طبقه. | Suspect: Rahimi, floor manager.
+مدرک کافی برای بازداشت: نه. | Sufficient evidence to hold: no.
+وضعیت: پرونده باز ماند. | Status: case left open.
+[always]
+
+[footnote] این گزارش با امضای افسر صحنه معتبر است. | This report is valid with the scene officer's signature.
+
+امضا: گروهبان مرادی | Signed: Sergeant Moradi

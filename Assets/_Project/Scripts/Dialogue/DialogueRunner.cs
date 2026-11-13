@@ -13,6 +13,18 @@ namespace TehranNoir.Dialogue
         private static readonly Regex EffectPattern =
             new Regex(@"^\s*([A-Za-z0-9_.]+)\s*([+\-=])\s*(.+?)\s*$");
 
+        /// <summary>
+        /// اثرهایی که موتور دیالوگ معنی‌شان را نمی‌داند و لایه‌ی دیگری (آیتم‌ها)
+        /// می‌شناسد؛ مثل `[do] item.give.file.sealed = archive`.
+        ///
+        /// چرا قلاب و نه `using TehranNoir.Items`؟ چون جهت وابستگی باید یکی بماند:
+        /// آیتم‌ها به دیالوگ وابسته‌اند، نه برعکس. اگر قلاب `true` برگرداند،
+        /// گرامر عادی `[do]` دیگر اجرا نمی‌شود؛ اگر `false` برگرداند، مثل قبل.
+        ///
+        /// تنظیم و پاک‌کردنش کار `Items/ItemDialogueEffect.cs` است.
+        /// </summary>
+        public static Func<string, WorldState, bool> ExternalEffect;
+
         private readonly List<OptionItem> _options = new List<OptionItem>();
         private int _index;
 
@@ -28,6 +40,9 @@ namespace TehranNoir.Dialogue
         public event Action<SayItem> LineShown;
         public event Action<IReadOnlyList<OptionItem>> OptionsShown;
         public event Action Finished;
+
+        /// <summary>یک سند کاغذی باید باز شود؛ مسیرش را می‌دهد و منتظر می‌ماند تا Continue صدا زده شود.</summary>
+        public event Action<string> DocumentRequested;
 
         public void Begin(DialogueDocument document, WorldState world, string startNodeId = null)
         {
@@ -53,6 +68,16 @@ namespace TehranNoir.Dialogue
         {
             if (!IsRunning || IsWaitingForChoice) return;
             if (CurrentLine == null) return;
+
+            CurrentLine = null;
+            Step();
+        }
+
+        /// بعد از بسته شدن سند، دیالوگ از همان‌جا ادامه می‌دهد.
+        public void Continue()
+        {
+            if (!IsRunning) return;
+            if (IsWaitingForChoice) return;
 
             CurrentLine = null;
             Step();
@@ -123,6 +148,21 @@ namespace TehranNoir.Dialogue
                     {
                         if (!Jump(redirect.Target)) return;
                     }
+                    continue;
+                }
+
+                ReadItem read = item as ReadItem;
+                if (read != null)
+                {
+                    // این کلاس عمداً به UnityEngine وابسته نیست؛ گزارش دادن کارِ لایه‌ی UI است.
+                    if (available && DocumentRequested != null)
+                    {
+                        CurrentLine = null;
+                        DocumentRequested(read.Path);
+                        return;
+                    }
+
+                    // کسی گوش نمی‌دهد؛ دیالوگ نباید قفل شود و از خط رد می‌شود
                     continue;
                 }
 
@@ -227,6 +267,9 @@ namespace TehranNoir.Dialogue
         public static void ApplyEffect(string source, WorldState world)
         {
             if (world == null || string.IsNullOrEmpty(source)) return;
+
+            // لایه‌ی آیتم‌ها اول شانس دارد: گرامرهایی مثل `item.give.*` را خودش می‌شناسد.
+            if (ExternalEffect != null && ExternalEffect(source, world)) return;
 
             Match match = EffectPattern.Match(source);
             if (!match.Success) return;

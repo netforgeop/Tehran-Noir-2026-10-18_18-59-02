@@ -544,6 +544,11 @@ namespace TehranNoir.Dialogue
                 if (token.HasValue && token.Value.Kind == TokenKind.Operator)
                 {
                     string op = token.Value.Value;
+
+                    // یک «=» تنها هم برابر است: در فایل آیتم‌ها شرط با همان «=»ی
+                    // اثرها نوشته می‌شود، و رد کردنش قاعده را بی‌صدا حذف می‌کرد.
+                    if (op == "=") op = "==";
+
                     if (op == "==" || op == "!=" || op == ">" || op == "<" || op == ">=" || op == "<=")
                     {
                         Take();

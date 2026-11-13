@@ -9,7 +9,7 @@ namespace TehranNoir.Dialogue
     {
         private static readonly string[] Tags =
         {
-            "person", "name", "role", "cast", "node", "say", "opt", "go", "if", "else", "do", "end"
+            "person", "name", "role", "cast", "node", "say", "opt", "go", "if", "else", "do", "end", "read"
         };
 
         private static readonly Regex TagPattern = new Regex(@"^\[([A-Za-z]+)\]\s*(.*)$");
@@ -263,6 +263,23 @@ namespace TehranNoir.Dialogue
 
                     pendingGuard.Clear();
                     pendingGuardSource = string.Empty;
+                    continue;
+                }
+
+                if (tag == "read")
+                {
+                    if (rest.Length == 0)
+                    {
+                        document.Errors.Add(new DialogueIssue(lineNumber, "[read] مسیر سند را ندارد"));
+                        continue;
+                    }
+
+                    ReadItem read = new ReadItem();
+                    read.Line = lineNumber;
+                    read.Path = FirstToken(rest);
+                    read.Guard = guard;
+                    read.GuardSource = guardSource;
+                    current.Items.Add(read);
                     continue;
                 }
 

@@ -1,0 +1,30 @@
+# پرونده‌ی مهر و موم‌شده — الگوی «نامه‌ی رسمی»
+# ------------------------------
+# تگ‌ها: agency, office, number, date, title, stamp, emblem, seal, template
+# هر خط بدنه: «فارسی | English» — خط بدون «|» در هر دو زبان همان‌طور می‌آید.
+# خط خالی = فاصله‌ی بین پاراگراف‌ها.
+# این فایل در Resources/Documents است؛ DialogueInteractable مسیرش را می‌دهد:
+#   Documents/file_sealed
+# ------------------------------
+
+[template] letter
+[emblem] true
+[seal] true
+
+[agency] شهربانی کل کشور | Imperial Iranian Police
+[office] اداره‌ی اطلاعات — بایگانی مرکزی | Intelligence Bureau — Central Archive
+[number] ۱۲۵/ب — ۴۱ | 125/B — 41
+[date] ۱۴ مرداد ۱۳۵۲ | 5 August 1973
+[title] گزارش بازجویی | Interrogation report
+[stamp] محرمانه | SECRET
+
+صورت‌جلسه‌ی بازجویی. پرونده‌ی شماره‌ی ۱۳۵۲/۱۱۴. | Interrogation record. Case number 1352/114.
+متهم: کریم شریفی، بیست‌وشش ساله، راننده، ساکن خیابان ری. | Suspect: Karim Sharifi, twenty-six, driver, resident of Rey Street.
+بازداشت در خیابان ری، ساعت دو بامداد، بدون حکم. | Arrested on Rey Street at two in the morning, without a warrant.
+
+در بازجویی نخست، نام دو همکار خود را گفت. | In the first interrogation he named two of his associates.
+در بازجویی دوم، همه را انکار کرد. | In the second, he denied everything.
+هیچ‌کدام از آن نام‌ها در دفتر ثبت نیامده است. | None of those names appear in the logbook.
+
+علت مرگ: نامشخص. پرونده بسته شد. | Cause of death: undetermined. Case closed.
+امضا: سرگرد یزدانی | Signed: Major Yazdani

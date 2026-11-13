@@ -46,4 +46,8 @@ echo
 echo "۱۰) برش ساختمان‌ها (مدیر روی ریشه / سقفِ طبقه‌ی جاری)"
 python3 tools/cutawaycheck.py Assets/_Project/Scenes/*.unity || status=1
 
+echo
+echo "۱۱) درهای بین صحنه‌ها (مقصد موجود / راه برگشت / شکل اثرها)"
+python3 tools/doorcheck.py || status=1
+
 exit $status

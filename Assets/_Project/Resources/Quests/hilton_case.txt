@@ -3,15 +3,25 @@
 # کار از لحظه‌ی ورود به صحنه باز است، نه از حرف زدن با کسی. بازیکن باید
 # همان اول ببیند چه کاری دارد؛ وگرنه یک اتاق تاریک است با چند آدم.
 #
-# `place.hotel` را `SceneMarker` در شروع صحنه می‌نویسد.
+# `place.hotel` را `SceneMarker` در شروع صحنه می‌نویسد؛ `flag.hilton.floor` را
+# خودِ آسانسور. `place` می‌گوید «کدام ساختمان»، `floor` می‌گوید «کدام طبقه».
 # ------------------------------
 
 [quest] hilton_case
 [name] اتاق ۸۱۴ | Room 814
 [type] main
 [summary] تاجر روسی در اتاقش مرده. پزشک قانونی می‌گوید بین ده و نیم و یازده و بیست. مدیر طبقه می‌گوید تا نصف‌شب سر جایش بوده. | A Russian trader is dead in his room. The coroner puts the time between half past ten and twenty past eleven. The floor manager says he was at his desk until midnight.
-[start] place.hotel == true
+# کار در لابی شروع می‌شود، نه در راهرو: بازیکن باید بداند کجا برود.
+# `place.hotel` و `place.hilton814` هر دو، چون بازی می‌تواند از هر دو صحنه
+# شروع شود (دکمه‌ی Play در هر کدام).
+[start] place.hotel == true or place.hilton814 == true
 [done] flag.hilton.case.reported == true
+
+# قدم اول فقط در لابی هست. `flag.hilton.floor` را خود آسانسور می‌نویسد،
+# پس اگر بازیکن وسط پرونده پایین بیاید، همین قدم برمی‌گردد.
+[step] upstairs
+[text] آسانسور دیوار غربی لابی است؛ با آن به طبقه‌ی هشتم برو | The lift is on the west wall; ride it to the eighth floor
+[when] flag.hilton.floor != 8
 
 [step] brief
 [text] با گروهبان مرادی پای درِ ۸۱۴ حرف بزن | Talk to Sergeant Moradi at the door of 814

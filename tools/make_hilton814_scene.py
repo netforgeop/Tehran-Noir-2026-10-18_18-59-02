@@ -31,6 +31,7 @@ REZA = "978304783"
 CUBE = "1537828487"
 WALL = "1124334549"
 PLAYER = "1182697546"
+PLAYER_GO = "1182697542"
 CLOCK_COMPONENT = "445466633"
 LIGHT = "1107200289"
 SUN = "1107200289"
@@ -483,12 +484,22 @@ def main():
                 "سینی سیگار برنجی|Brass ashtray", "اتاق ۸۱۴ | Room 814",
                 guides["ashtray_814"], "", ui_id)
 
+    # ۹) آسانسور — راه برگشت به لابی
+    kit.scene_door(
+        builder, CUBE, root_transform, "Door_Lift_Down",
+        (0.0, 1.1, -10.62), (2.1, 2.2, 0.5), brass,
+        "آسانسور — پایین|Lift — down", "لابی | Lobby",
+        "Hilton", "floor8_lift", ["flag.hilton.floor = 0"])
+
     # ۱۰) برش — هر سه سقف در همان لحظه که دوربین از بالای سر نگاه می‌کند
     # برداشته می‌شوند. بدون این، تصویر فقط یک تخته‌ی قهوه‌ای است.
     kit.building_cutaway(
         builder, root_id, builder.transform_id(PLAYER),
         (1.6, 1.3, 0.0), (15.0, 2.6, 23.0),
         floor_height=2.9, ground_level=0.0, exit_margin=0.5)
+
+    kit.persist_world(builder.docs)
+    kit.world_initial(builder.docs, ["flag.hilton.floor = 8"])
 
     # ۱۱) نشانگر صحنه — بدون این، کار «اتاق ۸۱۴» هرگز در فهرست کارها نمی‌آید.
     kit.component_object(

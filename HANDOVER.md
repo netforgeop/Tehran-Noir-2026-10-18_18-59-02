@@ -1473,3 +1473,39 @@ flag.quest.file == 3   با متغیر تعریف‌نشده  → نادرست
 `Floor_1`, `Floor_2`, `Floor_3`, `Roof`؛ در راهرو پنهان می‌شوند سه سقف.
 در Unity هنوز Play نشده.
 
+## ۵۴. آسانسور و ساختمان زنده (جلسه‌ی ۴۹)
+
+سؤال بازیکن: «چه جوری برم بالا؟» جواب: **نمی‌شد.** لابی و راهروی هشتم دو
+فایل بودند و هیچ دری بین‌شان نبود. سه چیز لازم بود.
+
+**یک — در.** `Scripts/World/SceneDoor.cs` یک `Interactable` است که پرچم
+می‌نویسد، `entry.from` را ثبت می‌کند، پرده را سیاه می‌کند و صحنه را
+بارگذاری می‌کند. `Scripts/World/SceneEntryPoint.cs` روی `Player` می‌نشیند و
+اگر از آن در آمده باشی، سرِ همان در پیاده‌ات می‌کند نه وسط خیابان.
+
+**دو — جهانی که می‌ماند.** `persistBetweenScenes` در هر چهار صحنه `0` بود؛
+یعنی با اولین رد شدن از در، بریفینگ و مدارک و اعتراف صفر می‌شدند. در لابی و
+راهرو حالا `1` است.
+
+**سه — فهرست بیلد.** `SceneManager.LoadScene` اگر صحنه در Build Settings
+نباشد بی‌صدا شکست می‌خورد. `Editor/SceneListBootstrap.cs` با هر بار باز شدن
+پروژه فهرست را می‌سازد. `ProjectSettings` در گیت نیست، پس این لازم است.
+
+| فایل | تغییر |
+| --- | --- |
+| `Scripts/World/SceneDoor.cs` | تازه |
+| `Scripts/World/SceneEntryPoint.cs` | تازه |
+| `Editor/SceneListBootstrap.cs` | تازه |
+| `Scenes/Hilton.unity` | آسانسور دیوار غربی، جای پیاده‌شدن، ساعت ۶:۵۰ بامداد |
+| `Scenes/Hilton814.unity` | آسانسور برگشت، ساعت ۶:۴۰ |
+| `Quests/hilton_case.txt` | قدم `upstairs`؛ شروع با `place.hotel or place.hilton814` |
+| `tools/doorcheck.py` | تازه؛ گام یازدهم `preflight` |
+| `tools/scenekit.py` | `scene_door`, `scene_entry`, `set_local`, `persist_world`, `world_initial` |
+
+**قاعده‌ی تازه:** `place.*` می‌گوید «کدام ساختمان»، `flag.hilton.floor`
+می‌گوید «کدام طبقه». اولی چسبنده است، دومی نه؛ برای قدمِ «برو بالا» دومی
+درست است.
+
+**تست:** `preflight` یازده گام صفر مشکل؛ `doorcheck`: دو در با راه برگشت؛
+`Hilton` ۱۶۸ آبجکت؛ `Hilton814` ۱۰۵. در Unity هنوز Play نشده.
+

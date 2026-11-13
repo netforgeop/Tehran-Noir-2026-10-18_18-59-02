@@ -1129,8 +1129,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1955899642b2184fbc1fb1b7645d46c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TehranNoir.Dialogue.WorldStateProvider
-  initialVariables: []
-  persistBetweenScenes: 0
+  initialVariables:
+  - flag.hilton.floor = 8
+  persistBetweenScenes: 1
 --- !u!1 &2006028761
 GameObject:
   m_ObjectHideFlags: 0
@@ -1361,7 +1362,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 700000010}
-  - component: {fileID: 700004620}
+  - component: {fileID: 700004680}
   m_Layer: 0
   m_Name: HiltonFloor8
   m_TagString: Untagged
@@ -1473,6 +1474,7 @@ Transform:
   - {fileID: 700004440}
   - {fileID: 700004500}
   - {fileID: 700004560}
+  - {fileID: 700004630}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 
@@ -12038,7 +12040,146 @@ MonoBehaviour:
   startNodeId: 
   dialogueUI: {fileID: 1729212504}
 
---- !u!114 &700004620
+--- !u!1 &700004620
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 700004630}
+  - component: {fileID: 700004640}
+  - component: {fileID: 700004650}
+  - component: {fileID: 700004660}
+  - component: {fileID: 700004670}
+  m_Layer: 0
+  m_Name: Door_Lift_Down
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &700004630
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700004620}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.0, y: 1.1, z: -10.62}
+  m_LocalScale: {x: 2.1, y: 2.2, z: 0.5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 700000010}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &700004640
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700004620}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &700004650
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700004620}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 6f296568c24067d732173a7b5251b980, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &700004660
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700004620}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &700004670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700004620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43a4294763fcaa9343fb41e8b0c944ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TehranNoir.World.SceneDoor
+  action: 0
+  interactionPoint: {fileID: 0}
+  maxDistance: 2.6
+  maxAngle: 360
+  displayName: "\u0622\u0633\u0627\u0646\u0633\u0648\u0631 \u2014 \u067E\u0627\u06CC\u06CC\u0646|Lift \u2014 down"
+  subtype: "\u0644\u0627\u0628\u06CC | Lobby"
+  outline: {fileID: 0}
+  targetScene: Hilton
+  entryId: floor8_lift
+  effects: 
+  - flag.hilton.floor = 0
+  fadeSeconds: 0.45
+  logDeparture: 1
+
+--- !u!114 &700004680
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -12058,7 +12199,7 @@ MonoBehaviour:
   groundLevel: 0.0
   checkInterval: 0.1
   logChanges: 1
---- !u!1 &700004630
+--- !u!1 &700004690
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -12066,8 +12207,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 700004640}
-  - component: {fileID: 700004650}
+  - component: {fileID: 700004700}
+  - component: {fileID: 700004710}
   m_Layer: 0
   m_Name: SceneMarker_Hilton814
   m_TagString: Untagged
@@ -12076,13 +12217,13 @@ GameObject:
   m_StaticEditorFlags: 0
   m_IsActive: 1
 
---- !u!4 &700004640
+--- !u!4 &700004700
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700004630}
+  m_GameObject: {fileID: 700004690}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -12092,13 +12233,13 @@ Transform:
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 
---- !u!114 &700004650
+--- !u!114 &700004710
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700004630}
+  m_GameObject: {fileID: 700004690}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d32222d12ba24edcd0410ce3e475a72, type: 3}
@@ -12106,7 +12247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TehranNoir.World.SceneMarker
   placeId: hilton814
   logMarker: 1
---- !u!1 &700004660
+--- !u!1 &700004720
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -12114,8 +12255,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 700004670}
-  - component: {fileID: 700004680}
+  - component: {fileID: 700004730}
+  - component: {fileID: 700004740}
   m_Layer: 0
   m_Name: CutawaySelfTest
   m_TagString: Untagged
@@ -12124,13 +12265,13 @@ GameObject:
   m_StaticEditorFlags: 0
   m_IsActive: 1
 
---- !u!4 &700004670
+--- !u!4 &700004730
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700004660}
+  m_GameObject: {fileID: 700004720}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -12140,13 +12281,13 @@ Transform:
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 
---- !u!114 &700004680
+--- !u!114 &700004740
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700004660}
+  m_GameObject: {fileID: 700004720}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d50a984b5d36d67e530506f47ae62c84, type: 3}
@@ -12170,5 +12311,5 @@ SceneRoots:
   - {fileID: 2006028765}
   - {fileID: 9223372036854776817}
   - {fileID: 700000010}
-  - {fileID: 700004640}
-  - {fileID: 700004670}
+  - {fileID: 700004700}
+  - {fileID: 700004730}

@@ -267,6 +267,9 @@ def set_environment(docs, sky_color, intensity=1.0, fog=False):
         doc["body"] = body
 
 
+SCENE_DOOR_GUID = "43a4294763fcaa9343fb41e8b0c944ec"
+SCENE_ENTRY_GUID = "f581e2c7c009eb342181474601fc47ca"
+
 CUTAWAY_SCRIPT_GUID = "716b6c9cd7df75ec7018eb366bc368f8"
 CUTAWAY_PIECE_GUID = "7bf126e49e49cec06616925990812a03"
 
@@ -341,6 +344,118 @@ def attach_component(builder, go, script_guid, class_identifier, fields):
             break
 
     return mono
+
+
+def scene_door(builder, cube, root, name, position, scale, material, display_name,
+                subtype, target_scene, entry_id, effects, fade_seconds=0.45,
+                rotation=None):
+    """در یا آسانسوری که صحنه را عوض می‌کند.
+
+    کپیِ یک مکعب با `BoxCollider`، بعد کامپوننتش با `SceneDoor` عوض می‌شود.
+    مکعب نامرئی است: خودِ درها و چارچوب جدا ساخته می‌شوند.
+    """
+    go, _ = builder.clone(cube, name, position, scale, material, root, rotation)
+
+    # خودِ ناحیه‌ی تعامل نامرئی است؛ درها و چارچوب جدا ساخته می‌شوند. اگر
+    # رندرر روشن بماند، یک مکعب برنجی روی آسانسور می‌نشیند.
+    for doc in builder.docs:
+        if doc["cls"] == "23" and re.search(r"m_GameObject: \{fileID: " + go + r"\}",
+                                            doc["body"]):
+            doc["body"] = re.sub(r"m_Enabled: 1", "m_Enabled: 0", doc["body"], count=1)
+
+    for doc in builder.docs:
+        if doc["cls"] != "114":
+            continue
+        if not re.search(r"m_GameObject: \{fileID: " + go + r"\}", doc["body"]):
+            continue
+
+        lines = "".join("  - " + effect + "\n" for effect in effects)
+
+        doc["body"] = (
+            "MonoBehaviour:\n"
+            "  m_ObjectHideFlags: 0\n"
+            "  m_CorrespondingSourceObject: {fileID: 0}\n"
+            "  m_PrefabInstance: {fileID: 0}\n"
+            "  m_PrefabAsset: {fileID: 0}\n"
+            "  m_GameObject: {fileID: " + go + "}\n"
+            "  m_Enabled: 1\n"
+            "  m_EditorHideFlags: 0\n"
+            "  m_Script: {fileID: 11500000, guid: " + SCENE_DOOR_GUID + ", type: 3}\n"
+            "  m_Name: \n"
+            "  m_EditorClassIdentifier: Assembly-CSharp::TehranNoir.World.SceneDoor\n"
+            "  action: 0\n"
+            "  interactionPoint: {fileID: 0}\n"
+            "  maxDistance: 2.6\n"
+            "  maxAngle: 360\n"
+            '  displayName: "' + yaml_text(display_name) + '"\n'
+            '  subtype: "' + yaml_text(subtype) + '"\n'
+            "  outline: {fileID: 0}\n"
+            "  targetScene: " + target_scene + "\n"
+            "  entryId: " + entry_id + "\n"
+            "  effects: " + ("\n" + lines.rstrip("\n") if effects else "[]") + "\n"
+            "  fadeSeconds: " + str(fade_seconds) + "\n"
+            "  logDeparture: 1\n\n")
+
+    return go
+
+
+def scene_entry(builder, player_go, entry_id, point_transform, log_arrival=True):
+    """روی خودِ Player: اگر از این در آمده‌ای، همان‌جا پیاده شو."""
+    return attach_component(builder, player_go, SCENE_ENTRY_GUID,
+                            "TehranNoir.World.SceneEntryPoint",
+                            "  entryId: " + entry_id + "\n"
+                            "  entryPoint: {fileID: " + point_transform + "}\n"
+                            "  lookAt: {fileID: 0}\n"
+                            "  logArrival: %d" % (1 if log_arrival else 0))
+
+
+def set_local(builder, transform, position, rotation_y=None):
+    """جابه‌جا کردن یک Transform که همین حالا ساخته‌ایم."""
+    for doc in builder.docs:
+        if doc["cls"] != "4" or doc["id"] != transform:
+            continue
+
+        doc["body"] = re.sub(r"m_LocalPosition: \{[^}]*\}",
+                             "m_LocalPosition: {x: %s, y: %s, z: %s}" % position,
+                             doc["body"], count=1)
+
+        if rotation_y is not None:
+            import math
+            half = math.radians(rotation_y) * 0.5
+            doc["body"] = re.sub(r"m_LocalRotation: \{[^}]*\}",
+                                 "m_LocalRotation: {x: 0, y: %.6f, z: 0, w: %.6f}"
+                                 % (math.sin(half), math.cos(half)), doc["body"], count=1)
+        break
+
+
+def world_initial(docs, lines):
+    """مقدارهای اولیه‌ی جهان؛ با همان نحو `[do]`.
+
+    برای چیزی که «از اول همین است»: طبقه‌ای که در آن هستی، فصلی که باز است.
+    اگر بازیکن مستقیم صحنه را Play کند، این‌ها نوشته می‌شوند؛ اگر از در
+    بیاید، جهانِ مانده حرف اول را می‌زند.
+    """
+    for doc in docs:
+        if doc["cls"] != "114":
+            continue
+        if "TehranNoir.Dialogue.WorldStateProvider" not in doc["body"]:
+            continue
+
+        block = "initialVariables:\n" + "".join("  - " + line + "\n" for line in lines) \
+            if lines else "initialVariables: []\n"
+
+        doc["body"] = re.sub(r"initialVariables:( \[\])?\n(  - .*\n)*", block,
+                             doc["body"], count=1)
+
+
+def persist_world(docs):
+    """جهان بین صحنه‌ها بماند. بدون این، هر بار که از در رد شوی همه‌ی پرچم‌ها صفر می‌شوند."""
+    for doc in docs:
+        if doc["cls"] != "114":
+            continue
+        if "TehranNoir.Dialogue.WorldStateProvider" in doc["body"]:
+            doc["body"] = re.sub(r"persistBetweenScenes: \d",
+                                 "persistBetweenScenes: 1", doc["body"], count=1)
 
 
 def cutaway_piece(builder, go, role, level):

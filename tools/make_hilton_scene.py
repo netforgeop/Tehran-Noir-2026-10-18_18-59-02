@@ -30,6 +30,7 @@ REZA = "978304783"
 CUBE = "1537828487"
 WALL = "1124334549"
 PLAYER = "1182697546"
+PLAYER_GO = "1182697542"
 CLOCK_COMPONENT = "445466633"
 LIGHT = "1107200289"
 SUN = "1107200289"
@@ -39,8 +40,8 @@ DOCUMENT_SCRIPT_GUID = "4f8b2d1c9a7e4b3d8c6f0a2e5b9d7c14"
 PAPER_GUID = "4a8603e6b0d4eed4e8778f6120261937"
 NPC_GUID = "5952c87a01e696a45a3c76677c2b3f30"
 
-SKY = "{r: 0.10, g: 0.12, b: 0.18, a: 1}"
-FOG = "{r: 0.06, g: 0.07, b: 0.10, a: 1}"
+SKY = "{r: 0.30, g: 0.34, b: 0.42, a: 1}"
+FOG = "{r: 0.22, g: 0.24, b: 0.29, a: 1}"
 
 HALF_W = 8.0        # نیم‌عرض ساختمان
 HALF_D = 6.0        # نیم‌عمق ساختمان
@@ -224,10 +225,11 @@ def main():
 
     builder = kit.Builder(docs, templates, WALL, LIGHT)
 
-    # شب سیزدهم مرداد ۱۳۵۲، یک ربع به نیمه‌شب — بازیکن از خیابان می‌رسد.
-    kit.set_clock(docs, CLOCK_COMPONENT, 1352, 5, 13, 23, 45)
+    # بامداد چهاردهم مرداد ۱۳۵۲ — بازیکن از خیابان می‌رسد، ده دقیقه بعد از جسد.
+    # صبح روز بعد. راهروی طبقه‌ی هشتم ساعت ۶:۴۰ است؛ لابی ده دقیقه بعد.
+    kit.set_clock(docs, CLOCK_COMPONENT, 1352, 5, 14, 6, 50)
     kit.set_player(docs, PLAYER, (0, 1, -13.5))
-    kit.set_environment(docs, SKY, 0.55, fog=True)
+    kit.set_environment(docs, SKY, 0.95, fog=True)
 
     for doc in docs:
         if doc["cls"] == "104":
@@ -239,10 +241,10 @@ def main():
             continue
         if not re.search(r"m_GameObject: \{fileID: " + SUN + r"\}", doc["body"]):
             continue
-        doc["body"] = re.sub(r"m_Intensity: [0-9.]+", "m_Intensity: 0.08",
+        doc["body"] = re.sub(r"m_Intensity: [0-9.]+", "m_Intensity: 0.55",
                              doc["body"], count=1)
         doc["body"] = re.sub(r"m_Color: \{[^}]*\}",
-                             "m_Color: {r: 0.40, g: 0.48, b: 0.66, a: 1}",
+                             "m_Color: {r: 0.62, g: 0.68, b: 0.82, a: 1}",
                              doc["body"], count=1)
 
     viewer = builder.transform_id(PLAYER)
@@ -258,6 +260,7 @@ def main():
     asphalt = kit.guid_of(MATERIAL_FOLDER + "/M_HotelAsphalt.mat")
     sidewalk = kit.guid_of(MATERIAL_FOLDER + "/M_HotelSidewalk.mat")
     sign = kit.guid_of(MATERIAL_FOLDER + "/M_HotelSign.mat")
+    dark = kit.guid_of(MATERIAL_FOLDER + "/M_HotelGlass.mat")
 
     guids = {"wall": wall, "glass": glass, "lit": lit}
 
@@ -412,11 +415,40 @@ def main():
     builder.box("Water_Tank", (5.0, ROOF_Y + 1.05, 3.0), (1.4, 1.8, 1.4), wood, roof)
     builder.box("Stair_Hut", (-4.6, ROOF_Y + 0.75, 3.2), (2.4, 1.5, 2.0), wall, roof)
 
+    # ---------------------------------------------------------------- آسانسور
+    # تنها راه رفتن به طبقه‌ی هشتم. بدون این، کار «اتاق ۸۱۴» به آدمی اشاره
+    # می‌کرد که در صحنه‌ی دیگری بود.
+    builder.box("Lift_Recess_Back", (-7.62, 1.4, 4.2), (0.3, 2.8, 2.4), dark, lobby)
+    builder.box("Lift_Door_L", (-7.44, 1.1, 3.72), (0.08, 2.2, 0.9), brass, lobby)
+    builder.box("Lift_Door_R", (-7.44, 1.1, 4.68), (0.08, 2.2, 0.9), brass, lobby)
+    builder.box("Lift_Frame_L", (-7.42, 1.15, 3.22), (0.14, 2.35, 0.14), wood, lobby)
+    builder.box("Lift_Frame_R", (-7.42, 1.15, 5.18), (0.14, 2.35, 0.14), wood, lobby)
+    builder.box("Lift_Header", (-7.42, 2.4, 4.2), (0.16, 0.28, 2.1), wood, lobby)
+    builder.box("Lift_Call", (-7.36, 1.2, 5.42), (0.1, 0.24, 0.16), brass, lobby)
+    builder.box("Lift_Number_Panel", (-7.36, 2.1, 4.2), (0.08, 0.22, 0.5), lit, lobby)
+    builder.box("Lift_Sign", (-7.3, 2.62, 4.2), (0.06, 0.3, 1.6), lit, lobby)
+
+    lift_light, _ = builder.light("Light_Lift", (-7.0, 2.1, 4.2), 1.3, 4.0, lobby)
+
+    kit.scene_door(
+        builder, CUBE, lobby, "Door_Lift_Up",
+        (-7.62, 1.1, 4.2), (0.36, 2.2, 1.9), brass,
+        "آسانسور — طبقه‌ی هشتم|Lift — eighth floor", "طبقه‌ی ۸۱۴ | 814",
+        "Hilton814", "hotel_lift", ["flag.hilton.floor = 8"])
+
+    # ۵) جای پیاده‌شدن، وقتی از طبقه‌ی هشتم پایین می‌آیی
+    entry_go, entry_transform = kit.empty(builder, "Entry_From_Floor8", root_transform)
+    kit.set_local(builder, entry_transform, (-6.5, 1.0, 4.2), 90.0)
+
     # ---------------------------------------------------------------- برش
     kit.building_cutaway(
         builder, root_id, viewer,
         (0, 1.4, 0), (HALF_W * 2 + 0.4, LOBBY_H, HALF_D * 2 + 0.4),
         floor_height=FLOOR_H, ground_level=0.0, exit_margin=0.7)
+
+    kit.persist_world(builder.docs)
+    kit.world_initial(builder.docs, ["flag.hilton.floor = 0"])
+    kit.scene_entry(builder, PLAYER_GO, "floor8_lift", entry_transform)
 
     # ---------------------------------------------------------------- نشانگر و نوشتن
     kit.component_object(

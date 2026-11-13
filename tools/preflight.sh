@@ -42,4 +42,8 @@ echo
 echo "۹) مسیر دیالوگ‌ها (گره‌ی بی‌پایان / گره‌ی بدون ورودی)"
 python3 tools/walkcheck.py || status=1
 
+echo
+echo "۱۰) برش ساختمان‌ها (مدیر روی ریشه / سقفِ طبقه‌ی جاری)"
+python3 tools/cutawaycheck.py Assets/_Project/Scenes/*.unity || status=1
+
 exit $status

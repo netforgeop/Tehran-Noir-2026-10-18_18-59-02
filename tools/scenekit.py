@@ -173,6 +173,11 @@ class Builder:
 
     def transform_id(self, go_or_transform):
         """شناسه‌ی Transform یک GameObject، یا خودش اگر از قبل Transform باشد."""
+        # اول در اسنادِ زنده: آبجکت‌هایی که همین حالا ساخته‌ایم در قالب نیستند.
+        for candidate in self.docs:
+            if candidate["id"] == go_or_transform and candidate["cls"] == "4":
+                return go_or_transform
+
         doc = self.by_id.get(go_or_transform)
 
         if doc is not None and doc["cls"] == "4":
@@ -260,6 +265,113 @@ def set_environment(docs, sky_color, intensity=1.0, fog=False):
                           "m_FogColor: " + sky_color, body, count=1)
 
         doc["body"] = body
+
+
+CUTAWAY_SCRIPT_GUID = "716b6c9cd7df75ec7018eb366bc368f8"
+CUTAWAY_PIECE_GUID = "7bf126e49e49cec06616925990812a03"
+
+
+def empty(builder, name, parent):
+    """یک GameObject خالی، به‌عنوان ریشه‌ی یک گروه (مثلاً یک طبقه)."""
+    go, transform = builder.take(2)
+
+    builder.add("1", go,
+                "GameObject:\n"
+                "  m_ObjectHideFlags: 0\n"
+                "  m_CorrespondingSourceObject: {fileID: 0}\n"
+                "  m_PrefabInstance: {fileID: 0}\n"
+                "  m_PrefabAsset: {fileID: 0}\n"
+                "  serializedVersion: 6\n"
+                "  m_Component:\n"
+                "  - component: {fileID: " + transform + "}\n"
+                "  m_Layer: 0\n"
+                "  m_Name: " + name + "\n"
+                "  m_TagString: Untagged\n"
+                "  m_Icon: {fileID: 0}\n"
+                "  m_NavMeshLayer: 0\n"
+                "  m_StaticEditorFlags: 0\n"
+                "  m_IsActive: 1\n\n")
+
+    builder.add("4", transform, transform_body(go, builder.transform_id(parent)))
+
+    return go, transform
+
+
+def transform_body(go, parent, position=(0, 0, 0)):
+    return (
+        "Transform:\n"
+        "  m_ObjectHideFlags: 0\n"
+        "  m_CorrespondingSourceObject: {fileID: 0}\n"
+        "  m_PrefabInstance: {fileID: 0}\n"
+        "  m_PrefabAsset: {fileID: 0}\n"
+        "  m_GameObject: {fileID: " + go + "}\n"
+        "  serializedVersion: 2\n"
+        "  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}\n"
+        "  m_LocalPosition: {x: %s, y: %s, z: %s}\n" % position +
+        "  m_LocalScale: {x: 1, y: 1, z: 1}\n"
+        "  m_ConstrainProportionsScale: 0\n"
+        "  m_Children: []\n"
+        "  m_Father: {fileID: " + parent + "}\n"
+        "  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}\n\n")
+
+
+def attach_component(builder, go, script_guid, class_identifier, fields):
+    """یک MonoBehaviour به GameObject موجود اضافه می‌کند."""
+    (mono,) = builder.take(1)
+
+    builder.add("114", mono,
+                "MonoBehaviour:\n"
+                "  m_ObjectHideFlags: 0\n"
+                "  m_CorrespondingSourceObject: {fileID: 0}\n"
+                "  m_PrefabInstance: {fileID: 0}\n"
+                "  m_PrefabAsset: {fileID: 0}\n"
+                "  m_GameObject: {fileID: " + go + "}\n"
+                "  m_Enabled: 1\n"
+                "  m_EditorHideFlags: 0\n"
+                "  m_Script: {fileID: 11500000, guid: " + script_guid + ", type: 3}\n"
+                "  m_Name: \n"
+                "  m_EditorClassIdentifier: Assembly-CSharp::" + class_identifier + "\n"
+                + fields + "\n")
+
+    for doc in builder.docs:
+        if doc["cls"] == "1" and doc["id"] == go:
+            doc["body"] = doc["body"].replace(
+                "  m_Layer: 0",
+                "  - component: {fileID: " + mono + "}\n  m_Layer: 0", 1)
+            break
+
+    return mono
+
+
+def cutaway_piece(builder, go, role, level):
+    """تکه‌ی برش: role ۰ = طبقه، ۱ = سقف."""
+    return attach_component(builder, go, CUTAWAY_PIECE_GUID,
+                            "TehranNoir.World.CutawayPiece",
+                            "  role: %d\n  level: %d" % (role, level))
+
+
+def building_cutaway(builder, go, viewer_transform, center, size,
+                     floor_height=3.0, ground_level=0.0, exit_margin=0.7,
+                     log_changes=True):
+    """مدیر برش، روی خودِ ریشه‌ی ساختمان.
+
+    عمداً روی ریشه و نه روی یک آبجکت تازه: کامپوننت با
+    `GetComponentsInChildren` تکه‌ها را پیدا می‌کند، و یک آبجکت تازه فرزندی
+    ندارد. یک بار همین اشتباه باعث شد برش هیچ کاری نکند و هیچ خطایی هم
+    ندهد.
+    """
+    fields = (
+        "  viewer: {fileID: " + viewer_transform + "}\n"
+        "  interiorCenter: {x: %s, y: %s, z: %s}\n" % center +
+        "  interiorSize: {x: %s, y: %s, z: %s}\n" % size +
+        "  exitMargin: %s\n" % exit_margin +
+        "  floorHeight: %s\n" % floor_height +
+        "  groundLevel: %s\n" % ground_level +
+        "  checkInterval: 0.1\n"
+        "  logChanges: %d" % (1 if log_changes else 0))
+
+    return attach_component(builder, go, CUTAWAY_SCRIPT_GUID,
+                            "TehranNoir.World.BuildingCutaway", fields)
 
 
 def component_object(builder, parent, name, script_guid, class_identifier, fields):

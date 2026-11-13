@@ -39,6 +39,7 @@ DOCUMENT_SCRIPT_GUID = "4f8b2d1c9a7e4b3d8c6f0a2e5b9d7c14"
 PAPER_GUID = "4a8603e6b0d4eed4e8778f6120261937"
 NPC_GUID = "5952c87a01e696a45a3c76677c2b3f30"
 MARKER_GUID = "7d32222d12ba24edcd0410ce3e475a72"
+CUTAWAY_TEST_GUID = "d50a984b5d36d67e530506f47ae62c84"
 SIMPLE_SCRIPT_GUID = "3a720bb0e6966394ab363f5c0aed4660"
 STARTER_SCRIPT_GUID = "1acd582d969747f44ba68ce463e05588"
 
@@ -329,7 +330,8 @@ def main():
 
     # ۱) پوسته‌ی راهرو — از آسانسور جنوبی تا پنجره‌ی شمالی
     builder.box("Floor_Corridor", (0, -0.05, 0), (3.2, 0.1, 22), floor, root_transform)
-    builder.box("Ceiling_Corridor", (0, 2.65, 0), (3.4, 0.1, 22), wall, root_transform)
+    ceiling_corridor, _ = builder.box("Ceiling_Corridor", (0, 2.65, 0), (3.4, 0.1, 22), wall, root_transform)
+    kit.cutaway_piece(builder, ceiling_corridor, 1, 0)
     builder.box("Wall_S", (0, 1.3, -11), (3.4, 2.6, 0.2), wall, root_transform)
     builder.box("Wall_N", (0, 1.3, 11), (3.4, 2.6, 0.2), wall, root_transform)
     builder.box("Wall_E_S", (1.6, 1.3, -5.85), (0.2, 2.6, 10.3), wall, root_transform)
@@ -343,7 +345,8 @@ def main():
 
     # ۲) اتاق ۸۱۴ — شرق راهرو
     builder.box("Floor_814", (4.6, -0.05, 0), (6.0, 0.1, 5.6), floor, root_transform)
-    builder.box("Ceiling_814", (4.6, 2.65, 0), (6.0, 0.1, 5.6), wall, root_transform)
+    ceiling_814, _ = builder.box("Ceiling_814", (4.6, 2.65, 0), (6.0, 0.1, 5.6), wall, root_transform)
+    kit.cutaway_piece(builder, ceiling_814, 1, 0)
     builder.box("Wall_814_N", (4.6, 1.3, 2.8), (6.2, 2.6, 0.2), wall, root_transform)
     builder.box("Wall_814_S", (4.6, 1.3, -2.8), (6.2, 2.6, 0.2), wall, root_transform)
     builder.box("Wall_814_E_S", (7.6, 1.3, -1.95), (0.2, 2.6, 1.7), wall, root_transform)
@@ -356,7 +359,8 @@ def main():
 
     # ۳) دفتر مدیر طبقه — غرب راهرو، ته شمالی
     builder.box("Floor_Office", (-3.5, -0.05, 7.5), (3.8, 0.1, 4.2), floor, root_transform)
-    builder.box("Ceiling_Office", (-3.5, 2.65, 7.5), (3.8, 0.1, 4.2), wall, root_transform)
+    ceiling_office, _ = builder.box("Ceiling_Office", (-3.5, 2.65, 7.5), (3.8, 0.1, 4.2), wall, root_transform)
+    kit.cutaway_piece(builder, ceiling_office, 1, 0)
     builder.box("Wall_Office_W", (-5.4, 1.3, 7.5), (0.2, 2.6, 4.2), wall, root_transform)
     builder.box("Wall_Office_N", (-3.5, 1.3, 9.6), (3.8, 2.6, 0.2), wall, root_transform)
     builder.box("Wall_Office_S", (-3.5, 1.3, 5.4), (3.8, 2.6, 0.2), wall, root_transform)
@@ -479,11 +483,24 @@ def main():
                 "سینی سیگار برنجی|Brass ashtray", "اتاق ۸۱۴ | Room 814",
                 guides["ashtray_814"], "", ui_id)
 
-    # ۱۰) نشانگر صحنه — بدون این، کار «اتاق ۸۱۴» هرگز در فهرست کارها نمی‌آید.
+    # ۱۰) برش — هر سه سقف در همان لحظه که دوربین از بالای سر نگاه می‌کند
+    # برداشته می‌شوند. بدون این، تصویر فقط یک تخته‌ی قهوه‌ای است.
+    kit.building_cutaway(
+        builder, root_id, builder.transform_id(PLAYER),
+        (1.6, 1.3, 0.0), (15.0, 2.6, 23.0),
+        floor_height=2.9, ground_level=0.0, exit_margin=0.5)
+
+    # ۱۱) نشانگر صحنه — بدون این، کار «اتاق ۸۱۴» هرگز در فهرست کارها نمی‌آید.
     kit.component_object(
         builder, "0", "SceneMarker_Hilton814", MARKER_GUID,
         "TehranNoir.World.SceneMarker",
         "  placeId: hilton814\n  logMarker: 1")
+
+    # تست برش، یک بار با شروع صحنه. در بیلد خاموشش کن.
+    kit.component_object(
+        builder, "0", "CutawaySelfTest", CUTAWAY_TEST_GUID,
+        "TehranNoir.World.CutawaySelfTest",
+        "  runOnStart: 1\n  levels: 3")
 
     output = kit.write_scene(TARGET, header, builder.docs)
 

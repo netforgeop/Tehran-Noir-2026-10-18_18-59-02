@@ -47,7 +47,7 @@ https://github.com/netforgeop/Tehran-Noir-2026-10-18_18-59-02
 | مسیر پروژه روی کامپیوتر کاربر | `D:\PYWP\Game\Unity Games\Tehran Noir\` |
 | ریپو | https://github.com/netforgeop/Tehran-Noir-2026-10-18_18-59-02 |
 | شاخه | `arena/4796527a-tehran-noir-2026-10-18-18-59-0` |
-| آخرین کامیت این نوشته | `158f82e` — feat(mission): tea-house scene, Masoud's testimony, witness quest |
+| آخرین کامیت این نوشته | `4c9d993` — feat(hilton): the cashier loop, and the lobby it happens in |
 
 بازی اول کاربر است؛ سطح مهارت برنامه‌نویسی: مبتدی. کد باید ساده، مدولار و قابل توضیح بماند.
 

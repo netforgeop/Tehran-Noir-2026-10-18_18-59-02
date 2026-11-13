@@ -109,9 +109,18 @@ class Builder:
         self.next_id = next_id
 
     def take(self, count):
-        start = self.next_id
-        self.next_id += 10 * count
-        return [str(start + 10 * index) for index in range(count)]
+        # SceneRoots uses Int64.MaxValue; never allocate by adding to that ID.
+        used = {doc["id"] for doc in self.docs}
+        result = []
+        while len(result) < count:
+            candidate = self.next_id
+            self.next_id += 10
+            if candidate <= 0 or candidate > (1 << 63) - 1:
+                raise ValueError("scene ID allocator exceeded the signed 64-bit range")
+            if str(candidate) not in used:
+                result.append(str(candidate))
+                used.add(str(candidate))
+        return result
 
     def add(self, cls, new_id, body):
         self.docs.append({"cls": cls, "id": new_id, "body": body})

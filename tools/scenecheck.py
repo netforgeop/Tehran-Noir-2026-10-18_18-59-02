@@ -81,6 +81,12 @@ def main():
     with io.open(path, encoding="utf-8") as handle:
         text = handle.read()
 
+    # Unity serializes scene IDs as signed 64-bit integers, including references.
+    for match in re.finditer(r"(?m)^--- !u!\d+ &(-?\d+)|\{fileID: (-?\d+)", text):
+        value = match.group(1) or match.group(2)
+        if not -(1 << 63) <= int(value) <= (1 << 63) - 1:
+            problems.append("fileID outside signed 64-bit range: " + value)
+
     docs = split_scene(text)
     by_id = {}
 

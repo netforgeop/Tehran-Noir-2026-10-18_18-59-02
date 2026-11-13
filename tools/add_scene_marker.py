@@ -49,7 +49,7 @@ def main():
         return 0
 
     builder = kit.Builder(docs, {doc["id"]: doc for doc in docs},
-                          "0", "0", next_id=max(int(doc["id"]) for doc in docs) + 1000)
+                          "0", "0", next_id=800000000)
 
     kit.component_object(
         builder, "0", "SceneMarker_" + place, MARKER_GUID,

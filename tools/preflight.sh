@@ -50,4 +50,8 @@ echo
 echo "۱۱) درهای بین صحنه‌ها (مقصد موجود / راه برگشت / شکل اثرها)"
 python3 tools/doorcheck.py || status=1
 
+echo
+echo "۱۲) فهرست مدل‌ها (خط بدشکل / نام آبجکت ناشناس / چند جای خالی)"
+python3 tools/modelcheck.py || status=1
+
 exit $status

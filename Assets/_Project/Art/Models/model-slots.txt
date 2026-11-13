@@ -1,0 +1,47 @@
+# جای مدل‌ها — Model Slots
+#
+# هر خط: نام آبجکت در صحنه = مسیر فایل نسبت به همین پوشه
+#
+#   Ashtray_814_Case = Slots/ashtray.fbx
+#   Chair_814        = Slots/chair.fbx | rotY=90
+#
+# سه تغییردهنده، همه اختیاری، با | جدا می‌شوند:
+#
+#   rotY=90     چرخش حول محور عمودی، درجه
+#   stretch=1   کشیدن در سه محور جدا (پیش‌فرض: بزرگ‌کردن یکنواخت)
+#   lift=0.05   بالا بردن، متر
+#
+# قاعده: پیش‌فرض یکنواخت بزرگ می‌کند تا مدل کشیده نشود؛ اندازه را از جعبه‌ای
+# می‌گیرد که آن آبجکت الان اشغال کرده، پس چیدمان صحنه به‌هم نمی‌خورد.
+#
+# فایلی که نبوده باشد خطا نیست: صحنه همان جعبه‌ی ساده را نشان می‌دهد و
+# `tools/modelcheck.py` می‌گوید چند جای دیگر خالی است.
+#
+# راهنمای کامل: docs/50-models.md
+# ---------------------------------------------------------------
+
+# ── لابی هتل ──────────────────────────────────────────────────
+Counter          = Slots/counter.fbx
+Register         = Slots/register.fbx
+Sofa             = Slots/sofa.fbx
+Planter          = Slots/plant.fbx
+Suitcase         = Slots/suitcase.fbx
+Chandelier_1     = Slots/chandelier.fbx
+Chandelier_2     = Slots/chandelier.fbx
+Lobby_Desk       = Slots/desk.fbx
+
+# ── اتاق ۸۱۴ ──────────────────────────────────────────────────
+Ashtray_814_Case = Slots/ashtray.fbx
+Nightstand       = Slots/nightstand.fbx
+Desk_814         = Slots/desk.fbx
+Chair_814        = Slots/chair.fbx
+Wardrobe         = Slots/wardrobe.fbx
+Bed_Frame        = Slots/bed.fbx
+
+# ── راهروی طبقه‌ی هشتم ────────────────────────────────────────
+Maid_Cart        = Slots/cart.fbx
+
+# ── چای‌خانه ─────────────────────────────────────────────────
+Samovar          = Slots/samovar.fbx
+Tray             = Slots/tray.fbx
+Stool_1_Seat     = Slots/stool.fbx
